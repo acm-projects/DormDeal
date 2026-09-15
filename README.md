@@ -2,7 +2,7 @@
   <img src="https://media.giphy.com/media/10YWA8gW28JbqM/giphy.gif" alt="Student Loans Debt GIF">
 </div>
 
-<p align="center"><a href="https://giphy.com/gifs/mic-student-loans-debt-loan-forgiveness-10YWA8gW28JbqM">via GIPHY</a></p>
+<p align="center"><a href="https://giphy.com/gifs/mic-student-loans-debt-loan-forgiveness-10YWA8gW28JbqM"></a></p>
 
 # DormDeal 🎓
 
@@ -167,59 +167,37 @@ DormDeal also supports ride-sharing to grocery stores and airports, service list
 **MOCKS → THANKSGIVING BREAK → PRESENTATION NIGHT**
 
 ## Tech Stack & Resources 💻
-
+ 
 #### Start here!
-
-- What is a frontend?
-- What is a backend?
-- How to Build a Chrome Extension
-
+ 
+- [Intro to Frontend](https://www.youtube.com/watch?v=WG5ikvJ2TKA)
+- [Intro to Backend](https://www.youtube.com/watch?v=XBu54nfzxAQ)
+- [React Native docs](http://reactnative.dev)
+- [Expo docs](http://docs.expo.dev)
 #### Frontend
-
+ 
 - React Native + Expo
 - TypeScript
 - Figma
 - Need help choosing colors?
+  - [Coolors](https://coolors.co/?home)
 - Look at other UI for inspo
-- Intro to Design
-
+  - [Mobbin](https://mobbin.com/)
+  - [Dribbble](https://dribbble.com/)
+- Look at competitors!
+- [Intro to Design](https://www.youtube.com/watch?v=wIuVvCuiJhU)
+- [Sajid's Frontend Cheatsheet](https://www.iamsajid.com/)
 #### Backend
-
+ 
 - Node.js + Express
 - PostgreSQL (Supabase)
 - Socket.io
 - AWS S3
 - Microsoft Graph API
-- Designing a Database
-- Node.js docs
-- Swagger
-
-## Roadblocks & Solutions 🚧
-
-**Microsoft Graph OAuth**
-- Student email verification requires Microsoft App approval, which can block auth entirely in early weeks → focus on just Outlook verification, submit app request Week 1 if team agrees it's a priority.
-
-**Listing volume for demo**
-- Edit database with realistic fake listings in Week 7. Prepare 3–4 demo accounts with different trust scores before the demo.
-
-**WebSocket chat complexity**
-- Real-time state is tricky → use Socket.io, which abstracts the hard parts. Build a simple 1:1 chat first, add group chat as a stretch goal.
-
-## Competition 🥊
-
-**Facebook Marketplace**
-- Largest existing platform for local buy/sell
-- No student verification — meeting strangers carries real safety risk
-- No campus filter, no rides or services, no trust layer
-
-**Craigslist**
-- Classified ads for local exchange, widely known
-- No accounts, no reputation system, outdated UI
-- Not built for students — dangerous for first-time renters and buyers
-
-**UTD Sell/Trade Discord**
-- Informal buy/sell happens in student chat groups right now
-- Chaotic, unsearchable, no payment layer, no accountability
+- [Designing a Database](https://www.youtube.com/watch?v=5RpUmDEsn1k)
+- [Node.js](https://www.youtube.com/watch?v=TlB_eWDSMt4)
+- [Swagger](https://www.youtube.com/watch?v=5aryMKiBEKY)
+- [Microsoft Graph API docs](http://learn.microsoft.com/en-us/graph/overview)
 
 ## Git Commands 🤖
 
