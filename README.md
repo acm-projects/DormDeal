@@ -175,11 +175,7 @@ DormDeal also supports ride-sharing to grocery stores and airports, service list
 - [React Native docs](http://reactnative.dev)
 - [Expo docs](http://docs.expo.dev)
 #### Frontend
- 
-- React Native + Expo
-- TypeScript
-- Figma
-- Need help choosing colors?
+
   - [Coolors](https://coolors.co/?home)
 - Look at other UI for inspo
   - [Mobbin](https://mobbin.com/)
@@ -189,11 +185,6 @@ DormDeal also supports ride-sharing to grocery stores and airports, service list
 - [Sajid's Frontend Cheatsheet](https://www.iamsajid.com/)
 #### Backend
  
-- Node.js + Express
-- PostgreSQL (Supabase)
-- Socket.io
-- AWS S3
-- Microsoft Graph API
 - [Designing a Database](https://www.youtube.com/watch?v=5RpUmDEsn1k)
 - [Node.js](https://www.youtube.com/watch?v=TlB_eWDSMt4)
 - [Swagger](https://www.youtube.com/watch?v=5aryMKiBEKY)
