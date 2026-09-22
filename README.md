@@ -208,10 +208,10 @@ DormDeal also supports ride-sharing to grocery stores and airports, service list
 - Minh Do
 - Saloni Roy - fire
 - Sai Kottamasu
-- Bhargavi Nigam
+- Bhargavi Nigam --> your bestie
 
 **Project Manager**
-- Tramanh Trinh
+- Tramanh Trinh - goat
 
 **Industry Mentor**
 - Faiza Rahman
