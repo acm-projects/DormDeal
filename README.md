@@ -4,7 +4,7 @@
 
 <p align="center"><a href="https://giphy.com/gifs/mic-student-loans-debt-loan-forgiveness-10YWA8gW28JbqM"></a></p>
 
-# Who was here?
+# DormDeal 🎓
 
 College is expensive, but campus life doesn't have to be. DormDeal is the app where students buy, sell, borrow, and help each other, making everyday college life more affordable.
 
@@ -190,6 +190,20 @@ DormDeal also supports ride-sharing to grocery stores and airports, service list
 - [Swagger](https://www.youtube.com/watch?v=5aryMKiBEKY)
 - [Microsoft Graph API docs](http://learn.microsoft.com/en-us/graph/overview)
 
+## Environment Setup ♻️
+- Clone the GitHub repository: acm-projects/DormDeal
+- Use the following command to install any packages/dependencies necessary for running project:
+```
+npm install
+```
+- Use these following commands to test the project:
+```
+npm run android
+npm run ios # you need to use macOS to build the iOS project - use the Expo app if you need to do iOS development without a Mac
+npm run web
+```
+*Note: This project was built with the npx create-expo-app command.*
+
 ## Git Commands 🤖
 
 | Command                       | What it does                        |
@@ -205,7 +219,7 @@ DormDeal also supports ride-sharing to grocery stores and airports, service list
 ## Team DormDeal 😆
 
 **Developers**
-- Minh Do -> hooary
+- Minh Do -> team member
 - Sai Kottamasu -> aura
 - Saloni Roy - fire
 - Bhargavi Nigam --> your bestie
