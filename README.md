@@ -210,7 +210,7 @@ DormDeal also supports ride-sharing to grocery stores and airports, service list
 - Bhargavi Nigam
 
 **Project Manager**
-- Tramanh Trinh
+- Tramanh Trinh - goat
 
 **Industry Mentor**
 - Faiza Rahman
