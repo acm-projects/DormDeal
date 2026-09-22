@@ -206,8 +206,8 @@ DormDeal also supports ride-sharing to grocery stores and airports, service list
 
 **Developers**
 - Minh Do
-- Saloni Roy
 - Sai Kottamasu -> aura
+- Saloni Roy - fire
 - Bhargavi Nigam --> your bestie
 
 **Project Manager**
