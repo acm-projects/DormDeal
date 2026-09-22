@@ -4,7 +4,7 @@
 
 <p align="center"><a href="https://giphy.com/gifs/mic-student-loans-debt-loan-forgiveness-10YWA8gW28JbqM"></a></p>
 
-# DormDeal 🎓
+# Who was here?
 
 College is expensive, but campus life doesn't have to be. DormDeal is the app where students buy, sell, borrow, and help each other, making everyday college life more affordable.
 
@@ -205,9 +205,9 @@ DormDeal also supports ride-sharing to grocery stores and airports, service list
 ## Team DormDeal 😆
 
 **Developers**
-- Minh Do
-- Saloni Roy
-- Sai Kottamasu
+- Minh Do -> hooary
+- Sai Kottamasu -> aura
+- Saloni Roy - fire
 - Bhargavi Nigam --> your bestie
 
 **Project Manager**
