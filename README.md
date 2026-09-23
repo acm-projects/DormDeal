@@ -191,17 +191,36 @@ DormDeal also supports ride-sharing to grocery stores and airports, service list
 - [Microsoft Graph API docs](http://learn.microsoft.com/en-us/graph/overview)
 
 ## Environment Setup ♻️
+- Install the latest version of Node.js.
 - Clone the GitHub repository: acm-projects/DormDeal
-- Use the following command to install any packages/dependencies necessary for running project:
+- Use the following command to install any packages/dependencies necessary for running the project:
 ```
 npm install
 ```
-- Use these following commands to test the project:
+- Install [Expo Go](https://apps.apple.com/us/app/expo-go/id982107779) on iOS if testing on iOS.
+- Create an Expo Account on *Expo Go* or on the official website, [*Expo*](https://expo.dev/). **Remember this login information.**
+- Open the IDE of your choosing with the packages already installed and run the command to login (The example below is VSCode-tested):
+```
+npx expo login
+```
+Make sure to type the username/password properly in the terminal. If npx proceeds to ask for an Apple Developer Account login, skip it. (Prompting random, blatantly incorrect information is okay.)
+- Use one of the following commands to test the project:
 ```
 npm run android
 npm run ios # you need to use macOS to build the iOS project - use the Expo app if you need to do iOS development without a Mac
 npm run web
 ```
+Or alternatively, you may use:
+```
+npx expo start
+```
+- If testing on web, a `localhost` should have already opened in your default browser.
+- If testing on iOS: 
+  - **Ensure** that the WiFi connected on **BOTH** devices (Computer with the IDE, and mobile device) are exactly the same.
+    - **DO NOT USE** any School WiFi (although Dorm (Dorm... Deal... 😆) WiFi is okay); as tested, it will not send a proper connection.
+  - **Ensure** that on Expo Go, that you have logged in. *An Apple Developer Account is not necessary.*
+  - use the `Camera` app to scan the QR code in the Terminal of your IDE which should redirect you to Expo Go.
+
 *Note: This project was built with the npx create-expo-app command.*
 
 ## Git Commands 🤖
