@@ -7,9 +7,12 @@ const App = () => {
     return (
         <View style={styles.container}>
             <Image source={Logo} style={styles.img}/>
-            <Text style={styles.title}>Open up App.js to start working on your app!</Text>
-            <Link href="/frontend/About" style={[styles.card, {marginTop: 20}]}>About Page</Link>
-            <Link href="/frontend/Landing" style={[styles.card, {marginTop: 20}]}>Landing Page</Link>
+            <Text style={styles.title}>This is technically, the home page.</Text>
+            <Link href="/Listings" style={[styles.card, {marginTop: 20}]}>Listings Page</Link>
+            <Link href="/Store" style={[styles.card, {marginTop: 20}]}>Store Page</Link>
+            <Link href="/Landing" style={[styles.card, {marginTop: 20}]}>Landing Page</Link>
+            <Link href="/Landing" style={[styles.card, {marginTop: 20}]}>Landing Page</Link>
+            <Link href="/Landing" style={[styles.card, {marginTop: 20}]}>Landing Page</Link>
         </View>
     );
 }
