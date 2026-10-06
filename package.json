@@ -4,13 +4,15 @@
   "main": "index.js",
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
+    "@types/react-router-dom": "^5.3.3",
     "expo": "~57.0.24",
     "expo-sqlite": "~57.0.3",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
-    "react-native-web": "^0.21.2"
+    "react-native-web": "^0.21.2",
+    "react-router-dom": "^7.18.4"
   },
   "scripts": {
     "start": "expo start",
@@ -18,5 +20,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "typescript": "~6.0.3"
+  }
 }
