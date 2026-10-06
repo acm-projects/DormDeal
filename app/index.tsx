@@ -1,20 +1,19 @@
-import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, Image } from 'react-native';
-import Home from './Home'
-import Logo from '../../assets/icon.png'
+import { Link } from 'expo-router'
 
-export default function App() {
+import Logo from '../assets/icon.png'
+
+const App = () => {
     return (
         <View style={styles.container}>
             <Image source={Logo} style={styles.img}/>
             <Text style={styles.title}>Open up App.js to start working on your app!</Text>
-            <View style={styles.card}>
-                <Home/>
-            </View>
-            <StatusBar style="auto" />
+            <Link href="/frontend/About" style={[styles.card, {marginTop: 20}]}>About Page</Link>
         </View>
     );
 }
+
+export default App
 
 const styles = StyleSheet.create({
     container: {
