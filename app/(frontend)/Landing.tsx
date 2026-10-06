@@ -3,28 +3,28 @@ import paperbg from '../../assets/paper_bg.png'
 
 const Landing_Page = () => {
     return (
-        <View style={landing_page_styles.container}>
+        <View style={styles.container}>
             {/* background */}
-            <Image source={paperbg} style={landing_page_styles.image_bg}/>
+            <Image source={paperbg} style={styles.image_bg}/>
             {/* main work */}
-            <Text style={landing_page_styles.header_1}>DormDeal</Text>
-            <View style={landing_page_styles.temp_box}>
+            <Text style={styles.header_1}>DormDeal</Text>
+            <View style={styles.temp_box}>
                 <Text>insert useless content here.</Text>
             </View>
-            <Text style={landing_page_styles.header_2}>Marketplace for students,<br/>by <Text style={{fontFamily: 'Gloria Hallelujah'}}>students.</Text></Text>
-            <View style={landing_page_styles.button_container}>
-                <TouchableOpacity style={[landing_page_styles.default_button, {backgroundColor: '#FFF'}]}>
-                    <Text style={[landing_page_styles.default_text, {color: '#000'}]}>Login</Text>
+            <Text style={styles.header_2}>Marketplace for students,<br/>by <Text style={{fontFamily: 'Gloria Hallelujah'}}>students.</Text></Text>
+            <View style={styles.button_container}>
+                <TouchableOpacity style={[styles.default_button, {backgroundColor: '#FFF'}]}>
+                    <Text style={[styles.default_text, {color: '#000'}]}>Login</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[landing_page_styles.default_button, {backgroundColor: '#800000'}]}>
-                    <Text style={[landing_page_styles.default_text, {color: '#FFF'}]}>Sign Up</Text>
+                <TouchableOpacity style={[styles.default_button, {backgroundColor: '#800000'}]}>
+                    <Text style={[styles.default_text, {color: '#FFF'}]}>Sign Up</Text>
                 </TouchableOpacity>
             </View>
         </View>
     );
 }
 
-const landing_page_styles = StyleSheet.create({
+const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F1EEEA',
@@ -71,7 +71,7 @@ const landing_page_styles = StyleSheet.create({
 
     button_container: {
         position: 'absolute',
-        bottom: 25,
+        bottom: 75,
         margin: 'auto',
         width: '90%',
     },

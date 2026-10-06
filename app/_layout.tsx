@@ -28,10 +28,10 @@ const RootLayout = () => {
                 headerTintColor: '#0000FF',
             }}>
                 <Stack.Screen name="index" options={{ title: 'INDEX THIS', headerShown: false }}/>
-                <Stack.Screen name="frontend/Landing" options={{ headerShown: false }}/>
-                <Slot />
+                <Stack.Screen name="(frontend)/Landing" options={{ headerShown: false }}/>
+                {/* <Slot /> */ }
             </Stack>
-            <Text style={styles.footer}>Footer</Text>
+            {/* <Text style={styles.footer}>Footer</Text> */ }
         </View>
     )
 }
