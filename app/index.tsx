@@ -9,6 +9,7 @@ const App = () => {
             <Image source={Logo} style={styles.img}/>
             <Text style={styles.title}>Open up App.js to start working on your app!</Text>
             <Link href="/frontend/About" style={[styles.card, {marginTop: 20}]}>About Page</Link>
+            <Link href="/frontend/Landing" style={[styles.card, {marginTop: 20}]}>Landing Page</Link>
         </View>
     );
 }
