@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, Image } from 'react-native'
-import { Link } from 'expo-router'
+import Nav_Button from '../components/nav_button'
 import paperbg from '../../../assets/paper_bg.png'
 import styles from '../../styles'
 
@@ -15,16 +15,18 @@ const Landing_Page = () => {
             </View>
             <Text style={landing_styles.header_2}>Marketplace for students,<br/>by <Text style={{fontFamily: 'Gloria Hallelujah'}}>students.</Text></Text>
             <View style={landing_styles.button_container}>
-                <Link href="/Login" style={[landing_styles.default_button, landing_styles.default_text, {backgroundColor: '#FFF', color: '#000'}]}>
-                    Login
-                </Link>
-                <Link href="/SignUp" style={[landing_styles.default_button, landing_styles.default_text, {backgroundColor: '#800000', color: '#FFF'}]}>
-                    Sign Up
-                </Link>
+                <Nav_Button href="/Login" text="Login" 
+                    m_style={[landing_styles.default_button, {backgroundColor: '#FFF'}]} 
+                    txt_style={[landing_styles.default_text, {borderBottomWidth: 0, color: '#000'}]}>
+                </Nav_Button>
+                <Nav_Button href="/SignUp" text="Sign Up" 
+                    m_style={[landing_styles.default_button, {backgroundColor: '#800000'}]} 
+                    txt_style={[landing_styles.default_text, {borderBottomWidth: 0, color: '#FFF'}]}>
+                </Nav_Button>
             </View>
 
             <View style={styles.navigation}>
-                <Link href="/" style={[styles.card, {marginTop: 20}]}>Home Page</Link>
+                <Nav_Button href="/" text="Home Page"></Nav_Button>
             </View>
         </View>
     );

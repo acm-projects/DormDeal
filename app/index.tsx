@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View, Image } from 'react-native';
-import { Link } from 'expo-router'
 import styles from './styles'
+import Nav_Button from './(frontend)/components/nav_button'
 
 import Logo from '../assets/icon.png'
 
@@ -10,13 +10,13 @@ const App = () => {
             <Image source={Logo} style={styles.img}/>
             <Text style={styles.title}>This is technically: The home page.</Text>
             <View style={styles.navigation}>
-                <Link href="/Landing" style={[styles.card, {marginTop: 20}]}>Landing Page</Link>
-                <Link href="/Store" style={[styles.card, {marginTop: 20}]}>Store Page</Link>
-                <Link href="/Listings" style={[styles.card, {marginTop: 20}]}>Listings Page</Link>
-                <Link href="/Contacts" style={[styles.card, {marginTop: 20}]}>Contacts Page</Link>
-                <Link href="/Profile" style={[styles.card, {marginTop: 20}]}>Profile Page</Link>
-                <Link href="/Settings" style={[styles.card, {marginTop: 20}]}>Settings Page</Link>
-                <Link href="/Store/Listing/Service" style={[styles.card, {marginTop: 20}]}>Recommended Listing Moment</Link>
+                <Nav_Button href="/Landing" text="Landing Page"></Nav_Button>
+                <Nav_Button href="/Store" text="Store Page"></Nav_Button>
+                <Nav_Button href="/Listings" text="Listings Page"></Nav_Button>
+                <Nav_Button href="/Contacts" text="Contacts Page"></Nav_Button>
+                <Nav_Button href="/Profile/1" text="Profile Page"></Nav_Button>
+                <Nav_Button href="/Settings" text="Settings Page"></Nav_Button>
+                <Nav_Button href="/Store/Listing/Marketplace/1" text="Recommended Listing Page"></Nav_Button>
             </View>
         </View>
     );

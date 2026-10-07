@@ -33,8 +33,10 @@ const base_styles = StyleSheet.create({
         width: 50,
         height: 50,
     },
-    card: {
+    nav_button: {
         fontFamily: 'Outfit',
+        textAlign: 'center',
+        fontSize: 17,
         borderBottomWidth: 2,
     }
 });

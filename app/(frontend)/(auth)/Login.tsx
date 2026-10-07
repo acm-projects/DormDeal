@@ -1,5 +1,5 @@
 import { StyleSheet, Text, Image, View, TextInput, TouchableOpacity } from 'react-native';
-import { Link } from 'expo-router'
+import Nav_Button from '../components/nav_button'
 import paperbg from '../../../assets/paper_bg.png'
 import microsoft_logo from '../../../assets/microsoft.png'
 import styles from '../../styles'
@@ -22,7 +22,10 @@ const Login: React.FC = () => {
                     <Text style={[login_styles.extra_text_guide, {color: "#B26666"}]}>Forgot your password?</Text>
                 </View>
                 <View style={[login_styles.base_row_flex_setup, {marginTop: 25}]}>
-                    <Link href="/" style={[login_styles.default_button, {fontFamily: 'Gloria Hallelujah', backgroundColor: '#800000', color: '#FFF'}]}>Login! (temporarially directs you to home page)</Link>
+                    <Nav_Button href="/" text="Login! (temporarially directs you to home page)"
+                        m_style={[login_styles.default_button, {backgroundColor: '#800000'}]}
+                        txt_style={{color: '#FFF', fontFamily: 'Gloria Hallelujah', borderBottomWidth: 0}}>
+                    </Nav_Button>
                     <TouchableOpacity style={[login_styles.default_button, {marginTop: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}]}>
                         <Image source={microsoft_logo} style={{marginRight: 5, width: 25, height: 25}}></Image>
                         <Text style={{fontFamily: 'Gloria Hallelujah', textAlign: "center"}}>Login With Microsoft OAuth</Text>

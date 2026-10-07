@@ -1,5 +1,5 @@
 import { StyleSheet, Text, Image, View, TextInput, TouchableOpacity } from 'react-native';
-import { Link } from 'expo-router'
+import Nav_Button from '../components/nav_button'
 import paperbg from '../../../assets/paper_bg.png'
 import microsoft_logo from '../../../assets/microsoft.png'
 import styles from '../../styles'
@@ -22,7 +22,11 @@ const SignUp: React.FC = () => {
                     <Text style={[signup_styles.extra_text_guide, {color: "#800000"}]}>Error Example.</Text>
                 </View>
                 <View style={[signup_styles.base_row_flex_setup, {marginTop: 25}]}>
-                    <Link href="/" style={[signup_styles.default_button, {fontFamily: 'Gloria Hallelujah', backgroundColor: '#800000', color: '#FFF'}]}>Sign Up! (temporarially directs you to home page)</Link>
+                    <Nav_Button href="/" text="Sign Up! (temporarially directs you to home page)"
+                        m_style={[signup_styles.default_button, {backgroundColor: '#800000'}]}
+                        txt_style={{color: '#FFF', fontFamily: 'Gloria Hallelujah', borderBottomWidth: 0}}>
+                    </Nav_Button>
+
                     <TouchableOpacity style={[signup_styles.default_button, {marginTop: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}]}>
                         <Image source={microsoft_logo} style={{marginRight: 5, width: 25, height: 25}}></Image>
                         <Text style={{fontFamily: 'Gloria Hallelujah', textAlign: "center"}}>Sign Up With Microsoft OAuth</Text>
