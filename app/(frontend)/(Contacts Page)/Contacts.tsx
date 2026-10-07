@@ -1,7 +1,6 @@
 import { StyleSheet, Text, View, Image } from 'react-native';
-import { Link } from 'expo-router'
+import Nav_Button from '../components/nav_button'
 import styles from '../../styles'
-
 import Logo from '../../../assets/icon.png'
 
 const Contacts = () => {
@@ -10,9 +9,9 @@ const Contacts = () => {
             <Image source={Logo} style={styles.img}/>
             <Text style={styles.title}>Contacts Page.</Text>
             <View style={styles.navigation}>
-                <Link href="/" style={[styles.card, {marginTop: 20}]}>Home Page</Link>
-                <Link href="/Messages" style={[styles.card, {marginTop: 20}]}>Messages Page</Link>
-                <Link href="/Store/Listing/Service" style={[styles.card, {marginTop: 20}]}>Listing from Person</Link>
+                <Nav_Button href="/" text="Home Page"></Nav_Button>
+                <Nav_Button href="/Messages/1" text="Messages Page"></Nav_Button>
+                <Nav_Button href="/Store/Listing/Service/2" text="Listing from Person"></Nav_Button>
             </View>
         </View>
     );

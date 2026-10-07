@@ -4,19 +4,19 @@ import styles from '../../../styles'
 
 import Logo from '../../../../assets/icon.png'
 
-const Checkout = () => {
+const Messages = () => {
     return (
         <View style={styles.container}>
             <Image source={Logo} style={styles.img}/>
-            <Text style={styles.title}>This is where you're checking out.</Text>
+            <Text style={styles.title}>Messaging Someone Page.</Text>
             <View style={styles.navigation}>
-                <Nav_Button href="/Store/Confirmation" text="Confirmation Page"></Nav_Button>
                 <Nav_Button href="/" text="Home Page"></Nav_Button>
-                <Nav_Button href="/Store" text="Store Page"></Nav_Button>
-                <Nav_Button href="/Store/Shopping Cart" text="Back to Shopping Cart Page"></Nav_Button>
+                <Nav_Button href="/Contacts" text="Contacts Page"></Nav_Button>
+                <Nav_Button href="/Messages/Reminders" text="Reminders Page"></Nav_Button>
+                <Nav_Button href="/Profile" text="Go To Profile Page"></Nav_Button>
             </View>
         </View>
     );
 }
 
-export default Checkout
+export default Messages

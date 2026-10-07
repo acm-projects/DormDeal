@@ -1,8 +1,8 @@
 import { StyleSheet, Text, View, Image } from 'react-native';
-import { Link } from 'expo-router'
-import styles from '../../../../styles'
+import Nav_Button from '../../../../components/nav_button'
+import styles from '../../../../../styles'
 
-import Logo from '../../../../../assets/icon.png'
+import Logo from '../../../../../../assets/icon.png'
 
 const Marketplace_Listing = () => {
     return (
@@ -10,9 +10,9 @@ const Marketplace_Listing = () => {
             <Image source={Logo} style={styles.img}/>
             <Text style={styles.title}>This is a MARKETPLACE listing.</Text>
             <View style={styles.navigation}>
-                <Link href="/" style={[styles.card, {marginTop: 20}]}>Home Page</Link>
-                <Link href="/Store" style={[styles.card, {marginTop: 20}]}>Store Page</Link>
-                <Link href="/Profile" style={[styles.card, {marginTop: 20}]}>Go to Profile</Link>
+                <Nav_Button href="/" text="Home Page"></Nav_Button>
+                <Nav_Button href="/Store" text="Store Page"></Nav_Button>
+                <Nav_Button href="/Profile" text="Go to Profile"></Nav_Button>
             </View>
         </View>
     );

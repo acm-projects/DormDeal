@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, Image } from 'react-native';
-import { Link } from 'expo-router'
+import Nav_Button from '../components/nav_button'
 import styles from '../../styles'
 
 import Logo from '../../../assets/icon.png'
@@ -11,10 +11,10 @@ const Listings = () => {
             <Text style={styles.title}>This is the Listings page.</Text>
             <Text style={{fontFamily: 'Gloria Hallelujah'}}>You make listings here.</Text>
             <View style={styles.navigation}>
-                <Link href="/Create Listing" style={[styles.card, {marginTop: 20}]}>Create a Listing Page</Link>
-                <Link href="/Store/Listing/Marketplace" style={[styles.card, {marginTop: 20}]}>Listing Page</Link>
-                <Link href="/" style={[styles.card, {marginTop: 20}]}>Home Page</Link>
-                <Link href="/Store" style={[styles.card, {marginTop: 20}]}>Store Page</Link>
+                <Nav_Button href="/Create Listing" text="Create a Listing Page"></Nav_Button>
+                <Nav_Button href="/Store/Listing/Marketplace/1" text="Listing Page"></Nav_Button>
+                <Nav_Button href="/" text="Home Page"></Nav_Button>
+                <Nav_Button href="/Store" text="Store Page"></Nav_Button>
             </View>
         </View>
     );
