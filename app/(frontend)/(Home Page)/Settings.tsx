@@ -4,18 +4,16 @@ import styles from '../../styles'
 
 import Logo from '../../../assets/icon.png'
 
-const Contacts = () => {
+const Settings = () => {
     return (
         <View style={styles.container}>
             <Image source={Logo} style={styles.img}/>
-            <Text style={styles.title}>Contacts Page.</Text>
+            <Text style={styles.title}>Change Settings Moment.</Text>
             <View style={styles.navigation}>
                 <Link href="/" style={[styles.card, {marginTop: 20}]}>Home Page</Link>
-                <Link href="/Messages" style={[styles.card, {marginTop: 20}]}>Messages Page</Link>
-                <Link href="/Store/Listing/Service" style={[styles.card, {marginTop: 20}]}>Listing from Person</Link>
             </View>
         </View>
     );
 }
 
-export default Contacts
+export default Settings

@@ -3,7 +3,7 @@ import { StyleSheet, Text } from 'react-native';
 const Listings: React.FC = () => {
     return (
         <Text style={styles.header_1}>
-            okay i just needed this ngl
+            This is the Login page.
         </Text>
     );
 };

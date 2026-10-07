@@ -1,30 +1,22 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, Image } from 'react-native';
+import { Link } from 'expo-router'
+import styles from '../../styles'
 
-const About = () => {
+import Logo from '../../../assets/icon.png'
+
+const Store = () => {
     return (
-        <View>
-            <Text style={styles.title}>
-                About Me
-            </Text>
-            <Text style={styles.text}>
-                I didn't know that this was the About Me Page.
-            </Text>
+        <View style={styles.container}>
+            <Image source={Logo} style={styles.img}/>
+            <Text style={styles.title}>This is the Store Page.</Text>
+            <View style={styles.navigation}>
+                <Link href="/Store/Shopping Cart" style={[styles.card, {marginTop: 20}]}>Shopping Cart Page</Link>
+                <Link href="/" style={[styles.card, {marginTop: 20}]}>Home Page</Link>
+                <Link href="/Store/Listing/Service" style={[styles.card, {marginTop: 20}]}>Service Listing Page</Link>
+                <Link href="/Store/Listing/Marketplace" style={[styles.card, {marginTop: 20}]}>Marketplace Listing Page</Link>
+            </View>
         </View>
     );
-};
+}
 
-export default About
-
-const styles = StyleSheet.create({
-    title: {
-        fontWeight: 800,
-        fontSize: 32,
-        color: "#6d0000",
-        marginBottom: 25,
-    },
-
-    text: {
-        fontSize: 16,
-        color: "#FFF",
-    }
-})
+export default Store
