@@ -7,6 +7,18 @@ const base_styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
+    image_bg: {
+        position: 'absolute',
+        opacity: 0.35,
+        width: '100%',
+        height: '100%',
+    },
+    default_text: {
+        fontFamily: 'Outfit',
+        color: "#000",
+        fontSize: 17,
+        textAlign: 'center',
+    },
     navigation: {
         flexDirection: 'row',
         columnGap: 15,
