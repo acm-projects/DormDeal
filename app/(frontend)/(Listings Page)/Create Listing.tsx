@@ -4,15 +4,14 @@ import styles from '../../styles'
 
 import Logo from '../../../assets/icon.png'
 
-const Listings = () => {
+const Create_Listing = () => {
     return (
         <View style={styles.container}>
             <Image source={Logo} style={styles.img}/>
-            <Text style={styles.title}>This is the Listings page.</Text>
-            <Text style={{fontFamily: 'Gloria Hallelujah'}}>You make listings here.</Text>
+            <Text style={styles.title}>Create a Listing directly here.</Text>
             <View style={styles.navigation}>
-                <Link href="/Create Listing" style={[styles.card, {marginTop: 20}]}>Create a Listing Page</Link>
-                <Link href="/Store/Listing/Marketplace" style={[styles.card, {marginTop: 20}]}>Listing Page</Link>
+                <Link href="/Store/Listing/Service" style={[styles.card, {marginTop: 20}]}>If Made Listing, go here. (one or the other works)</Link>
+                <Link href="/Listings" style={[styles.card, {marginTop: 20}]}>Your Listings Page</Link>
                 <Link href="/" style={[styles.card, {marginTop: 20}]}>Home Page</Link>
                 <Link href="/Store" style={[styles.card, {marginTop: 20}]}>Store Page</Link>
             </View>
@@ -20,4 +19,4 @@ const Listings = () => {
     );
 }
 
-export default Listings
+export default Create_Listing

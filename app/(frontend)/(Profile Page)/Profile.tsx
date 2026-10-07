@@ -1,17 +1,23 @@
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View, Image } from 'react-native';
+import { Link } from 'expo-router'
+import styles from '../../styles'
 
-const Listings: React.FC = () => {
+import Logo from '../../../assets/icon.png'
+
+const Profile = () => {
     return (
-        <Text style={styles.header_1}>
-            This is the Profile page.
-        </Text>
+        <View style={styles.container}>
+            <Image source={Logo} style={styles.img}/>
+            <Text style={styles.title}>This is the Profile Page.</Text>
+            <View style={styles.navigation}>
+                <Link href="/Listings" style={[styles.card, {marginTop: 20}]}>Listings Page</Link>
+                <Link href="/Store" style={[styles.card, {marginTop: 20}]}>Store Page</Link>
+                <Link href="/Contacts" style={[styles.card, {marginTop: 20}]}>Contacts Page</Link>
+                <Link href="/" style={[styles.card, {marginTop: 20}]}>Home Page</Link>
+                <Link href="/Store/Listing/Marketplace" style={[styles.card, {marginTop: 20}]}>Listing Page</Link>
+            </View>
+        </View>
     );
-};
+}
 
-export default Listings;
-
-const styles = StyleSheet.create({
-    header_1: {
-        fontSize: 34,
-    },
-})
+export default Profile
