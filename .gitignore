@@ -1,0 +1,8 @@
+node_modules/
+dist/
+
+# Local credentials and environment-specific settings
+.env
+.env.local
+.env.*.local
+
