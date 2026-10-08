@@ -1,30 +1,251 @@
-# DormDeal – Microsoft and email login
+<div align="center">
+  <img src="https://media.giphy.com/media/10YWA8gW28JbqM/giphy.gif" alt="Student Loans Debt GIF">
+</div>
 
-## 1. Entra app setup (App registrations > DormDeal)
-1. **Overview**: copy *Application (client) ID* and *Directory (tenant) ID*.
-2. **Authentication > Add a platform > Single-page application**.
-3. Add Redirect URI: `http://localhost:5173/auth/callback` (add your production URL later, e.g. `https://yourdomain.com/auth/callback`).
-4. **API permissions**: `Microsoft Graph > User.Read` (delegated) is enough for sign-in.
+<p align="center"><a href="https://giphy.com/gifs/mic-student-loans-debt-loan-forgiveness-10YWA8gW28JbqM"></a></p>
 
-## 2. Supabase username/password setup
+# DormDeal 🎓
 
-1. Create or select a Supabase project.
-2. Open **SQL Editor**, paste in `supabase/schema.sql`, and run it once.
-3. Copy the project URL and anon/publishable key from **Project Settings > API** into `.env` as `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. The URL must be the base project URL (for example, `https://your-project.supabase.co`) with no `/rest/v1` path.
+College is expensive, but campus life doesn't have to be. DormDeal is the app where students buy, sell, borrow, and help each other, making everyday college life more affordable.
 
-The schema stores usernames in `app_users`, hashes passwords with `pgcrypto`, and keeps both credential and session tables inaccessible through direct public API queries. The app uses narrowly scoped database functions to register, log in, and validate sessions.
+## Summary 📋
 
-## 3. Run
-```bash
-npm install
-cp .env.example .env   # fill in client ID + tenant ID
-npm run dev            # http://localhost:5173
+DormDeal is a mobile marketplace built exclusively for college students, verified through Microsoft Outlook .edu sign-in. Students can buy and sell textbooks, furniture, dorm supplies, and electronics within a trusted campus community. Unlike Facebook Marketplace or OfferUp, every user is a verified student, creating a baseline of trust only DormDeal offers.
+
+DormDeal also supports ride-sharing to grocery stores and airports, service listings (tutoring, tech help, moving), item borrowing, and an event posting feature — making it a full campus peer-to-peer experience rather than a single-use marketplace.
+
+## MVP 🏆
+
+- .edu verification
+  - Probably won't be able to get student verification w/o getting Microsoft App approval, so focus here is to get Outlook sign-in through Microsoft Graph
+- Buy & sell listings
+  - Heavily inspired by Facebook Marketplace structure
+- Rideshare
+  - Carpools to grocery stores, airports, off-campus events
+- In-app chat
+- Trust score for users across all exchange types
+- Services marketplace
+  - Tutoring, tech help, moving, etc.
+- Event posting feature
+
+## Stretch Goals 💪
+
+- Public meetup suggestions
+- Borrowing items
+- CV item classification
+  - Auto-detect category and condition from a photo
+- Price recommendation engine
+- Organization accounts
+
+## Timeline 📆
+
+<details>
+  <summary>Week 1: Set Up ⚙️</summary>
+
+  **All**
+  - Decide focus features, brainstorm ideas
+  - GitHub practice & branches made
+
+  **Front End**
+  - Decide app flow
+  - Figma wireframing
+
+  **Back End**
+  - Research backend stack
+  - Design schema
+  - Figma wireframing
+<br></details>
+
+<details>
+  <summary>Week 2: More Preparation 💡</summary>
+
+  **Front End**
+  - Finalize wireframes for all screens
+  - Finalize color palette and logo design
+
+  **Back End**
+  - Microsoft Graph OAuth setup
+  - API research implementation
+<br></details>
+
+<details>
+  <summary>Week 3: Coding Begins 👨🏻‍💻</summary>
+
+  **Front End**
+  - Signup/Login screens
+  - "Connecting account…" screen
+  - Home feed skeleton UI
+
+  **Back End**
+  - Fetch and store user profile
+  - Initialize PostgreSQL schema
+<br></details>
+
+<details>
+  <summary>Week 4: Listings 📸</summary>
+
+  **Front End**
+  - Listing creation screen (photo, category, condition, price)
+  - Tag badges for listing type
+
+  **Back End**
+  - Photo upload
+  - Listing write to database
+  - Category and condition tagging logic
+<br></details>
+
+<details>
+  <summary>Week 5: Browse & Ride 🚗</summary>
+
+  **Front End**
+  - Browse/search listings UI
+  - Listing detail screen
+  - Ride post UI
+
+  **Back End**
+  - Browse and search API
+  - Rideshare listing logic
+  - Trust score foundation
+<br></details>
+
+<details>
+  <summary>Week 6: Chat & Services 💬</summary>
+
+  **Front End**
+  - In-app chat UI
+  - Services marketplace screen
+  - Event posting screen
+
+  **Back End**
+  - WebSocket chat backend
+  - Services listing logic
+  - Event post API
+  - Set up demo account
+<br></details>
+
+<details>
+  <summary>Week 7: Finishing Touches 👔</summary>
+
+  **All**
+  - Watch previous ACM presentations for inspo
+  - Begin brainstorming presentation script
+
+  **Front End**
+  - Loading states and polish
+  - Final feature touches
+  - Fix integration issues
+
+  **Back End**
+  - Last integrations
+  - Demo data (10+ listings, rides, services)
+<br></details>
+
+<details>
+  <summary>Week 8: Presentation Prep 🎤</summary>
+
+  **All**
+  - Full team run-through
+
+  **Front End**
+  - Presentation slides and script
+  - Assign speaking parts
+
+  **Back End**
+  - Finished video/demo recorded
+  - Last bug fixes
+<br></details>
+
+<details>
+  <summary>Week 9: Wrapping Up 🗣️🖥️</summary>
+
+  **All**
+  - Final slide edits
+  - Speaker transitions
+  - Q&A prep
+<br></details>
+
+**MOCKS → THANKSGIVING BREAK → PRESENTATION NIGHT**
+
+## Tech Stack & Resources 💻
+ 
+#### Start here!
+ 
+- [Intro to Frontend](https://www.youtube.com/watch?v=WG5ikvJ2TKA)
+- [Intro to Backend](https://www.youtube.com/watch?v=XBu54nfzxAQ)
+- [React Native docs](http://reactnative.dev)
+- [Expo docs](http://docs.expo.dev)
+#### Frontend
+
+  - [Coolors](https://coolors.co/?home)
+- Look at other UI for inspo
+  - [Mobbin](https://mobbin.com/)
+  - [Dribbble](https://dribbble.com/)
+- Look at competitors!
+- [Intro to Design](https://www.youtube.com/watch?v=wIuVvCuiJhU)
+- [Sajid's Frontend Cheatsheet](https://www.iamsajid.com/)
+#### Backend
+ 
+- [Designing a Database](https://www.youtube.com/watch?v=5RpUmDEsn1k)
+- [Node.js](https://www.youtube.com/watch?v=TlB_eWDSMt4)
+- [Swagger](https://www.youtube.com/watch?v=5aryMKiBEKY)
+- [Microsoft Graph API docs](http://learn.microsoft.com/en-us/graph/overview)
+
+## Environment Setup ♻️
+- Install the latest version of Node.js.
+- Clone the GitHub repository: acm-projects/DormDeal
+- Use the following command to install any packages/dependencies necessary for running the project:
 ```
+npm install
+```
+- Install [Expo Go](https://apps.apple.com/us/app/expo-go/id982107779) on iOS if testing on iOS.
+- Create an Expo Account on *Expo Go* or on the official website, [*Expo*](https://expo.dev/). **Remember this login information.**
+- Open the IDE of your choosing with the packages already installed and run the command to login (The example below is VSCode-tested):
+```
+npx expo login
+```
+Make sure to type the username/password properly in the terminal. If npx proceeds to ask for an Apple Developer Account login, skip it. (Prompting random, blatantly incorrect information is okay.)
+- Use one of the following commands to test the project:
+```
+npm run android
+npm run ios # you need to use macOS to build the iOS project - use the Expo app if you need to do iOS development without a Mac
+npm run web
+```
+Or alternatively, you may use:
+```
+npx expo start
+```
+- If testing on web, a `localhost` should have already opened in your default browser.
+- If testing on iOS: 
+  - **Ensure** that the WiFi connected on **BOTH** devices (Computer with the IDE, and mobile device) are exactly the same.
+    - **DO NOT USE** any School WiFi (although Dorm (Dorm... Deal... 😆) WiFi is okay); as tested, it will not send a proper connection.
+  - **Ensure** that on Expo Go, that you have logged in. *An Apple Developer Account is not necessary.*
+  - use the `Camera` app to scan the QR code in the Terminal of your IDE which should redirect you to Expo Go.
 
-## How it works
-- `Login with Microsoft` calls `instance.loginRedirect()` (src/pages/Home.jsx).
-- Entra authenticates the user and redirects to `/auth/callback` (src/pages/Callback.jsx).
-- MSAL processes the response; `onLoginSuccess` / `onLoginFailure` in `src/auth/callbacks.js` run (wired in `src/main.jsx`).
-- The regular form calls the `login_user` database function and validates its session token after a refresh.
-- The Register tab calls the `register_user` database function. No email address or confirmation is required.
-- Successful Microsoft or email logins go to the protected `/success` page. Authentication errors remain on the login page.
+*Note: This project was built with the npx create-expo-app command.*
+
+## Git Commands 🤖
+
+| Command                       | What it does                        |
+| ----------------------------- | ------------------------------------ |
+| git branch                    | lists all the branches              |
+| git branch "branch name"      | makes a new branch                  |
+| git checkout "branch name"    | switches to specified branch        |
+| git add .                     | finds all changed files             |
+| git commit -m "Testing123"    | commit with a message               |
+| git push                      | push to branch                      |
+| git pull "branch"             | pull updates from a specific branch |
+
+## Team DormDeal 😆
+
+**Developers**
+- Minh Do -> team member
+- Sai Kottamasu -> aura
+- Saloni Roy - fire
+- Bhargavi Nigam --> your bestie
+
+**Project Manager**
+- Tramanh Trinh - goat
+
+**Industry Mentor**
+- Faiza Rahman
+- I made an edit
