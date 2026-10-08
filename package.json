@@ -1,16 +1,26 @@
 {
   "name": "dormdeal",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "expo-router/entry",
   "dependencies": {
+    "@react-navigation/native": "^7.5.0",
     "@supabase/supabase-js": "^2.117.2",
+    "@types/react-router-dom": "^5.3.3",
     "expo": "~57.0.24",
+    "expo-constants": "~57.0.21",
+    "expo-font": "~57.0.4",
+    "expo-linking": "~57.0.12",
+    "expo-router": "~57.0.25",
     "expo-sqlite": "~57.0.3",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
-    "react-native-web": "^0.21.2"
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-svg": "^15.15.5",
+    "react-native-web": "^0.21.2",
+    "react-router-dom": "^7.18.4"
   },
   "scripts": {
     "start": "expo start",
@@ -18,5 +28,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "typescript": "~6.0.3"
+  }
 }
