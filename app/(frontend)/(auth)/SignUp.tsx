@@ -15,7 +15,7 @@ const Login: React.FC = () => {
             <View style={login_styles.container}>
                 <View style={[login_styles.base_row_flex_setup, {alignItems: 'center', justifyContent: 'flex-end', marginBottom: 25}]}>
                     <Text style={[styles.default_text, login_styles.default_text, login_styles.header_1]}>
-                        Sign Up
+                        sign up
                     </Text>
                 </View>
 
@@ -52,7 +52,7 @@ const login_styles = StyleSheet.create({
     header_1: {
         fontFamily: 'Outfit',
         fontWeight: 'bold',
-        fontSize: 34,
+        fontSize: 48,
         color: '#800000',
     },
     default_text: {

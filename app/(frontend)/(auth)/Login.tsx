@@ -15,17 +15,17 @@ const Login: React.FC = () => {
             <View style={login_styles.container}>
                 <View style={[login_styles.base_row_flex_setup, {alignItems: 'center', justifyContent: 'flex-end', marginBottom: 25}]}>
                     <Text style={[styles.default_text, login_styles.default_text, login_styles.header_1]}>
-                        Login
+                        login
                     </Text>
                 </View>
 
                 <View style={[login_styles.base_row_flex_setup]}>
-                    <View style={{flex: 1}}>
+                    <View style={{flex: 1, justifyContent: 'center'}}>
                         <TextInput style={[styles.default_text, login_styles.text_input]} placeholder='Username'></TextInput>
                         <Image source={line_bar} style={[login_styles.line_bar]}/>
                         <Text style={[login_styles.extra_text_guide, {color: "#800000", fontWeight: 'bold'}]}>Error Example.</Text>
                     </View>
-                    <View style={{flex: 1}}>
+                    <View style={{flex: 1, justifyContent: 'center'}}>
                         <TextInput style={[styles.default_text, login_styles.text_input]} placeholder='Password'></TextInput>
                         <Image source={line_bar2} style={[login_styles.line_bar]}/>
                         <Text style={[login_styles.extra_text_guide, {color: "#B26666"}]}>Forgot your password?</Text>
@@ -53,7 +53,7 @@ const login_styles = StyleSheet.create({
     header_1: {
         fontFamily: 'Outfit',
         fontWeight: 'bold',
-        fontSize: 34,
+        fontSize: 48,
         color: '#800000',
     },
     default_text: {
@@ -74,13 +74,12 @@ const login_styles = StyleSheet.create({
         height: 'auto',
     },
     extra_text_guide: {
-        flex: 1, 
         marginTop: 5, 
         fontWeight: '600',
     },
     container: {
-        paddingTop: 50,
-        paddingBottom: 50,
+        paddingTop: '28%',
+        paddingBottom: '28%',
         height: '100%',
         width: '100%',
     },
