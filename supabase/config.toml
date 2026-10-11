@@ -1,0 +1,4 @@
+project_id = "DormDeal"
+
+[functions.recommendations]
+verify_jwt = true
