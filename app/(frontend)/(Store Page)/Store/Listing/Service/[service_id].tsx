@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, Image } from 'react-native';
 import Nav_Button from '../../../../components/nav_button'
 import styles from '../../../../../styles'
 
-import Logo from '../../../../../../assets/icon.png'
+import Logo from '../../../../../../assets/images/icon.png'
 
 const Service_Listing = () => {
     return (

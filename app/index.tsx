@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, Image } from 'react-native';
 import styles from './styles'
 import Nav_Button from './(frontend)/components/nav_button'
 
-import Logo from '../assets/icon.png'
+import Logo from '../assets/images/icon.png'
 
 const App = () => {
     return (
