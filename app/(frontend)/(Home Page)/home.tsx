@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import TabBar from '../components/tab_bar';
 import { Text, View, ImageBackground, StyleSheet, ScrollView, Pressable } from 'react-native'; // NEW: ScrollView, Pressable
 import { colors } from '../../styles';
 import { Ionicons } from '@expo/vector-icons';
@@ -187,6 +188,7 @@ const Home = () => {
                 </View>
 
             </ScrollView>
+            <TabBar active="home" />
         </ImageBackground>
     );
 };

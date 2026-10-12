@@ -11,6 +11,7 @@ export const colors = {
     muted: '#6B5E5E',
     white: '#FFFFFF',
     blush: '#F3E3E3',
+    maroonLight: '#A8322A',
 };
 
 const base_styles = StyleSheet.create({
