@@ -7,6 +7,7 @@ const LoadFonts = () => {
         'Gloria Hallelujah': require('../assets/fonts/GloriaHallelujah.ttf'),
         'Bricolage Grotesque': require('../assets/fonts/BricolageGrotesque-VariableFont.ttf'),
         'Outfit': require('../assets/fonts/Outfit-VariableFont.ttf'),
+        'Caveat': require('../assets/fonts/Caveat-Bold.ttf'),
     });
 
     useEffect(() => {
