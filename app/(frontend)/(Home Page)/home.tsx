@@ -127,6 +127,8 @@ const PickupCard = (props: { pickup: Pickup }) => {
 const Home = () => {
     const userName = 'Maya'; // swap for real name once login works
     const initials = 'MR';   // same, comes from login later
+    const [mode, setMode] = useState<'buy' | 'sell'>('buy'); // which tab is picked
+    const shown = pickups.filter((p) => p.type === mode);   // only the matching pickups
 
     return (
         <ImageBackground source={PaperBg} style={home.screen}>
@@ -156,6 +158,33 @@ const Home = () => {
 
                 
                 <CardStack />
+                                <View style={home.sectionRow}>
+                    <Text style={home.sectionTitle}>Upcoming pickups</Text>
+
+                    <View style={home.toggle}>
+                        <Pressable
+                            onPress={() => setMode('buy')}
+                            style={[home.toggleOption, mode === 'buy' && home.toggleActive]}
+                        >
+                            <Text style={[home.toggleText, mode === 'buy' && home.toggleTextActive]}>Buy</Text>
+                        </Pressable>
+                        <Pressable
+                            onPress={() => setMode('sell')}
+                            style={[home.toggleOption, mode === 'sell' && home.toggleActive]}
+                        >
+                            <Text style={[home.toggleText, mode === 'sell' && home.toggleTextActive]}>Sell</Text>
+                        </Pressable>
+                    </View>
+                </View>
+
+                <View style={home.pickupList}>
+                    {shown.map((p) => (
+                        <PickupCard key={p.id} pickup={p} />
+                    ))}
+                    {shown.length === 0 && (
+                        <Text style={home.emptyText}>No pickups yet!</Text>
+                    )}
+                </View>
 
             </ScrollView>
         </ImageBackground>
@@ -274,6 +303,10 @@ const home = StyleSheet.create({
         paddingTop: 16,       // more room under the photo
         paddingBottom: 10,
     },
+    cardLeft: {
+        flex: 1,
+        gap: 6,
+    },
     cardTitle: {
         fontSize: 19,         // was 17
         fontWeight: '600',
@@ -327,6 +360,89 @@ const home = StyleSheet.create({
         position: 'absolute',
         top: 0,
         left: 0,
+    },
+    toggle: {
+        flexDirection: 'row',
+        marginLeft: 'auto', // push to the right
+        backgroundColor: colors.white,
+        borderRadius: 20,
+        padding: 4,
+    },
+    toggleOption: {
+        paddingHorizontal: 14,
+        paddingVertical: 4,
+        borderRadius: 16,
+    },
+    toggleActive: {
+        backgroundColor: colors.maroon,
+    },
+    toggleText: {
+        fontSize: 20,
+        fontFamily: 'Caveat',
+        color: colors.ink,
+    },
+    toggleTextActive: {
+        color: colors.white,
+    },
+    pickupList: {
+        gap: 12,
+    },
+    pickupCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+        backgroundColor: colors.white,
+        borderRadius: 24,
+        padding: 12,
+        paddingRight: 16,
+    },
+    dateBox: {
+        width: 64,
+        height: 64,
+        borderRadius: 18,
+        backgroundColor: colors.blush,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    dateDay: {
+        fontSize: 12,
+        fontWeight: '600',
+        letterSpacing: 1,
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+    },
+    dateNum: {
+        fontSize: 26,
+        fontWeight: '700',
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+    },
+    pickupInfo: {
+        flex: 1, // take the middle space so the arrow sits on the right
+        gap: 4,
+    },
+    pickupItem: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: colors.ink,
+        fontFamily: 'Outfit',
+    },
+    pickupWhere: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    pickupWhereText: {
+        fontSize: 13,
+        color: colors.muted,
+        fontFamily: 'Outfit',
+    },
+    emptyText: {
+        fontSize: 20,
+        fontFamily: 'Caveat',
+        color: colors.muted,
+        textAlign: 'center',
+        paddingVertical: 12,
     },
 });
 
