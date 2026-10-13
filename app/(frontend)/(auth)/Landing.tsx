@@ -1,13 +1,12 @@
 import { StyleSheet, Text, View, Image } from 'react-native'
 import Nav_Button from '../components/nav_button'
+import Base from '../components/base'
 import paperbg from '../../../assets/images/paper_bg.png'
-import styles from '../../styles'
+import styles from '../../root_styles'
 
 const Landing_Page = () => {
     return (
-        <View style={landing_styles.container}>
-            {/* background */}
-            <Image source={paperbg} style={styles.image_bg}/>
+        <Base>
             {/* main work */}
             <Text style={landing_styles.header_1}>DormDeal</Text>
             <View style={landing_styles.temp_box}>
@@ -28,7 +27,7 @@ const Landing_Page = () => {
             <View style={styles.navigation}>
                 <Nav_Button href="/" text="Home Page"></Nav_Button>
             </View>
-        </View>
+        </Base>
     );
 }
 

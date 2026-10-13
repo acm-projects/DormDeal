@@ -1,22 +1,19 @@
 import { StyleSheet, Text, Image, View, TextInput, TouchableOpacity } from 'react-native';
 import Nav_Button from '../components/nav_button'
-import paperbg from '../../../assets/images/paper_bg.png'
+import Base from '../components/base'
+import { Header1 } from '../components/headers'
 import microsoft_logo from '../../../assets/images/microsoft.png'
-import login_header from '../../../assets/images/login_header.png'
 import line_bar from '../../../assets/svgs/line.svg'
 import line_bar2 from '../../../assets/svgs/line2.svg'
-import styles from '../../styles'
+import styles from '../../root_styles'
 
 const Login: React.FC = () => {
     return (
-        <View style={styles.container}>
-            <Image source={paperbg} style={styles.image_bg}/>
+        <Base>
             {/* actual container */}
             <View style={login_styles.container}>
                 <View style={[login_styles.base_row_flex_setup, {alignItems: 'center', justifyContent: 'flex-end', marginBottom: 25}]}>
-                    <Text style={[styles.default_text, login_styles.default_text, login_styles.header_1]}>
-                        login
-                    </Text>
+                    <Header1>login</Header1>
                 </View>
 
                 <View style={[login_styles.base_row_flex_setup, {flex: 0.66, display: 'flex'}]}>
@@ -35,15 +32,15 @@ const Login: React.FC = () => {
                 <View style={[login_styles.base_row_flex_setup, {marginTop: 25}]}>
                     <Nav_Button href="/" text="Login"
                         m_style={[login_styles.default_button, {backgroundColor: '#800000', paddingTop: 3, paddingBottom: 3}]}
-                        txt_style={{color: '#FFF', fontFamily: 'Gloria Hallelujah', borderBottomWidth: 0}}>
+                        txt_style={{color: '#FFF', fontFamily: 'Caveat', borderBottomWidth: 0}}>
                     </Nav_Button>
                     <TouchableOpacity style={[login_styles.default_button, {marginTop: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingTop: 3, paddingBottom: 3}]}>
                         <Image source={microsoft_logo} style={{marginRight: 5, width: 25, height: 25}}></Image>
-                        <Text style={{fontFamily: 'Gloria Hallelujah', textAlign: "center"}}>Microsoft Login</Text>
+                        <Text style={{fontFamily: 'Caveat', textAlign: "center"}}>Microsoft Login</Text>
                     </TouchableOpacity>
                 </View>
             </View>
-        </View>
+        </Base>
     );
 };
 
