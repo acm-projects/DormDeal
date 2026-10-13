@@ -1,21 +1,30 @@
-import { StyleSheet, Text, View, Image } from 'react-native';
-import Nav_Button from '../../../../components/nav_button'
-import styles from '../../../../../styles'
-
-import Logo from '../../../../../../assets/icon.png'
+import { Text, View, StyleSheet } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { colors } from '../../../../../styles';
 
 const Marketplace_Listing = () => {
+    const { marketplace_id } = useLocalSearchParams<{ marketplace_id: string }>(); // the number at the end of the address
+
     return (
-        <View style={styles.container}>
-            <Image source={Logo} style={styles.img}/>
-            <Text style={styles.title}>This is a MARKETPLACE listing.</Text>
-            <View style={styles.navigation}>
-                <Nav_Button href="/" text="Home Page"></Nav_Button>
-                <Nav_Button href="/Store" text="Store Page"></Nav_Button>
-                <Nav_Button href="/Profile" text="Go to Profile"></Nav_Button>
-            </View>
+        <View style={page.screen}>
+            <Text style={page.test}>You opened item #{marketplace_id}</Text>
         </View>
     );
-}
+};
 
-export default Marketplace_Listing
+const page = StyleSheet.create({
+    screen: {
+        flex: 1,
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.cream,
+    },
+    test: {
+        fontSize: 24,
+        fontFamily: 'Outfit',
+        color: colors.maroon,
+    },
+});
+
+export default Marketplace_Listing;
