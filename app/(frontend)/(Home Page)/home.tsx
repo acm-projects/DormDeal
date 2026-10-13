@@ -4,15 +4,12 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../styles';
 import TabBar from '../components/tab_bar';
+import { items } from '../../../data/items';
 
 import PaperBg from '../../../assets/paper_bg.png';
 
-// fake items for now, later these come from the backend
-const recommended = [
-    { id: '1', title: 'Mini fridge', seller: 'Alex R.', initials: 'AR', price: '$60' },
-    { id: '2', title: 'Desk lamp', seller: 'Jordan M.', initials: 'JM', price: '$12' },
-    { id: '3', title: 'Twin XL sheets', seller: 'Priya S.', initials: 'PS', price: '$15' },
-];
+
+
 
 // what one pickup looks like
 type Pickup = {
@@ -66,7 +63,7 @@ const RecCard = (props: RecCardProps) => {
 
 // the deck: tap top card to open it, swipe it to send it to the back
 const CardStack = () => {
-    const [deck, setDeck] = useState(recommended);
+    const [deck, setDeck] = useState(items);
     const router = useRouter();
     const position = useRef(new Animated.ValueXY()).current; // where the top card is being dragged
 
