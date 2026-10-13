@@ -19,7 +19,7 @@ const Login: React.FC = () => {
                     </Text>
                 </View>
 
-                <View style={[login_styles.base_row_flex_setup]}>
+                <View style={[login_styles.base_row_flex_setup, {flex: 0.66, display: 'flex'}]}>
                     <View style={{flex: 1, justifyContent: 'center'}}>
                         <TextInput style={[styles.default_text, login_styles.text_input]} placeholder='Username'></TextInput>
                         <Image source={line_bar} style={[login_styles.line_bar]}/>
@@ -78,8 +78,8 @@ const login_styles = StyleSheet.create({
         fontWeight: '600',
     },
     container: {
-        paddingTop: '28%',
-        paddingBottom: '28%',
+        paddingTop: 50,
+        paddingBottom: 50,
         height: '100%',
         width: '100%',
     },

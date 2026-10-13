@@ -7,7 +7,7 @@ import line_bar from '../../../assets/svgs/line.svg'
 import line_bar2 from '../../../assets/svgs/line2.svg'
 import styles from '../../styles'
 
-const Login: React.FC = () => {
+const SignUp: React.FC = () => {
     return (
         <View style={styles.container}>
             <Image source={paperbg} style={styles.image_bg}/>
@@ -19,7 +19,7 @@ const Login: React.FC = () => {
                     </Text>
                 </View>
 
-                <View style={[login_styles.base_row_flex_setup, {flex: 1}]}>
+                <View style={[login_styles.base_row_flex_setup]}>
                     <View style={{flex: 1}}>
                         <TextInput style={[styles.default_text, login_styles.text_input]} placeholder='Username'></TextInput>
                         <Image source={line_bar} style={[login_styles.line_bar]}/>
@@ -46,7 +46,7 @@ const Login: React.FC = () => {
     );
 };
 
-export default Login;
+export default SignUp;
 
 const login_styles = StyleSheet.create({
     header_1: {
