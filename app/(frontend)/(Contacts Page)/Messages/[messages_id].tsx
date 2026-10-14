@@ -1,23 +1,113 @@
-import { StyleSheet, Text, View, Image } from 'react-native';
-import Nav_Button from '../../components/nav_button'
+import { StyleSheet, View, Image } from 'react-native';
+import Back_Button from '../../components/back_button'
+import Button from '../../components/button'
 import Base from '../../components/base'
-import styles from '../../../root_styles'
-
-import Logo from '../../../../assets/images/icon.png'
+import Text from '../../components/text_styles'
+import Text_Input from '../../components/text_input'
+import avatar_test from '../../../../assets/svgs/avatar_sample.svg'
+import menu_icon from '../../../../assets/svgs/menu.svg'
+import plus_icon from '../../../../assets/svgs/plus.svg'
 
 const Messages = () => {
     return (
-        <Base>
-            <Image source={Logo} style={styles.img}/>
-            <Text style={styles.title}>Messaging Someone Page.</Text>
-            <View style={styles.navigation}>
-                <Nav_Button href="/" text="Home Page"></Nav_Button>
-                <Nav_Button href="/Contacts" text="Contacts Page"></Nav_Button>
-                <Nav_Button href="/Messages/Reminders" text="Reminders Page"></Nav_Button>
-                <Nav_Button href="/Profile" text="Go To Profile Page"></Nav_Button>
+        <Base style={{paddingLeft: 0, paddingRight: 0, paddingBottom: 0}}>
+            <View style={styles.header_container}>
+                <Back_Button href="/Contacts"/>
+                <View style={styles.header_quick_info}>
+                    <Image source={avatar_test}/>
+                    <View style={styles.text_info}>
+                        <Text style={{fontSize: 18, fontWeight: 'bold'}}>Anthony Simon</Text>
+                        <Text style={{fontSize: 12, fontWeight: 'regular', opacity: 0.45}}>Last Online: 32s</Text>
+                    </View>
+                    <View style={styles.dot}>
+                    
+                    </View>
+                </View>
+                <Button>
+                    <Image source={menu_icon}></Image>
+                </Button>
+            </View>
+
+            <View>
+                {/* messages go in here.. */}
+            </View>
+
+            <View style={styles.messages_work}>
+                <Button style={{backgroundColor: "#5B0000",}}>
+                    <Image source={plus_icon} style={{opacity: 0.85}}></Image>
+                </Button>
+                <View style={styles.text_input_container}>
+                    <Text_Input placeholder="Message..." style={styles.text_input}/>
+                </View>
             </View>
         </Base>
     );
 }
 
 export default Messages
+
+const styles = StyleSheet.create({
+    header_container: {
+        flexDirection: 'row',
+        paddingLeft: 20, 
+        paddingRight: 20,
+        gap: 10,
+    },
+    header_quick_info: {
+        flex: 1,
+        paddingLeft: 10,
+        paddingRight: 10,
+        backgroundColor: "#E4E4E4",
+        alignItems: 'center',
+        flexDirection: 'row',
+        width: '100%',
+        borderRadius: 25,
+        height: 50,
+        boxShadow: '0px 4px 15px rgba(0, 0, 0, 0.08)',
+    },
+    text_info: {
+        flex: 1,
+        textAlign: 'left',
+        justifyContent: 'flex-start',
+        alignItems: 'flex-start',
+        marginLeft: 10,
+    },
+    dot: {
+        width: 15,
+        height: 15,
+        backgroundColor: '#58EF5D',
+        borderRadius: '50%',
+    },
+    messages_work: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        position: 'absolute',
+        bottom: 0,
+        alignContent: 'flex-end',
+        backgroundColor: '#800000',
+        width: '100%',
+        height: 86,
+        borderTopLeftRadius: 25,
+        borderTopRightRadius: 25,
+        paddingBottom: 15,
+        paddingLeft: 20,
+        paddingRight: 20,
+    },
+    text_input_container: {
+        flex: 1,
+        marginLeft: 10,
+        justifyContent: 'center',
+        backgroundColor: "#5B0000",
+        width: '100%',
+        height: 50,
+        borderRadius: 25,
+        paddingLeft: 20,
+        paddingRight: 20,
+    },
+    text_input: {
+        color: "#FFFFFF",
+        opacity: 0.65,
+        height: '100%',
+        borderRadius: 25,
+    }
+})

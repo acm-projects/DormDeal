@@ -1,11 +1,11 @@
 import { StyleSheet, Text, Image, View, TextInput, TouchableOpacity } from 'react-native';
 import paper_bg from '../../../assets/images/paper_bg.png'
 
-const Base = ({children}) => {
+const Base = ({style, children}) => {
     return (
         <View style={styles.base_container}>
             <Image source={paper_bg} style={styles.image_bg}/>
-            <View style={styles.actual_container}>
+            <View style={[styles.actual_container, style]}>
                 { children }
             </View>
         </View>

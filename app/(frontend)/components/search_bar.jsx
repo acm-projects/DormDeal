@@ -4,8 +4,8 @@ import search_icon from '../../../assets/images/search_icon.png'
 
 const Search_Bar = ({placeholder = "", style = {}}) => {
     return (
-        <View style={styles.search_bar_container}>
-            <TextInput style={[component_root_styles.default_text, style, styles.search_bar_txt]} placeholder={placeholder}></TextInput>
+        <View style={[styles.search_bar_container, style]}>
+            <TextInput style={[component_root_styles.default_text, styles.search_bar_txt]} placeholder={placeholder}></TextInput>
             <Image source={search_icon} style={styles.search_icon}/>
         </View>
     );
