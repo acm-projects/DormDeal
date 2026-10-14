@@ -15,14 +15,14 @@ export default Base;
 const styles = StyleSheet.create({
     base_container: {
         flex: 1,
-        backgroundColor: '#FFF',
+        backgroundColor: '#F1EEEA',
         alignItems: 'center',
         justifyContent: 'center',
         /* this is meant to be the basic page setup */
     },
     image_bg: {
         position: 'absolute',
-        opacity: 0.35,
+        opacity: 0.30,
         width: '100%',
         height: '100%',
     },

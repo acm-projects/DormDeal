@@ -1,7 +1,8 @@
-import { StyleSheet, Text, Image, View, TextInput, TouchableOpacity } from 'react-native';
+import { StyleSheet, Image, Text, View, TextInput, TouchableOpacity } from 'react-native';
+import { Header1, ErrorText } from '../components/text_styles'
 import Nav_Button from '../components/nav_button'
+import Account_Text_Input from '../components/account_text_input'
 import Base from '../components/base'
-import { Header1 } from '../components/headers'
 import microsoft_logo from '../../../assets/images/microsoft.png'
 import line_bar from '../../../assets/svgs/line.svg'
 import line_bar2 from '../../../assets/svgs/line2.svg'
@@ -17,26 +18,23 @@ const Login: React.FC = () => {
                 </View>
 
                 <View style={[login_styles.base_row_flex_setup, {flex: 0.66, display: 'flex'}]}>
-                    <View style={{flex: 1, justifyContent: 'center'}}>
-                        <TextInput style={[styles.default_text, login_styles.text_input]} placeholder='Username'></TextInput>
-                        <Image source={line_bar} style={[login_styles.line_bar]}/>
-                        <Text style={[login_styles.extra_text_guide, {color: "#800000", fontWeight: 'bold'}]}>Error Example.</Text>
-                    </View>
-                    <View style={{flex: 1, justifyContent: 'center'}}>
-                        <TextInput style={[styles.default_text, login_styles.text_input]} placeholder='Password'></TextInput>
-                        <Image source={line_bar2} style={[login_styles.line_bar]}/>
+                    <Account_Text_Input img_source={line_bar} placeholder='Username'>
+                        <ErrorText style={login_styles.extra_text_guide}>Error Example.</ErrorText>
+                    </Account_Text_Input>
+
+                    <Account_Text_Input img_source={line_bar2} placeholder='Password'>
                         <Text style={[login_styles.extra_text_guide, {color: "#B26666"}]}>Forgot your password?</Text>
-                    </View>
+                    </Account_Text_Input>
                 </View>
 
                 <View style={[login_styles.base_row_flex_setup, {marginTop: 25}]}>
                     <Nav_Button href="/" text="Login"
                         m_style={[login_styles.default_button, {backgroundColor: '#800000', paddingTop: 3, paddingBottom: 3}]}
-                        txt_style={{color: '#FFF', fontFamily: 'Caveat', borderBottomWidth: 0}}>
+                        txt_style={{color: '#FFF', fontFamily: 'Caveat', fontSize: 20, borderBottomWidth: 0}}>
                     </Nav_Button>
                     <TouchableOpacity style={[login_styles.default_button, {marginTop: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingTop: 3, paddingBottom: 3}]}>
                         <Image source={microsoft_logo} style={{marginRight: 5, width: 25, height: 25}}></Image>
-                        <Text style={{fontFamily: 'Caveat', textAlign: "center"}}>Microsoft Login</Text>
+                        <Text style={{fontFamily: 'Caveat', fontSize: 20, textAlign: "center"}}>Microsoft Login</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -71,6 +69,7 @@ const login_styles = StyleSheet.create({
         height: 'auto',
     },
     extra_text_guide: {
+        textAlign: 'left',
         marginTop: 5, 
         fontWeight: '600',
     },

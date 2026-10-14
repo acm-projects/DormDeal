@@ -1,15 +1,18 @@
 import { StyleSheet } from 'react-native';
 
+export const component_root_styles = StyleSheet.create({
+    default_text: {
+        fontFamily: 'Outfit',
+        fontWeight: 'regular',
+        textAlign: 'center',
+        color: "#000",
+        fontSize: 17,
+    }
+})
 const base_styles = StyleSheet.create({
     navigation: {
         flexDirection: 'row',
         columnGap: 15,
-    },
-    title: {
-        fontWeight: 800,
-        fontSize: 50,
-        marginBottom: 25,
-        fontFamily: 'Outfit',
     },
     img: {
         width: 50,

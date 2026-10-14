@@ -1,7 +1,8 @@
 import { StyleSheet, Text, Image, View, TextInput, TouchableOpacity } from 'react-native';
 import Nav_Button from '../components/nav_button'
 import Base from '../components/base'
-import { Header1 } from '../components/headers'
+import Account_Text_Input from '../components/account_text_input'
+import { Header1, ErrorText } from '../components/text_styles'
 import line_bar from '../../../assets/svgs/line.svg'
 import line_bar2 from '../../../assets/svgs/line2.svg'
 import styles from '../../root_styles'
@@ -16,16 +17,24 @@ const SignUp: React.FC = () => {
                 </View>
 
                 <View style={[login_styles.base_row_flex_setup]}>
+                    {/* 
+                    <Account_Text_Input placeholder='Username' img_source={line_bar}></Account_Text_Input>
+                    <Account_Text_Input placeholder='Password' img_source={line_bar2}></Account_Text_Input>
+                    <Account_Text_Input placeholder='Confirm Password' img_source={line_bar2}>
+                        <ErrorText style={login_styles.extra_text_guide}>Error Example.</ErrorText>
+                    </Account_Text_Input>
+                    */}
+
                     <View style={{flex: 1}}>
-                        <TextInput style={[styles.default_text, login_styles.text_input]} placeholder='Username'></TextInput>
+                        <TextInput style={[login_styles.text_input]} placeholder='Username'></TextInput>
                         <Image source={line_bar} style={[login_styles.line_bar]}/>
                     </View>
                     <View style={{flex: 1}}>
-                        <TextInput style={[styles.default_text, login_styles.text_input]} placeholder='Password'></TextInput>
+                        <TextInput style={[login_styles.text_input]} placeholder='Password'></TextInput>
                         <Image source={line_bar2} style={[login_styles.line_bar]}/>
                     </View>
                     <View style={{flex: 1}}>
-                        <TextInput style={[styles.default_text, login_styles.text_input]} placeholder='Confirm Password'></TextInput>
+                        <TextInput style={[login_styles.text_input]} placeholder='Confirm Password'></TextInput>
                         <Image source={line_bar2} style={[login_styles.line_bar]}/>
                         <Text style={[login_styles.extra_text_guide, {color: "#800000", fontWeight: 'bold'}]}>Error Example.</Text>
                     </View>
@@ -69,7 +78,8 @@ const login_styles = StyleSheet.create({
         height: 'auto',
     },
     extra_text_guide: {
-        flex: 1, 
+        textAlign: 'left',
+        fontSize: 13,
         marginTop: 5, 
         fontWeight: '600',
     },

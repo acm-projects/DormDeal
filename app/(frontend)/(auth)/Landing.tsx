@@ -1,7 +1,6 @@
 import { StyleSheet, Text, View, Image } from 'react-native'
 import Nav_Button from '../components/nav_button'
 import Base from '../components/base'
-import paperbg from '../../../assets/images/paper_bg.png'
 import styles from '../../root_styles'
 
 const Landing_Page = () => {

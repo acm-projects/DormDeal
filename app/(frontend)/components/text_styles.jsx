@@ -1,11 +1,25 @@
-import { StyleSheet } from 'react-native'
-import Text from './text'
+import { StyleSheet, Text, View, Image } from 'react-native'
+import { component_root_styles } from '../../root_styles'
+
+const Default_Text = ({children, style}) => {
+    return (
+        <Text style={
+            [
+                component_root_styles.default_text,
+                style
+            ]
+        }>
+            {children}
+        </Text>
+    )
+}
+
+export default Default_Text;
 
 export const Header1 = ({children}) => {
     return (
-        <Text style={
+        <Default_Text style={
             {
-                fontFamily: 'Outfit',
                 fontWeight: 'bold',
                 fontSize: 48,
                 letterSpacing: '-2%',
@@ -14,13 +28,13 @@ export const Header1 = ({children}) => {
             }
         }>
             {children}
-        </Text>
+        </Default_Text>
     );
 }
 
 export const Header2 = ({children}) => {
     return (
-        <Text style={
+        <Default_Text style={
             {
                 fontWeight: 'bold',
                 fontSize: 36,
@@ -29,13 +43,13 @@ export const Header2 = ({children}) => {
             }
         }>
             {children}
-        </Text>
+        </Default_Text>
     );
 }
 
 export const Header3 = ({children}) => {
     return (
-        <Text style={
+        <Default_Text style={
             {
                 fontWeight: 'semibold',
                 fontSize: 24,
@@ -44,13 +58,13 @@ export const Header3 = ({children}) => {
             }
         }>
             {children}
-        </Text>
+        </Default_Text>
     );
 }
 
 export const Header4 = ({children}) => {
     return (
-        <Text style={
+        <Default_Text style={
             {
                 fontWeight: 'semibold',
                 fontSize: 22,
@@ -59,13 +73,13 @@ export const Header4 = ({children}) => {
             }
         }>
             {children}
-        </Text>
+        </Default_Text>
     );
 }
 
 export const Header5 = ({children}) => {
     return (
-        <Text style={
+        <Default_Text style={
             {
                 fontWeight: 'semibold',
                 fontSize: 17,
@@ -74,6 +88,23 @@ export const Header5 = ({children}) => {
             }
         }>
             {children}
-        </Text>
+        </Default_Text>
+    );
+}
+
+export const ErrorText = ({style, children}) => {
+    return (
+        <Default_Text style={
+            [
+                {
+                    fontFamily: 'Outfit',
+                    fontWeight: 'bold',
+                    color: '#800000',
+                },
+                style
+            ]
+        }>
+            {children}
+        </Default_Text>
     );
 }
