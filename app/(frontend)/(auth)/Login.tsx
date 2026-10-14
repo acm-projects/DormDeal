@@ -12,31 +12,28 @@ const Login: React.FC = () => {
     return (
         <Base>
             {/* actual container */}
-            <View style={login_styles.container}>
-                <View style={[login_styles.base_row_flex_setup, {alignItems: 'center', justifyContent: 'flex-end', marginBottom: 25}]}>
-                    <Header1>login</Header1>
-                </View>
+            <View style={[login_styles.base_row_flex_setup, {alignItems: 'center', justifyContent: 'flex-end', marginBottom: 25}]}>
+                <Header1>login</Header1>
+            </View>
 
-                <View style={[login_styles.base_row_flex_setup, {flex: 0.66, display: 'flex'}]}>
-                    <Account_Text_Input img_source={line_bar} placeholder='Username'>
-                        <ErrorText style={login_styles.extra_text_guide}>Error Example.</ErrorText>
-                    </Account_Text_Input>
+            <View style={[login_styles.base_row_flex_setup, {flex: 0.66, display: 'flex'}]}>
+                <Account_Text_Input img_source={line_bar} placeholder='Username'>
+                    <ErrorText style={login_styles.extra_text_guide}>Error Example.</ErrorText>
+                </Account_Text_Input>
+                <Account_Text_Input img_source={line_bar2} placeholder='Password'>
+                    <Text style={[login_styles.extra_text_guide, {color: "#B26666"}]}>Forgot your password?</Text>
+                </Account_Text_Input>
+            </View>
 
-                    <Account_Text_Input img_source={line_bar2} placeholder='Password'>
-                        <Text style={[login_styles.extra_text_guide, {color: "#B26666"}]}>Forgot your password?</Text>
-                    </Account_Text_Input>
-                </View>
-
-                <View style={[login_styles.base_row_flex_setup, {marginTop: 25}]}>
-                    <Nav_Button href="/" text="Login"
-                        m_style={[login_styles.default_button, {backgroundColor: '#800000', paddingTop: 3, paddingBottom: 3}]}
-                        txt_style={{color: '#FFF', fontFamily: 'Caveat', fontSize: 20, borderBottomWidth: 0}}>
-                    </Nav_Button>
-                    <TouchableOpacity style={[login_styles.default_button, {marginTop: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingTop: 3, paddingBottom: 3}]}>
-                        <Image source={microsoft_logo} style={{marginRight: 5, width: 25, height: 25}}></Image>
-                        <Text style={{fontFamily: 'Caveat', fontSize: 20, textAlign: "center"}}>Microsoft Login</Text>
-                    </TouchableOpacity>
-                </View>
+            <View style={[login_styles.base_row_flex_setup, {marginTop: 25}]}>
+                <Nav_Button href="/" text="Login"
+                    m_style={[login_styles.default_button, {backgroundColor: '#800000', paddingTop: 3, paddingBottom: 3}]}
+                    txt_style={{color: '#FFF', fontFamily: 'Caveat', fontSize: 20, borderBottomWidth: 0}}>
+                </Nav_Button>
+                <TouchableOpacity style={[login_styles.default_button, {marginTop: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingTop: 3, paddingBottom: 3}]}>
+                    <Image source={microsoft_logo} style={{marginRight: 5, width: 25, height: 25}}></Image>
+                    <Text style={{fontFamily: 'Caveat', fontSize: 20, textAlign: "center"}}>Microsoft Login</Text>
+                </TouchableOpacity>
             </View>
         </Base>
     );
@@ -81,9 +78,7 @@ const login_styles = StyleSheet.create({
     },
     base_row_flex_setup: {
         flex: 1,
-        width: '80%',
-        marginLeft: '10%',
-        marginRight: '10%',
+        width: '100%',
     },
     default_button: {
         backgroundColor: '#FFF',

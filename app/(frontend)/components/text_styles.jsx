@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, Image } from 'react-native'
 import { component_root_styles } from '../../root_styles'
 
-const Default_Text = ({children, style}) => {
+const Default_Text = ({style, children}) => {
     return (
         <Text style={
             [
@@ -16,76 +16,91 @@ const Default_Text = ({children, style}) => {
 
 export default Default_Text;
 
-export const Header1 = ({children}) => {
+export const Header1 = ({children,style={}}) => {
     return (
         <Default_Text style={
-            {
-                fontWeight: 'bold',
-                fontSize: 48,
-                letterSpacing: '-2%',
-                color: '#800000',
-                marginBottom: 48,
-            }
+            [
+                {
+                    fontWeight: 'bold',
+                    fontSize: 48,
+                    letterSpacing: '-2%',
+                    color: '#800000',
+                    marginBottom: 48,
+                },
+                style
+            ]
         }>
             {children}
         </Default_Text>
     );
 }
 
-export const Header2 = ({children}) => {
+export const Header2 = ({children,style={}}) => {
     return (
         <Default_Text style={
-            {
-                fontWeight: 'bold',
-                fontSize: 36,
-                letterSpacing: '-2%',
-                marginBottom: 36,
-            }
+            [
+                {
+                    fontWeight: 'bold',
+                    fontSize: 36,
+                    letterSpacing: '-2%',
+                    marginBottom: 36,
+                },
+                style
+            ]
         }>
             {children}
         </Default_Text>
     );
 }
 
-export const Header3 = ({children}) => {
+export const Header3 = ({children,style={}}) => {
     return (
         <Default_Text style={
-            {
-                fontWeight: 'semibold',
-                fontSize: 24,
-                letterSpacing: '-2%',
-                marginBottom: 24,
-            }
+            [
+                {
+                    fontWeight: 'semibold',
+                    fontSize: 24,
+                    letterSpacing: '-2%',
+                    marginBottom: 24,
+                },
+                style
+            ]
         }>
             {children}
         </Default_Text>
     );
 }
 
-export const Header4 = ({children}) => {
+export const Header4 = ({children,style={}}) => {
     return (
         <Default_Text style={
-            {
-                fontWeight: 'semibold',
-                fontSize: 22,
-                letterSpacing: '-2%',
-                marginBottom: 22,
-            }
+            [
+                {
+                    fontWeight: 'semibold',
+                    fontSize: 22,
+                    letterSpacing: '-2%',
+                    marginBottom: 22,
+                },
+                style
+            ]
         }>
             {children}
         </Default_Text>
     );
 }
 
-export const Header5 = ({children}) => {
+export const Header5 = ({children,style={}}) => {
     return (
         <Default_Text style={
-            {
-                fontWeight: 'semibold',
-                fontSize: 17,
-                letterSpacing: '-2%',
-                marginBottom: 17,
-            }
+            [
+                {
+                    fontWeight: 'semibold',
+                    fontSize: 17,
+                    letterSpacing: '-2%',
+                    marginBottom: 17,
+                },
+                style
+            ]            
         }>
             {children}
         </Default_Text>

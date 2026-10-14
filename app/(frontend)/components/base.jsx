@@ -5,7 +5,9 @@ const Base = ({children}) => {
     return (
         <View style={styles.base_container}>
             <Image source={paper_bg} style={styles.image_bg}/>
-            { children }
+            <View style={styles.actual_container}>
+                { children }
+            </View>
         </View>
     );
 }
@@ -19,6 +21,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         /* this is meant to be the basic page setup */
+    },
+    actual_container: {
+        paddingTop: 50,
+        paddingBottom: 50,
+        paddingLeft: 20,
+        paddingRight: 20,
+        height: '100%',
+        width: '100%',
     },
     image_bg: {
         position: 'absolute',

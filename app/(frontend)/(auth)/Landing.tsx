@@ -31,13 +31,6 @@ const Landing_Page = () => {
 }
 
 const landing_styles = StyleSheet.create({ 
-    container: {
-        flex: 1,
-        backgroundColor: '#F1EEEA',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-
     header_1: {
         fontFamily: 'Bricolage Grotesque',
         fontWeight: 'bold',
@@ -69,10 +62,8 @@ const landing_styles = StyleSheet.create({
     },
 
     button_container: {
-        position: 'absolute',
-        bottom: '5%',
         margin: 'auto',
-        width: '90%',
+        width: '100%',
     },
     default_button: {
         backgroundColor: '#FFF',
