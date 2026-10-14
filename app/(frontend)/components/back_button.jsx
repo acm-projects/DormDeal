@@ -1,6 +1,6 @@
 import { StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router'
-import Arrow_Up from '../../../assets/svgs/arrow_up.svg'
+import Arrow_Up from '../../../assets/svgs/black_arrow.svg'
 import Button from './button'
 
 const Back_Button = ({href}) => {

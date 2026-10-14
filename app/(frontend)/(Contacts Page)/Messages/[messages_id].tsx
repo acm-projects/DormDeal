@@ -6,6 +6,7 @@ import Text from '../../components/text_styles'
 import Text_Input from '../../components/text_input'
 import avatar_test from '../../../../assets/svgs/avatar_sample.svg'
 import menu_icon from '../../../../assets/svgs/menu.svg'
+import arrow from '../../../../assets/svgs/white_arrow.svg'
 import plus_icon from '../../../../assets/svgs/plus.svg'
 
 const Messages = () => {
@@ -38,6 +39,9 @@ const Messages = () => {
                 </Button>
                 <View style={styles.text_input_container}>
                     <Text_Input placeholder="Message..." style={styles.text_input}/>
+                    <Button style={{backgroundColor: "#6b0000", width: 40, height: 40, marginLeft: 20}}>
+                        <Image source={arrow} style={{opacity: 0.85, transform: [{rotate: '90deg'}]}}></Image>
+                    </Button>
                 </View>
             </View>
         </Base>
@@ -95,8 +99,9 @@ const styles = StyleSheet.create({
     },
     text_input_container: {
         flex: 1,
+        flexDirection: 'row',
         marginLeft: 10,
-        justifyContent: 'center',
+        alignItems: 'center',
         backgroundColor: "#5B0000",
         width: '100%',
         height: 50,
@@ -105,6 +110,7 @@ const styles = StyleSheet.create({
         paddingRight: 20,
     },
     text_input: {
+        flex: 1,
         color: "#FFFFFF",
         opacity: 0.65,
         height: '100%',
