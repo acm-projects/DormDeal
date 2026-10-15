@@ -1,4 +1,5 @@
 import { StyleSheet, View, Image } from 'react-native';
+import Message_Box from '../../components/message_box'
 import Back_Button from '../../components/back_button'
 import Button from '../../components/button'
 import Base from '../../components/base'
@@ -29,17 +30,21 @@ const Messages = () => {
                 </Button>
             </View>
 
-            <View>
+            <View style={styles.messages_container}>
                 {/* messages go in here.. */}
+                <Message_Box></Message_Box>
+                <Message_Box></Message_Box>
+                <Message_Box></Message_Box>
+                <Message_Box></Message_Box>
             </View>
 
-            <View style={styles.messages_work}>
+            <View style={styles.messages_functionality}>
                 <Button style={{backgroundColor: "#5B0000",}}>
                     <Image source={plus_icon} style={{opacity: 0.85}}></Image>
                 </Button>
                 <View style={styles.text_input_container}>
                     <Text_Input placeholder="Message..." style={styles.text_input}/>
-                    <Button style={{backgroundColor: "#6b0000", width: 40, height: 40, marginLeft: 20}}>
+                    <Button style={{flex: 1, backgroundColor: "#6b0000", width: 40, height: 40}}>
                         <Image source={arrow} style={{opacity: 0.85, transform: [{rotate: '90deg'}]}}></Image>
                     </Button>
                 </View>
@@ -56,6 +61,15 @@ const styles = StyleSheet.create({
         paddingLeft: 20, 
         paddingRight: 20,
         gap: 10,
+    },
+    messages_container: {
+        flex: 1,
+        display: 'flex',
+        justifyContent: 'flex-end',
+        gap: 5,
+        paddingLeft: 20,
+        paddingRight: 20,
+        paddingBottom: 106,
     },
     header_quick_info: {
         flex: 1,
@@ -82,7 +96,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#58EF5D',
         borderRadius: '50%',
     },
-    messages_work: {
+    messages_functionality: {
         flexDirection: 'row',
         alignItems: 'center',
         position: 'absolute',
@@ -103,9 +117,9 @@ const styles = StyleSheet.create({
         marginLeft: 10,
         alignItems: 'center',
         backgroundColor: "#5B0000",
-        width: '100%',
         height: 50,
         borderRadius: 25,
+        gap: 20,
         paddingLeft: 20,
         paddingRight: 20,
     },
