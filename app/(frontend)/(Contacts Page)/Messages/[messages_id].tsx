@@ -1,5 +1,6 @@
 import { StyleSheet, View, Image } from 'react-native';
-import Message_Box from '../../components/message_box'
+import Other_Message_Box from '../../components/message_box_pink'
+import You_Message_Box from '../../components/message_box_red'
 import Back_Button from '../../components/back_button'
 import Button from '../../components/button'
 import Base from '../../components/base'
@@ -32,10 +33,10 @@ const Messages = () => {
 
             <View style={styles.messages_container}>
                 {/* messages go in here.. */}
-                <Message_Box></Message_Box>
-                <Message_Box></Message_Box>
-                <Message_Box></Message_Box>
-                <Message_Box></Message_Box>
+                <Other_Message_Box></Other_Message_Box>
+                <Other_Message_Box></Other_Message_Box>
+                <Other_Message_Box></Other_Message_Box>
+                <Other_Message_Box></Other_Message_Box>
             </View>
 
             <View style={styles.messages_functionality}>
@@ -44,7 +45,7 @@ const Messages = () => {
                 </Button>
                 <View style={styles.text_input_container}>
                     <Text_Input placeholder="Message..." style={styles.text_input}/>
-                    <Button style={{flex: 1, backgroundColor: "#6b0000", width: 40, height: 40}}>
+                    <Button style={{flex: 1, backgroundColor: "#6b0000", maxWidth: 40, maxHeight: 40}}>
                         <Image source={arrow} style={{opacity: 0.85, transform: [{rotate: '90deg'}]}}></Image>
                     </Button>
                 </View>
