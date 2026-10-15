@@ -1,5 +1,19 @@
 import { StyleSheet } from 'react-native';
 
+export const colors = {
+    maroon: '#800000',
+    maroonDark: '#4C0000',
+    gold: '#F2B33D',
+    goldLight: '#FCEFC9',
+    sage: '#9BB08A',
+    cream: '#F1EEEA',
+    ink: '#1F1414',
+    muted: '#6B5E5E',
+    white: '#FFFFFF',
+    blush: '#F3E3E3',
+    maroonLight: '#A8322A',
+};
+
 const base_styles = StyleSheet.create({
     container: {
         flex: 1,
