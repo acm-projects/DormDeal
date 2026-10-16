@@ -1,7 +1,7 @@
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../styles';
+import { colors } from '../../root_styles';
 
 type TabName = 'home' | 'search' | 'post' | 'inbox' | 'profile';
 

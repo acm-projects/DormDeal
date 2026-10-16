@@ -1,5 +1,5 @@
 import { StyleSheet, TextInput } from 'react-native'
-import { component_root_styles } from '../../root_styles'
+import component_root_styles from '../../root_styles'
 
 const TextInput_Default = ({style=[], placeholder}) => {
     return (

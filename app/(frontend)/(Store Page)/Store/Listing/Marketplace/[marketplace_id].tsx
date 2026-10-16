@@ -1,7 +1,7 @@
 import { Text, View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../../../../styles';
+import { colors } from '../../../../../root_styles';
 import { items } from '../../../../../../data/items';
 
 const Marketplace_Listing = () => {

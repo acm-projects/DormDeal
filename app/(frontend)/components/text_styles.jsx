@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, Image } from 'react-native'
-import { component_root_styles } from '../../root_styles'
+import component_root_styles from '../../root_styles'
 
 const Default_Text = ({style, children}) => {
     return (

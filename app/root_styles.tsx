@@ -33,8 +33,7 @@ const base_styles = StyleSheet.create({
         textAlign: 'center',
         color: "#000",
         fontSize: 17,
-    }
-
+    },
     navigation: {
         flexDirection: 'row',
         columnGap: 15,
