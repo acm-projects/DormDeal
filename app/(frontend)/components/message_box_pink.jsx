@@ -2,11 +2,14 @@ import { StyleSheet, Image, View, TextInput, TouchableOpacity } from 'react-nati
 import Text from './text_styles'
 import message_arrow_2 from '../../../assets/svgs/message_arrow_2.svg'
 
-const Message_Box = () => {
+const Message_Box = ({status="no status", children=[]}) => {
     return (
-        <View>
+        <View style={styles.message_container}>
+            <Text style={styles.status}>{status}</Text>
             <View style={styles.message_box}>
-                <Text style={styles.message_text}>THIS IS A MESSAGE. CONCEPTUALLY, it can be understood in the definition.</Text>
+                <Text style={styles.message_text}>
+                    {children}
+                </Text>
             </View>
             <Image style={styles.message_img} source={message_arrow_2}/>
         </View>
@@ -16,8 +19,13 @@ const Message_Box = () => {
 export default Message_Box;
 
 const styles = StyleSheet.create({
+    message_container: {
+        alignItems: 'flex-start',
+    },
     message_box: {
         padding: 10,
+        minHeight: 41,
+        minWidth: 41,
         maxWidth: 250,
         backgroundColor: '#B26666',
         borderTopLeftRadius: 10,
@@ -27,6 +35,12 @@ const styles = StyleSheet.create({
     message_text: {
         color: '#FFF',
         textAlign: 'left',
+    },
+    status: {
+        fontWeight: 'light',
+        opacity: 0.75,
+        color: '#242424',
+        fontSize: 12,
     },
     message_img: {
         marginTop: -2,

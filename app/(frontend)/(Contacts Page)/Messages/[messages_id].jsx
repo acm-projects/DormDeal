@@ -1,4 +1,5 @@
-import { StyleSheet, View, Image } from 'react-native';
+import { useRef } from 'react';
+import { StyleSheet, ScrollView, View, Image } from 'react-native';
 import Other_Message_Box from '../../components/message_box_pink'
 import You_Message_Box from '../../components/message_box_red'
 import Back_Button from '../../components/back_button'
@@ -12,6 +13,13 @@ import arrow from '../../../../assets/svgs/white_arrow.svg'
 import plus_icon from '../../../../assets/svgs/plus.svg'
 
 const Messages = () => {
+    const scroll_view_ref = useRef(null);
+    const scroll_to_end_func = () => {
+        scroll_view_ref.current?.scrollToEnd({
+            animated: false,
+        });
+    }
+
     return (
         <Base style={{paddingLeft: 0, paddingRight: 0, paddingBottom: 0}}>
             <View style={styles.header_container}>
@@ -23,7 +31,7 @@ const Messages = () => {
                         <Text style={{fontSize: 12, fontWeight: 'regular', opacity: 0.45}}>Last Online: 32s</Text>
                     </View>
                     <View style={styles.dot}>
-                    
+
                     </View>
                 </View>
                 <Button>
@@ -31,13 +39,22 @@ const Messages = () => {
                 </Button>
             </View>
 
-            <View style={styles.messages_container}>
+            <ScrollView
+                ref={scroll_view_ref}
+                onContentSizeChange={scroll_to_end_func}
+                style={styles.messages_scroll_view}
+                contentContainerStyle={styles.messages_container}
+                showsVerticalScrollIndicator={true}
+            >
                 {/* messages go in here.. */}
-                <Other_Message_Box></Other_Message_Box>
-                <Other_Message_Box></Other_Message_Box>
-                <Other_Message_Box></Other_Message_Box>
-                <Other_Message_Box></Other_Message_Box>
-            </View>
+                <Other_Message_Box status="1 day ago">In particular, are you patient enough to see that the definitive answer to my word is going to be a considerate amount of considerates?</Other_Message_Box>
+                <Other_Message_Box status="1 day ago">In particular, are you patient enough to see that the definitive answer to my word is going to be a considerate amount of considerates?</Other_Message_Box>
+                <Other_Message_Box status="1 day ago">In particular, are you patient enough to see that the definitive answer to my word is going to be a considerate amount of considerates?</Other_Message_Box>
+                <Other_Message_Box status="25 minutes ago • read">Good morning, how are you?</Other_Message_Box>
+                <You_Message_Box status="20 minutes ago • read">I'm okay, what about you?</You_Message_Box>
+                <You_Message_Box status="12 minutes ago • read">This is nice.</You_Message_Box>
+                <Other_Message_Box status="6 minutes ago • sent">Sure.</Other_Message_Box>
+            </ScrollView>
 
             <View style={styles.messages_functionality}>
                 <Button style={{backgroundColor: "#5B0000",}}>
@@ -45,7 +62,7 @@ const Messages = () => {
                 </Button>
                 <View style={styles.text_input_container}>
                     <Text_Input placeholder="Message..." style={styles.text_input}/>
-                    <Button style={{flex: 1, backgroundColor: "#6b0000", maxWidth: 40, maxHeight: 40}}>
+                    <Button style={styles.upload_button}>
                         <Image source={arrow} style={{opacity: 0.85, transform: [{rotate: '90deg'}]}}></Image>
                     </Button>
                 </View>
@@ -64,13 +81,16 @@ const styles = StyleSheet.create({
         gap: 10,
     },
     messages_container: {
-        flex: 1,
-        display: 'flex',
+        flexGrow: 1,
         justifyContent: 'flex-end',
         gap: 5,
         paddingLeft: 20,
         paddingRight: 20,
         paddingBottom: 106,
+    },
+    messages_scroll_view: {
+        flex: 1,
+        minHeight: 0,
     },
     header_quick_info: {
         flex: 1,
@@ -97,6 +117,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#58EF5D',
         borderRadius: '50%',
     },
+    upload_button: {
+        flexShrink: 0,
+        backgroundColor: "#6b0000", 
+        maxWidth: 40, 
+        maxHeight: 40,
+    },
     messages_functionality: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -115,14 +141,13 @@ const styles = StyleSheet.create({
     text_input_container: {
         flex: 1,
         flexDirection: 'row',
-        marginLeft: 10,
         alignItems: 'center',
+        marginLeft: 10,
         backgroundColor: "#5B0000",
-        height: 50,
         borderRadius: 25,
-        gap: 20,
         paddingLeft: 20,
         paddingRight: 20,
+        height: 50,
     },
     text_input: {
         flex: 1,
