@@ -1,5 +1,5 @@
 import { View, Image, StyleSheet, TextInput } from 'react-native';
-import { component_root_styles } from '../../root_styles'
+import component_root_styles from '../../root_styles'
 import search_icon from '../../../assets/images/search_icon.png'
 
 const Search_Bar = ({placeholder = "", style = {}}) => {

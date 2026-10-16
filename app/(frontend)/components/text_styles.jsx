@@ -1,14 +1,17 @@
 import { StyleSheet, Text, View, Image } from 'react-native'
 import component_root_styles from '../../root_styles'
 
-const Default_Text = ({style, children}) => {
+const Default_Text = ({style, children, selectable=true}) => {
     return (
         <Text style={
             [
                 component_root_styles.default_text,
                 style
             ]
-        }>
+        }
+        
+        selectable={selectable}
+        >
             {children}
         </Text>
     )
@@ -26,6 +29,7 @@ export const Header1 = ({children,style={}}) => {
                     letterSpacing: '-2%',
                     color: '#800000',
                     marginBottom: 48,
+                    textAlign: 'left',
                 },
                 style
             ]

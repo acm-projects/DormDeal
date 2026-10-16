@@ -44,7 +44,7 @@ const Messages = () => {
                 onContentSizeChange={scroll_to_end_func}
                 style={styles.messages_scroll_view}
                 contentContainerStyle={styles.messages_container}
-                showsVerticalScrollIndicator={true}
+                showsVerticalScrollIndicator={false}
             >
                 {/* messages go in here.. */}
                 <Other_Message_Box status="1 day ago">In particular, are you patient enough to see that the definitive answer to my word is going to be a considerate amount of considerates?</Other_Message_Box>
@@ -122,6 +122,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#6b0000", 
         maxWidth: 40, 
         maxHeight: 40,
+        boxShadow: '',
     },
     messages_functionality: {
         flexDirection: 'row',

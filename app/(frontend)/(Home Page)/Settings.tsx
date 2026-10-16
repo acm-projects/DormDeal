@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
+import { View, ScrollView, } from 'react-native';
 import { Header1 } from '../components/text_styles'
 import Search_Bar from '../components/search_bar'
 import Back_Button from '../components/back_button'
@@ -22,7 +22,10 @@ const Settings = () => {
             {/* needs button later */}
             <Search_Bar style={{marginTop: 30}} placeholder='Search'/>
 
-            <View style={{marginTop: 20, gap: 20}}>
+            <ScrollView 
+                contentContainerStyle={{marginTop: 20, gap: 20}}
+                showsVerticalScrollIndicator={false}
+                >
                 <Settings_Holder id={1}>
                     <Settings_Button text="Messages" style={{backgroundColor: "#FF0000"}}/>
                     <Settings_Button text="Profile Changes" style={{backgroundColor: "#00FF00"}}/>
@@ -44,7 +47,7 @@ const Settings = () => {
                     <Settings_Button text="This" style={{backgroundColor: "#00FF00"}}/>
                     <Settings_Button text="That" style={{backgroundColor: "#0000FF"}}/>
                 </Settings_Holder>
-            </View>
+            </ScrollView>
         </Base>
     );
 }
