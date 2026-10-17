@@ -1,13 +1,11 @@
 import { StyleSheet, Text, View, Image } from 'react-native'
 import Nav_Button from '../components/nav_button'
-import paperbg from '../../../assets/paper_bg.png'
-import styles from '../../styles'
+import Base from '../components/base'
+import styles from '../../root_styles'
 
 const Landing_Page = () => {
     return (
-        <View style={landing_styles.container}>
-            {/* background */}
-            <Image source={paperbg} style={styles.image_bg}/>
+        <Base>
             {/* main work */}
             <Text style={landing_styles.header_1}>DormDeal</Text>
             <View style={landing_styles.temp_box}>
@@ -28,18 +26,11 @@ const Landing_Page = () => {
             <View style={styles.navigation}>
                 <Nav_Button href="/" text="Home Page"></Nav_Button>
             </View>
-        </View>
+        </Base>
     );
 }
 
 const landing_styles = StyleSheet.create({ 
-    container: {
-        flex: 1,
-        backgroundColor: '#F1EEEA',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-
     header_1: {
         fontFamily: 'Bricolage Grotesque',
         fontWeight: 'bold',
@@ -71,10 +62,8 @@ const landing_styles = StyleSheet.create({
     },
 
     button_container: {
-        position: 'absolute',
-        bottom: '5%',
         margin: 'auto',
-        width: '90%',
+        width: '100%',
     },
     default_button: {
         backgroundColor: '#FFF',
