@@ -1,9 +1,15 @@
 import { StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router'
 
-const Button = ({href="/", onPress=() => (1), style={}, children=[]}) => {
+const Button = ({
+    href = "/",
+    onPress = () => (1),
+    disabled = false,
+    style = {},
+    children = [],
+}) => {
     return (
-        <Pressable onPress={onPress} style={[styles.pressable, style]}>
+        <Pressable disabled={disabled} onPress={onPress} style={[styles.pressable, style]}>
             { children }
         </Pressable>
     );

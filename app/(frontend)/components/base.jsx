@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
     },
     image_bg: {
         position: 'absolute',
-        opacity: 0.30,
+        opacity: 0.5,
         width: '100%',
         height: '100%',
     },

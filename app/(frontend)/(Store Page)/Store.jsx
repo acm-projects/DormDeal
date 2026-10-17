@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router'
 import { Animated, Dimensions, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../root_styles';
@@ -29,9 +30,10 @@ const Base_Filter_Button = ({text = "", enabled = false, onPress}) => {
 
 const Listing_Card = (props) => {
     const [isFavorite, setIsFavorite] = useState(false);
+    const router = useRouter();
 
     return (
-        <View style={styles.card}>
+        <Pressable style={styles.card} onPress={() => router.push(`/Store/Listing/Marketplace/1`)}>
             <View style={styles.cardPhoto}>
                 <View style={[
                     styles.cardPhotoHeader,
@@ -68,7 +70,7 @@ const Listing_Card = (props) => {
                     <Text style={styles.price}>{props.price}</Text>
                 </View>
             </View>
-        </View>
+        </Pressable>
     );
 };
 
@@ -101,6 +103,7 @@ const Store = () => {
     const [draftEnabled, setDraftEnabled] = useState(false);
     const { width: screenWidth } = Dimensions.get('window');
     const panelPosition = useState(new Animated.Value(screenWidth))[0];
+    const router = useRouter();
 
     useEffect(() => {
         if (activePanel) {
@@ -138,7 +141,12 @@ const Store = () => {
 
     return (
         <Base>
-            <Header1 style={{marginBottom: 30}}>marketplace</Header1>
+            <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 30}}>
+                <Header1 style={{flex: 1,marginBottom: 0}}>marketplace</Header1>
+                <Button style={styles.shopping_Cart} onPress={() => router.push('/Store/Shopping Cart')}>
+                    <Text>S</Text>
+                </Button>
+            </View>
             <View style={styles.listing_area}>
                 <View style={styles.search_overlay}>
                     <Search_Bar placeholder="What are you looking for?" />
@@ -291,6 +299,11 @@ const styles = StyleSheet.create({
         ...StyleSheet.absoluteFillObject,
         backgroundColor: 'rgba(31, 20, 20, 0.25)',
     },
+    shopping_Cart: {
+        width: 40,
+        height: 40,
+        backgroundColor: colors.white,
+    },  
     options_panel: {
         position: 'absolute',
         top: 0,
@@ -367,10 +380,6 @@ const styles = StyleSheet.create({
         backgroundColor: colors.white,
         borderRadius: 28,
         padding: 10,
-        shadowColor: colors.ink,
-        shadowOpacity: 0.12,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 4 },
         elevation: 4,
     },
     cardPhoto: {

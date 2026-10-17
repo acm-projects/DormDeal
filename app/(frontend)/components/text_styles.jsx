@@ -62,7 +62,7 @@ export const Header3 = ({children,style={}}) => {
         <Default_Text style={
             [
                 {
-                    fontWeight: 'semibold',
+                    fontWeight: '650',
                     fontSize: 24,
                     letterSpacing: '-2%',
                     marginBottom: 24,
