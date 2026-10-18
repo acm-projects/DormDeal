@@ -1,8 +1,6 @@
 import { StyleSheet, Text, View, Image, Pressable } from 'react-native';
 import { useRouter } from 'expo-router'
-import styles from '../../styles'
-
-import Logo from '../../../assets/icon.png'
+import styles from '../../root_styles'
 
 const Nav_Button = (props) => {
     const router = useRouter();
