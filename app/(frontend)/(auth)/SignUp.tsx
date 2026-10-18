@@ -1,13 +1,41 @@
+import { useState } from 'react';
 import { StyleSheet, Text, Image, View, TextInput, TouchableOpacity } from 'react-native';
-import Nav_Button from '../components/nav_button'
+import { useRouter } from 'expo-router';
 import Base from '../components/base'
 import Account_Text_Input from '../components/account_text_input'
 import { Header1, ErrorText } from '../components/text_styles'
 import line_bar from '../../../assets/svgs/line.svg'
 import line_bar2 from '../../../assets/svgs/line2.svg'
+import microsoft_logo from '../../../assets/images/microsoft.png'
+import { signInWithMicrosoft, signUpWithPassword } from '../../../lib/auth'
 import styles from '../../root_styles'
 
 const SignUp: React.FC = () => {
+    const router = useRouter();
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirm, setConfirm] = useState('');
+    const [message, setMessage] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleSignUp = async () => {
+        if (!name.trim() || !email.trim()) return setMessage('Please fill in all fields.');
+        if (password.length < 8) return setMessage('Password must be at least 8 characters.');
+        if (password !== confirm) return setMessage('Passwords do not match.');
+        try {
+            setLoading(true);
+            setMessage('');
+            const data = await signUpWithPassword(name.trim(), email.trim(), password);
+            if (data.session) router.replace('/');
+            else setMessage('Check your email to confirm your account, then log in.');
+        } catch (e: any) {
+            setMessage(e.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <Base>
             {/* actual container */}
@@ -16,33 +44,43 @@ const SignUp: React.FC = () => {
             </View>
 
             <View style={[login_styles.base_row_flex_setup]}>
-                {/* 
-                <Account_Text_Input placeholder='Username' img_source={line_bar}></Account_Text_Input>
-                <Account_Text_Input placeholder='Password' img_source={line_bar2}></Account_Text_Input>
-                <Account_Text_Input placeholder='Confirm Password' img_source={line_bar2}>
-                    <ErrorText style={login_styles.extra_text_guide}>Error Example.</ErrorText>
-                </Account_Text_Input>
-                */}
                 <View style={{flex: 1}}>
-                    <TextInput style={[login_styles.text_input]} placeholder='Username'></TextInput>
+                    <TextInput style={[login_styles.text_input]} placeholder='Username'
+                        value={name} onChangeText={setName}></TextInput>
                     <Image source={line_bar} style={[login_styles.line_bar]}/>
                 </View>
                 <View style={{flex: 1}}>
-                    <TextInput style={[login_styles.text_input]} placeholder='Password'></TextInput>
+                    <TextInput style={[login_styles.text_input]} placeholder='Email'
+                        value={email} onChangeText={setEmail}
+                        autoCapitalize='none' keyboardType='email-address'></TextInput>
                     <Image source={line_bar2} style={[login_styles.line_bar]}/>
                 </View>
                 <View style={{flex: 1}}>
-                    <TextInput style={[login_styles.text_input]} placeholder='Confirm Password'></TextInput>
+                    <TextInput style={[login_styles.text_input]} placeholder='Password'
+                        value={password} onChangeText={setPassword}
+                        secureTextEntry autoCapitalize='none'></TextInput>
                     <Image source={line_bar2} style={[login_styles.line_bar]}/>
-                    <Text style={[login_styles.extra_text_guide, {color: "#800000", fontWeight: 'bold'}]}>Error Example.</Text>
+                </View>
+                <View style={{flex: 1}}>
+                    <TextInput style={[login_styles.text_input]} placeholder='Confirm Password'
+                        value={confirm} onChangeText={setConfirm}
+                        secureTextEntry autoCapitalize='none'></TextInput>
+                    <Image source={line_bar2} style={[login_styles.line_bar]}/>
+                    {message ? (
+                        <Text style={[login_styles.extra_text_guide, {color: "#800000", fontWeight: 'bold'}]}>{message}</Text>
+                    ) : null}
                 </View>
             </View>
-            
+
             <View style={[login_styles.base_row_flex_setup, {marginTop: 25}]}>
-                <Nav_Button href="/" text="Sign Up"
-                    m_style={[login_styles.default_button, {backgroundColor: '#800000', paddingTop: 3, paddingBottom: 3}]}
-                    txt_style={{color: '#FFF', fontSize: 22, fontFamily: 'Caveat', borderBottomWidth: 0}}>
-                </Nav_Button>
+                <TouchableOpacity onPress={handleSignUp} disabled={loading}
+                    style={[login_styles.default_button, {backgroundColor: '#800000', paddingTop: 3, paddingBottom: 3, opacity: loading ? 0.6 : 1}]}>
+                    <Text style={{color: '#FFF', fontSize: 22, fontFamily: 'Caveat', textAlign: 'center'}}>Sign Up</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={signInWithMicrosoft} style={[login_styles.default_button, {marginTop: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingTop: 3, paddingBottom: 3}]}>
+                    <Image source={microsoft_logo} style={{marginRight: 5, width: 25, height: 25}}></Image>
+                    <Text style={{fontFamily: 'Caveat', fontSize: 20, textAlign: "center"}}>Microsoft Sign Up</Text>
+                </TouchableOpacity>
             </View>
         </Base>
     );
@@ -50,6 +88,7 @@ const SignUp: React.FC = () => {
 
 export default SignUp;
 
+// login_styles stays exactly as you have it
 const login_styles = StyleSheet.create({
     header_1: {
         fontFamily: 'Outfit',
@@ -77,7 +116,7 @@ const login_styles = StyleSheet.create({
     extra_text_guide: {
         textAlign: 'left',
         fontSize: 13,
-        marginTop: 5, 
+        marginTop: 5,
         fontWeight: '600',
     },
     container: {

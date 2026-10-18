@@ -1,14 +1,35 @@
+import { useState } from 'react';
 import { StyleSheet, Image, Text, View, TextInput, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Header1, ErrorText } from '../components/text_styles'
-import Nav_Button from '../components/nav_button'
-import Account_Text_Input from '../components/account_text_input'
 import Base from '../components/base'
 import microsoft_logo from '../../../assets/images/microsoft.png'
 import line_bar from '../../../assets/svgs/line.svg'
 import line_bar2 from '../../../assets/svgs/line2.svg'
+import { signInWithMicrosoft, signInWithPassword } from '../../../lib/auth'
 import styles from '../../root_styles'
 
 const Login: React.FC = () => {
+    const router = useRouter();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [message, setMessage] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleLogin = async () => {
+        if (!email.trim() || !password) return setMessage('Enter your email and password.');
+        try {
+            setLoading(true);
+            setMessage('');
+            await signInWithPassword(email.trim(), password);
+            router.replace('/');
+        } catch (e: any) {
+            setMessage(e.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <Base>
             {/* actual container */}
@@ -17,20 +38,30 @@ const Login: React.FC = () => {
             </View>
 
             <View style={[login_styles.base_row_flex_setup, {flex: 0.66, display: 'flex'}]}>
-                <Account_Text_Input img_source={line_bar} placeholder='Username'>
-                    <ErrorText style={login_styles.extra_text_guide}>Error Example.</ErrorText>
-                </Account_Text_Input>
-                <Account_Text_Input img_source={line_bar2} placeholder='Password'>
+                <View style={{flex: 1}}>
+                    <TextInput style={[login_styles.text_input]} placeholder='Email'
+                        value={email} onChangeText={setEmail}
+                        autoCapitalize='none' keyboardType='email-address'></TextInput>
+                    <Image source={line_bar} style={[login_styles.line_bar]}/>
+                    {message ? (
+                        <ErrorText style={login_styles.extra_text_guide}>{message}</ErrorText>
+                    ) : null}
+                </View>
+                <View style={{flex: 1}}>
+                    <TextInput style={[login_styles.text_input]} placeholder='Password'
+                        value={password} onChangeText={setPassword}
+                        secureTextEntry autoCapitalize='none'></TextInput>
+                    <Image source={line_bar2} style={[login_styles.line_bar]}/>
                     <Text style={[login_styles.extra_text_guide, {color: "#B26666"}]}>Forgot your password?</Text>
-                </Account_Text_Input>
+                </View>
             </View>
 
             <View style={[login_styles.base_row_flex_setup, {marginTop: 25}]}>
-                <Nav_Button href="/" text="Login"
-                    m_style={[login_styles.default_button, {backgroundColor: '#800000', paddingTop: 3, paddingBottom: 3}]}
-                    txt_style={{color: '#FFF', fontFamily: 'Caveat', fontSize: 20, borderBottomWidth: 0}}>
-                </Nav_Button>
-                <TouchableOpacity style={[login_styles.default_button, {marginTop: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingTop: 3, paddingBottom: 3}]}>
+                <TouchableOpacity onPress={handleLogin} disabled={loading}
+                    style={[login_styles.default_button, {backgroundColor: '#800000', paddingTop: 3, paddingBottom: 3, opacity: loading ? 0.6 : 1}]}>
+                    <Text style={{color: '#FFF', fontFamily: 'Caveat', fontSize: 20, textAlign: 'center'}}>Login</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={signInWithMicrosoft} style={[login_styles.default_button, {marginTop: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingTop: 3, paddingBottom: 3}]}>
                     <Image source={microsoft_logo} style={{marginRight: 5, width: 25, height: 25}}></Image>
                     <Text style={{fontFamily: 'Caveat', fontSize: 20, textAlign: "center"}}>Microsoft Login</Text>
                 </TouchableOpacity>
@@ -67,7 +98,7 @@ const login_styles = StyleSheet.create({
     },
     extra_text_guide: {
         textAlign: 'left',
-        marginTop: 5, 
+        marginTop: 5,
         fontWeight: '600',
     },
     container: {
