@@ -1,12 +1,12 @@
 import { StyleSheet, Text, View, Image } from 'react-native';
-import styles from './styles'
+import styles from './root_styles'
 import Nav_Button from './(frontend)/components/nav_button'
-
-import Logo from '../assets/icon.png'
+import Base from './(frontend)/components/base'
+import Logo from '../assets/images/icon.png'
 
 const App = () => {
     return (
-        <View style={styles.container}>
+        <Base>
             <Image source={Logo} style={styles.img}/>
             <Text style={styles.title}>This is technically: The home page.</Text>
             <View style={styles.navigation}>
@@ -18,7 +18,7 @@ const App = () => {
                 <Nav_Button href="/Settings" text="Settings Page"></Nav_Button>
                 <Nav_Button href="/Store/Listing/Marketplace/1" text="Recommended Listing Page"></Nav_Button>
             </View>
-        </View>
+        </Base>
     );
 }
 

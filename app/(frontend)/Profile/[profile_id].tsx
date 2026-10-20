@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, Image } from 'react-native';
 import Nav_Button from '../components/nav_button'
-import styles from '../../styles'
-import Logo from '../../../assets/icon.png'
+import styles from '../../root_styles'
+import Logo from '../../../assets/images/icon.png'
 
 const Profile = () => {
     return (
