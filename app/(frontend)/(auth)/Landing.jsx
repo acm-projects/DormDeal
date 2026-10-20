@@ -1,4 +1,6 @@
-import { StyleSheet, Text, View, Image } from 'react-native'
+import { StyleSheet, View, Image } from 'react-native'
+import { Header1 } from '../components/text_styles'
+import Text from '../components/text_styles'
 import Nav_Button from '../components/nav_button'
 import Base from '../components/base'
 import styles from '../../root_styles'
@@ -6,12 +8,15 @@ import styles from '../../root_styles'
 const Landing_Page = () => {
     return (
         <Base>
-            {/* main work */}
-            <Text style={landing_styles.header_1}>DormDeal</Text>
-            <View style={landing_styles.temp_box}>
-                <Text>insert useless content here.</Text>
+            <View style={{flex: 1, justifyContent: 'flex-end'}}>
+                <Header1 style={{textAlign: 'center'}}>DormDeal</Header1>
             </View>
-            <Text style={landing_styles.header_2}>Marketplace for students,<br/>by <Text style={{fontFamily: 'Gloria Hallelujah'}}>students.</Text></Text>
+            <View style={{flex: 2, alignItems: 'center', justifyContent: 'center'}}>
+                <View style={landing_styles.temp_box}>
+                    <Text>insert useless content here.</Text>
+                </View>
+                <Text style={{fontSize: 28}}>Marketplace for students,<br/>by <Text style={{fontFamily: 'Caveat', fontSize: 34, fontWeight: 'bold'}}>students.</Text></Text>
+            </View>
             <View style={landing_styles.button_container}>
                 <Nav_Button href="/Login" text="Login" 
                     m_style={[landing_styles.default_button, {backgroundColor: '#FFF'}]} 
@@ -22,27 +27,11 @@ const Landing_Page = () => {
                     txt_style={[landing_styles.default_text, {borderBottomWidth: 0, color: '#FFF'}]}>
                 </Nav_Button>
             </View>
-
-            <View style={styles.navigation}>
-                <Nav_Button href="/" text="Home Page"></Nav_Button>
-            </View>
         </Base>
     );
 }
 
 const landing_styles = StyleSheet.create({ 
-    header_1: {
-        fontFamily: 'Bricolage Grotesque',
-        fontWeight: 'bold',
-        fontSize: 40,
-    },
-
-    header_2: {
-        textAlign: 'center',
-        fontFamily: 'Outfit',
-        fontSize: 24,
-    },
-
     temp_box: {
         display: 'flex',
         alignItems: 'center',
@@ -52,7 +41,7 @@ const landing_styles = StyleSheet.create({
         marginBottom: 25,
         borderRadius: '50%',
         width: 300,
-        height: '30%',
+        height: 300,
     },
 
     default_text: {
@@ -62,8 +51,8 @@ const landing_styles = StyleSheet.create({
     },
 
     button_container: {
-        margin: 'auto',
-        width: '100%',
+        flex: 1,
+        justifyContent: 'center',
     },
     default_button: {
         backgroundColor: '#FFF',
