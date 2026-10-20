@@ -16,7 +16,6 @@ const App = () => {
                 <Nav_Button href="/Contacts" text="Contacts Page"></Nav_Button>
                 <Nav_Button href="/Profile/1" text="Profile Page"></Nav_Button>
                 <Nav_Button href="/Settings" text="Settings Page"></Nav_Button>
-                <Nav_Button href="/Store/Listing/Marketplace/1" text="Recommended Listing Page"></Nav_Button>
             </View>
         </Base>
     );
