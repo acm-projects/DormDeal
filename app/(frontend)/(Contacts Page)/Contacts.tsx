@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { Text, View, ImageBackground, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../styles';
+import { colors } from '../../root_styles';
 import TabBar from '../components/tab_bar';
 import { chats, Chat } from '../../../data/chats';
 
-import PaperBg from '../../../assets/paper_bg.png';
+import PaperBg from '../../../assets/images/paper_bg.png';
 
 // one row in the chat list
 const ChatRow = (props: { chat: Chat; onPress: () => void }) => {
