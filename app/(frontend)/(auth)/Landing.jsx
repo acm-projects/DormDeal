@@ -1,20 +1,52 @@
-import { StyleSheet, View, Image } from 'react-native'
+import { useEffect, useRef } from 'react'
+import { StyleSheet, View, Animated, Easing } from 'react-native'
 import { Header1 } from '../components/text_styles'
 import Text from '../components/text_styles'
 import Nav_Button from '../components/nav_button'
 import Base from '../components/base'
 import styles from '../../root_styles'
+import earth from '../../../assets/images/earth.png'
 
 const Landing_Page = () => {
+    const spin = useRef(new Animated.Value(0)).current
+
+    useEffect(() => {
+        const animation = Animated.loop(
+            Animated.timing(spin, {
+                toValue: 1,
+                duration: 30000,
+                easing: Easing.linear,
+                useNativeDriver: false,
+            }),
+        )
+
+        animation.start()
+
+        return () => animation.stop()
+    }, [spin])
+
     return (
         <Base>
             <View style={{flex: 1, justifyContent: 'flex-end'}}>
                 <Header1 style={{textAlign: 'center'}}>DormDeal</Header1>
             </View>
             <View style={{flex: 2, alignItems: 'center', justifyContent: 'center'}}>
-                <View style={landing_styles.temp_box}>
-                    <Text>insert useless content here.</Text>
-                </View>
+                <Animated.Image
+                    source={earth}
+                    style={{
+                        aspectRatio: 1,
+                        width: 'auto',
+                        height: '75%',
+                        marginTop: 25,
+                        marginBottom: 25,
+                        transform: [{
+                            rotate: spin.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: ['0deg', '-360deg'],
+                            }),
+                        }],
+                    }}
+                />
                 <Text style={{fontSize: 28}}>Marketplace for students,<br/>by <Text style={{fontFamily: 'Caveat', fontSize: 34, fontWeight: 'bold'}}>students.</Text></Text>
             </View>
             <View style={landing_styles.button_container}>
@@ -40,8 +72,7 @@ const landing_styles = StyleSheet.create({
         marginTop: 25,
         marginBottom: 25,
         borderRadius: '50%',
-        width: 300,
-        height: 300,
+        
     },
 
     default_text: {
