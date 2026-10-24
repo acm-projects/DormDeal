@@ -355,7 +355,7 @@ const Join_Page = () => {
             {page_number == PAGES.READY && <View>
                 <Header2 style={{marginBottom: 15}}>Ready {name}?</Header2>
                 <Text>Be a part of a trusted community.</Text> 
-                <Button onPress={() => {router.push('/')}}><Text>Let's Go!</Text></Button>
+                <Button onPress={() => {router.push('/home')}}><Text>Let's Go!</Text></Button>
             </View>}
         </Base>
     );
