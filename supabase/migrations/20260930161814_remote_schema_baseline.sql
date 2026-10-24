@@ -1,0 +1,3 @@
+-- Baseline marker for the marketplace schema that is already applied remotely.
+-- The original schema source is retained at:
+-- unused/supabase/migrations/20260930161814_initial_marketplace_schema.sql
