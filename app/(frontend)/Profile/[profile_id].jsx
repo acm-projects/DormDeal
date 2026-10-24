@@ -61,12 +61,12 @@ const Listing_Card = (props) => {
 const Profile = () => {
     return (
         <Base>
-            <View style={{flexDirection: 'row'}}>
+            <View style={{flexDirection: 'row', justifyContent: 'flex-start'}}>
                 <View>
                     <Image source={Profile_Picture} style={{width: 150, height: 150, borderRadius: '50%'}}></Image>
                 </View>
                 <View style={{justifyContent: 'center', alignItems: 'flex-start', marginLeft: 10}}>
-                    <Text style={{fontFamily: 'Caveat', fontSize: 28, fontWeight: 1000, color: '#800000', marginBottom: 10}}>Minh Do (Larp Version)</Text>
+                    <Text style={{fontFamily: 'Caveat', fontSize: 28, fontWeight: 1000, color: '#800000', marginBottom: 10}}>Minh Do</Text>
                     <View style={{flexDirection: 'row', gap: 5}}>
                         <Image source={Star} style={{width: 25, height: 25}}/>
                         <Image source={Star} style={{width: 25, height: 25}}/>
@@ -77,7 +77,7 @@ const Profile = () => {
                     </View>
                 </View>
             </View>
-            <View style={{marginTop: 30, alignItems: 'center', textAlign: 'center'}}>
+            <View style={{flex: 1, marginTop: 30, alignItems: 'center', textAlign: 'center'}}>
                 <Header1 style={{fontSize: 30, marginBottom: 15}}>Current Listings</Header1>
                 <ScrollView contentContainerStyle={{gap: 15}}>
                     <Row>
@@ -100,6 +100,7 @@ const Profile = () => {
                         <Listing_Card title={"see you got me"} seller={"sell"} initials={"MD"} price={"$67"}></Listing_Card>
                         <Listing_Card title={"see you got me"} seller={"sell"} initials={"MD"} price={"$67"}></Listing_Card>
                     </Row>
+                    <End_Row/>
                 </ScrollView>
             </View>
             <TabBar active="profile"/>
