@@ -142,16 +142,20 @@ const Store = () => {
     return (
         <Base>
             <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 30}}>
-                <Header1 style={{flex: 1,marginBottom: 0}}>marketplace</Header1>
+                <Header1 style={{flex: 1,marginBottom: 0}}>catalog</Header1>
                 <Button style={styles.shopping_Cart} onPress={() => router.push('/Store/Shopping Cart')}>
                     <Text>S</Text>
                 </Button>
             </View>
             <View style={styles.listing_area}>
                 <View style={styles.search_overlay}>
+                    <View style={{marginLeft: 22, flexDirection: 'row', gap: 5}}>
+                        <Button style={{height: 40, width: 'auto', paddingHorizontal: 10, paddingTop: 3, borderRadius: 10, marginBottom: -10, boxShadow: '', backgroundColor: colors.maroonLight, justifyContent: 'flex-start'}}><Text selectable={false} style={{color: colors.white}}>Marketplace</Text></Button>
+                        <Button style={{height: 40, width: 'auto', paddingHorizontal: 10, paddingTop: 3, borderRadius: 10, marginBottom: -10, boxShadow: '', backgroundColor: colors.maroonDark, justifyContent: 'flex-start'}}><Text selectable={false} style={{color: colors.white}}>Services</Text></Button>
+                    </View>
                     <Search_Bar placeholder="What are you looking for?" />
                 </View>
-                <ScrollView contentContainerStyle={styles.marketplace_listing_container} style={{marginTop: 22.5}} showsVerticalScrollIndicator={false}>
+                <ScrollView contentContainerStyle={styles.marketplace_listing_container} style={{marginTop: 48}} showsVerticalScrollIndicator={false}>
                     <ScrollView contentContainerStyle={styles.filter_container} showsHorizontalScrollIndicator={false}>
                         <Button
                             style={[[styles.filter_button,{backgroundColor: "#D4D4D4"}], enabledFilters.filter && styles.enabled_filter_button]}
@@ -282,7 +286,7 @@ const styles = StyleSheet.create({
     },
 
     marketplace_listing_container: {
-        paddingTop: 37.5,
+        paddingTop: 43,
         gap: 15,
     },
     marketplace_listing_row: {
