@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router'
 import { Animated, Dimensions, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../root_styles';
 import { Header1, Header4 } from '../../components/text_styles';
 import Text from '../../components/text_styles';
