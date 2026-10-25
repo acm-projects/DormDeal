@@ -1,10 +1,11 @@
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Text, View, ImageBackground, StyleSheet, ScrollView, Pressable, Animated, PanResponder } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../root_styles';
 import TabBar from '../components/tab_bar';
 import { items } from '../../../data/items';
+import { formatCategory, recordListingInteraction, RecommendedListing } from '../../../lib/recommendations';
 
 import PaperBg from '../../../assets/images/paper_bg.png';
 
@@ -35,6 +36,8 @@ type RecCardProps = {
     seller: string;
     initials: string;
     price: string;
+    category: string;
+    reason?: string;
 };
 
 // one card, reused for every item
@@ -42,6 +45,9 @@ const RecCard = (props: RecCardProps) => {
     return (
         <View style={home.card}>
             <View style={home.cardPhoto} />
+            <View style={home.categoryBadge}>
+                <Text style={home.categoryBadgeText}>{props.category}</Text>
+            </View>
             <View style={home.cardInfo}>
                 <View style={home.cardLeft}>
                     <Text style={home.cardTitle} numberOfLines={1}>{props.title}</Text>
@@ -57,19 +63,40 @@ const RecCard = (props: RecCardProps) => {
                     <Text style={home.price}>{props.price}</Text>
                 </View>
             </View>
+            {props.reason ? <Text style={home.reason}>{props.reason}</Text> : null}
         </View>
     );
 };
 
 // the deck: tap top card to open it, swipe it to send it to the back
-const CardStack = () => {
-    const [deck, setDeck] = useState(items);
+type FeedListing = {
+    id: string;
+    title: string;
+    seller: string;
+    initials: string;
+    price: string;
+    category: string;
+    reason?: string;
+    isLive: boolean;
+    liveListingId?: number;
+};
+
+const fallbackListings: FeedListing[] = items.map((item) => ({
+    ...item,
+    isLive: false,
+}));
+
+const CardStack = ({ listings }: { listings: FeedListing[] }) => {
+    const [deck, setDeck] = useState(listings);
+    const deckRef = useRef(listings);
     const router = useRouter();
     const position = useRef(new Animated.ValueXY()).current; // where the top card is being dragged
 
-    const sendToBack = () => {
-        setDeck((current) => [...current.slice(1), current[0]]);
-    };
+    useEffect(() => {
+        setDeck(listings);
+        deckRef.current = listings;
+        position.setValue({ x: 0, y: 0 });
+    }, [listings, position]);
 
     const swipe = useRef(
         PanResponder.create({
@@ -86,13 +113,21 @@ const CardStack = () => {
             // finger lifted
             onPanResponderRelease: (_, g) => {
                 if (Math.abs(g.dx) > 100) {
+                    const dismissed = deckRef.current[0];
+                    if (dismissed?.isLive) {
+                        recordListingInteraction(dismissed.liveListingId!, 'dismiss').catch(() => undefined);
+                    }
                     // flung far enough: fly off screen, then move to back
                     Animated.timing(position, {
                         toValue: { x: g.dx > 0 ? 500 : -500, y: g.dy },
                         duration: 200,
                         useNativeDriver: false,
                     }).start(() => {
-                        sendToBack();
+                        setDeck((current) => {
+                            const next = [...current.slice(1), current[0]];
+                            deckRef.current = next;
+                            return next;
+                        });
                         position.setValue({ x: 0, y: 0 }); // reset for the next card
                     });
                 } else {
@@ -123,6 +158,8 @@ const CardStack = () => {
                         seller={item.seller}
                         initials={item.initials}
                         price={item.price}
+                        category={item.category}
+                        reason={item.reason}
                     />
                 );
 
@@ -222,17 +259,6 @@ const Home = () => {
                 </View>
 
                 <View style={home.sectionRow}>
-                    <Text style={home.sectionTitle}>Recommended</Text>
-                    <Text style={home.sectionNote}>just for you!</Text>
-                    <Pressable style={home.seeAll}>
-                        <Text style={home.seeAllText}>See all</Text>
-                    </Pressable>
-                </View>
-
-                <CardStack />
-                <Text style={home.swipeHint}>swipe for more →</Text>
-
-                <View style={home.sectionRow}>
                     <Text style={home.sectionTitle}>Upcoming pickups</Text>
 
                     <View style={home.toggle}>
@@ -266,6 +292,23 @@ const Home = () => {
         </ImageBackground>
     );
 };
+
+function toFeedListing(listing: RecommendedListing): FeedListing {
+    const words = listing.seller_name.trim().split(/\s+/);
+    const initials = words.slice(0, 2).map((word) => word[0]?.toUpperCase()).join('') || '?';
+
+    return {
+        id: `live-${listing.listing_id}`,
+        title: listing.title,
+        seller: listing.seller_name,
+        initials,
+        price: `$${Number(listing.price).toFixed(2)}`,
+        category: formatCategory(listing.category),
+        reason: listing.recommendation_reason,
+        isLive: true,
+        liveListingId: listing.listing_id,
+    };
+}
 
 const home = StyleSheet.create({
     screen: {
@@ -375,6 +418,21 @@ const home = StyleSheet.create({
             inset: true,
         }],
     },
+    categoryBadge: {
+        position: 'absolute',
+        top: 24,
+        left: 24,
+        borderRadius: 14,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        backgroundColor: colors.white,
+    },
+    categoryBadgeText: {
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontSize: 12,
+        fontWeight: '700',
+    },
     cardInfo: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -419,6 +477,13 @@ const home = StyleSheet.create({
     },
     cardRight: {
         alignItems: 'flex-end',
+    },
+    reason: {
+        color: colors.muted,
+        fontFamily: 'Outfit',
+        fontSize: 12,
+        paddingHorizontal: 4,
+        paddingBottom: 8,
     },
     priceLabel: {
         fontSize: 12,
@@ -534,6 +599,46 @@ const home = StyleSheet.create({
         color: colors.muted,
         textAlign: 'center',
         marginTop: 4,
+    },
+    preferencePanel: {
+        backgroundColor: colors.white,
+        borderRadius: 16,
+        marginBottom: 12,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+    },
+    preferenceLabel: {
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontSize: 11,
+        fontWeight: '700',
+        letterSpacing: 0.5,
+        textTransform: 'uppercase',
+    },
+    preferenceText: {
+        color: colors.ink,
+        fontFamily: 'Outfit',
+        fontSize: 13,
+        marginTop: 3,
+    },
+    coldStartText: {
+        color: colors.muted,
+        fontFamily: 'Outfit',
+        fontSize: 13,
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    loadingRecommendations: {
+        alignItems: 'center',
+        height: 390,
+        justifyContent: 'center',
+    },
+    recommendationError: {
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontSize: 12,
+        marginTop: 8,
+        textAlign: 'center',
     },
 });
 

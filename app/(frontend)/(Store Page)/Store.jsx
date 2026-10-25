@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router'
-import { Animated, Dimensions, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Animated, Dimensions, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../root_styles';
 import { Header1 } from '../components/text_styles';
@@ -11,6 +11,11 @@ import Search_Bar from '../components/search_bar';
 import TabBar from '../components/tab_bar';
 import Filter_Image from '../../../assets/svgs/filter.svg';
 import Sort_Image from '../../../assets/svgs/sort.svg';
+import {
+    formatCategory,
+    getCategoryPreferences,
+    getRecommendations,
+} from '../../../lib/recommendations';
 
 const Base_Filter_Button = ({text = "", enabled = false, onPress}) => {
     return (
@@ -33,7 +38,7 @@ const Listing_Card = (props) => {
     const router = useRouter();
 
     return (
-        <Pressable style={styles.card} onPress={() => router.push(`/Store/Listing/Marketplace/1`)}>
+        <Pressable style={styles.card} onPress={() => router.push(`/Store/Listing/Marketplace/live-${props.id}`)}>
             <View style={styles.cardPhoto}>
                 <View style={[
                     styles.cardPhotoHeader,
@@ -70,6 +75,7 @@ const Listing_Card = (props) => {
                     <Text style={styles.price}>{props.price}</Text>
                 </View>
             </View>
+            <Text style={styles.cardCategory}>{props.category}</Text>
         </Pressable>
     );
 };
@@ -104,6 +110,16 @@ const Store = () => {
     const { width: screenWidth } = Dimensions.get('window');
     const panelPosition = useState(new Animated.Value(screenWidth))[0];
     const router = useRouter();
+    const [listings, setListings] = useState([]);
+    const [preferences, setPreferences] = useState([]);
+    const [loadingListings, setLoadingListings] = useState(true);
+    const [listingError, setListingError] = useState(null);
+
+    const hasUserFilters = enabledFilters.Budget
+        || enabledFilters.Convenience
+        || enabledFilters.Distance
+        || enabledFilters.filter
+        || enabledFilters.sort;
 
     useEffect(() => {
         if (activePanel) {
@@ -114,6 +130,34 @@ const Store = () => {
             }).start();
         }
     }, [activePanel, panelPosition]);
+
+    useEffect(() => {
+        let active = true;
+
+        const loadListings = async () => {
+            setLoadingListings(true);
+            setListingError(null);
+
+            try {
+                const recommendedListings = await getRecommendations(50);
+                const learnedPreferences = await getCategoryPreferences().catch(() => []);
+
+                if (active) {
+                    setListings(recommendedListings);
+                    setPreferences(learnedPreferences);
+                }
+            } catch (error) {
+                if (active) {
+                    setListingError(error instanceof Error ? error.message : 'Could not load listings. Please sign in and try again.');
+                }
+            } finally {
+                if (active) setLoadingListings(false);
+            }
+        };
+
+        loadListings();
+        return () => { active = false; };
+    }, []);
 
     const openPanel = (panel) => {
         setDraftEnabled(true);
@@ -187,18 +231,49 @@ const Store = () => {
                             onPress={() => setEnabledFilters((current) => ({ ...current, Distance: !current.Distance }))}
                         />
                     </ScrollView>
-                    <Row>
-                        <Listing_Card title={"see you got me"} seller={"sell"} initials={"MD"} price={"$67"} status="Trending"></Listing_Card>
-                        <Listing_Card title={"see you got me"} seller={"sell"} initials={"MD"} price={"$67"}></Listing_Card>
-                    </Row>
-                    <Row>
-                        <Listing_Card title={"see you got me"} seller={"sell"} initials={"MD"} price={"$67"}></Listing_Card>
-                        <Listing_Card title={"see you got me"} seller={"sell"} initials={"MD"} price={"$67"}></Listing_Card>
-                    </Row>
-                    <Row>
-                        <Listing_Card title={"see you got me"} seller={"sell"} initials={"MD"} price={"$67"}></Listing_Card>
-                        <Listing_Card title={"see you got me"} seller={"sell"} initials={"MD"} price={"$67"}></Listing_Card>
-                    </Row>
+                    {!hasUserFilters && (
+                        <View style={styles.personalizationNote}>
+                            <Text style={styles.personalizationTitle}>Picked for you</Text>
+                            <Text style={styles.personalizationText}>
+                                {preferences.length > 0
+                                    ? `Based on ${preferences.slice(0, 3).map((preference) => formatCategory(preference.category)).join(', ')}`
+                                    : 'Personalized automatically as you browse listings'}
+                            </Text>
+                        </View>
+                    )}
+                    {loadingListings ? (
+                        <View style={styles.loadingListings}>
+                            <ActivityIndicator color={colors.maroon} />
+                        </View>
+                    ) : listingError ? (
+                        <Text style={styles.listingMessage}>{listingError}</Text>
+                    ) : listings.length === 0 ? (
+                        <Text style={styles.listingMessage}>No active listings are available.</Text>
+                    ) : (
+                        Array.from({ length: Math.ceil(listings.length / 2) }, (_, rowIndex) => (
+                            <Row key={rowIndex}>
+                                {listings.slice(rowIndex * 2, rowIndex * 2 + 2).map((listing) => {
+                                    const sellerWords = listing.seller_name.trim().split(/\s+/);
+                                    const sellerInitials = sellerWords.slice(0, 2)
+                                        .map((word) => word[0]?.toUpperCase())
+                                        .join('') || '?';
+
+                                    return (
+                                        <Listing_Card
+                                            key={listing.listing_id}
+                                            id={listing.listing_id}
+                                            title={listing.title}
+                                            seller={listing.seller_name}
+                                            initials={sellerInitials}
+                                            price={`$${Number(listing.price).toFixed(2)}`}
+                                            category={formatCategory(listing.category)}
+                                            status={!hasUserFilters ? 'For you' : undefined}
+                                        />
+                                    );
+                                })}
+                            </Row>
+                        ))
+                    )}
                     <End_Row/>
                 </ScrollView>
             </View>
@@ -293,6 +368,36 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         gap: 15,
+    },
+    personalizationNote: {
+        backgroundColor: colors.white,
+        borderRadius: 16,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+    },
+    personalizationTitle: {
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontSize: 13,
+        fontWeight: '700',
+    },
+    personalizationText: {
+        color: colors.muted,
+        fontFamily: 'Outfit',
+        fontSize: 12,
+        marginTop: 2,
+    },
+    loadingListings: {
+        alignItems: 'center',
+        minHeight: 220,
+        justifyContent: 'center',
+    },
+    listingMessage: {
+        color: colors.muted,
+        fontFamily: 'Outfit',
+        fontSize: 14,
+        paddingVertical: 40,
+        textAlign: 'center',
     },
     panel_layer: {
         ...StyleSheet.absoluteFillObject,
@@ -475,5 +580,12 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: colors.maroon,
         fontFamily: 'Outfit',
+    },
+    cardCategory: {
+        color: colors.muted,
+        fontFamily: 'Outfit',
+        fontSize: 11,
+        paddingBottom: 4,
+        paddingHorizontal: 4,
     },
 });
