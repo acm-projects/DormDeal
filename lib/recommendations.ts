@@ -53,7 +53,8 @@ export async function recordListingInteraction(
   if (error) throw error;
 }
 
-export function formatCategory(category: string) {
+export function formatCategory(category: string | null | undefined) {
+  if (!category) return 'Other';
   return category
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
