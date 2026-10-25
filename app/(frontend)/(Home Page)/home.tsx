@@ -197,7 +197,7 @@ const CardStack = ({ listings }: { listings: FeedListing[] }) => {
                             {
                                 zIndex: deck.length - index,
                                 transform: [
-                                    { translateX: index * 22 },     // peek out to the right
+                                    { translateX: index * 35 },     // peek out to the right
                                     { scale: 1 - index * 0.04 },    // a bit smaller further back
                                 ],
                             },
@@ -399,16 +399,24 @@ const home = StyleSheet.create({
         backgroundColor: colors.white,
         borderRadius: 30,
         padding: 14, // thick white border, polaroid style
-        shadowColor: colors.ink,
-        shadowOpacity: 0.12,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 4, // shadow on android
+        boxShadow: [{
+            offsetX: 0,
+            offsetY: 0,
+            blurRadius: 10,
+            color: 'rgba(0,0,0,0.25)',
+        }],
     },
     cardPhoto: {
         height: 260,
         borderRadius: 22,
         backgroundColor: colors.maroon, // placeholder until real photos
+        boxShadow: [{
+            offsetX: 0,
+            offsetY: 0,
+            blurRadius: 4,
+            color: 'rgba(0,0,0,1)',
+            inset: true,
+        }],
     },
     categoryBadge: {
         position: 'absolute',
