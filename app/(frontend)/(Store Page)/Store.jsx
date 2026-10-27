@@ -202,14 +202,14 @@ const Store = () => {
                 <ScrollView contentContainerStyle={styles.marketplace_listing_container} style={{marginTop: 48}} showsVerticalScrollIndicator={false}>
                     <ScrollView contentContainerStyle={styles.filter_container} showsHorizontalScrollIndicator={false}>
                         <Button
-                            style={[[styles.filter_button,{backgroundColor: "#D4D4D4"}], enabledFilters.filter && styles.enabled_filter_button]}
+                            style={[[styles.filter_button,{backgroundColor: "#D4D4D4", border: '1px solid #c0c0c0',}], enabledFilters.filter && styles.enabled_filter_button]}
                             onPress={() => openPanel('filter')}
                             accessibilityLabel="Open filter options"
                         >
                             <Image source={Filter_Image}/>
                         </Button>
                         <Button
-                            style={[[styles.filter_button,{backgroundColor: "#D4D4D4"}], enabledFilters.sort && styles.enabled_filter_button]}
+                            style={[[styles.filter_button,{backgroundColor: "#D4D4D4", border: '1px solid #c0c0c0',}], enabledFilters.sort && styles.enabled_filter_button]}
                             onPress={() => openPanel('sort')}
                             accessibilityLabel="Open sort options"
                         >
@@ -315,7 +315,7 @@ const Store = () => {
                 </View>
             )}
 
-            <TabBar active="search" />
+            <TabBar active="catalog" />
         </Base>
     );
 }
@@ -341,9 +341,9 @@ const styles = StyleSheet.create({
         gap: 5,
     },
     filter_button: {
-        boxShadow: '',
         height: 25,
         borderRadius: 25,
+        border: '1px solid #CCCCCC',
         width: 'auto',
         paddingLeft: 10,
         paddingRight: 10,
