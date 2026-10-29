@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router'
-import { ActivityIndicator, Animated, Dimensions, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Animated, Dimensions, Image, LayoutAnimation, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../root_styles';
 import { Header1 } from '../components/text_styles';
@@ -11,6 +11,16 @@ import Search_Bar from '../components/search_bar';
 import TabBar from '../components/tab_bar';
 import Filter_Image from '../../../assets/svgs/filter.svg';
 import Sort_Image from '../../../assets/svgs/sort.svg';
+import Sort_Up_Image from '../../../assets/svgs/sort_up.svg';
+import Sort_Down_Image from '../../../assets/svgs/sort_down.svg';
+import No_Sort_Image from '../../../assets/svgs/no_sort.svg';
+import Furniture_Image from '../../../assets/svgs/furniture.svg';
+import Electronics_Image from '../../../assets/svgs/electronics.svg';
+import Textbooks_Image from '../../../assets/svgs/textbooks.svg';
+import Clothing_Image from '../../../assets/svgs/clothing.svg';
+import Budget_Image from '../../../assets/svgs/budget.svg';
+import Convenience_Image from '../../../assets/svgs/convenience.svg';
+import Distance_Image from '../../../assets/svgs/distance.svg';
 import {
     formatCategory,
     getCategoryPreferences,
@@ -32,6 +42,326 @@ const Base_Filter_Button = ({text = "", enabled = false, onPress}) => {
         </Button>
     );
 }
+
+const Filter_Option = ({
+    backgroundColor = colors.blush,
+    image,
+    text,
+    enabled = false,
+    onPress,
+}) => {
+    return (
+        <Pressable
+            style={[styles.sample_filter, enabled && styles.enabled_sample_filter]}
+            onPress={onPress ? () => onPress(text) : undefined}
+            accessibilityLabel={`Filter by ${text}`}
+            testID={text}
+        >
+            {image && (
+                <View style={[styles.sample_filter_image_container, {backgroundColor: enabled ? colors.maroon : backgroundColor}]}>
+                    <Image source={image} style={styles.sample_filter_image} />
+                </View>
+            )}
+            <Text
+                style={[styles.sample_filter_text, enabled && styles.enabled_sample_filter_text]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+            >
+                {text}
+            </Text>
+        </Pressable>
+    );
+};
+
+const Filter_Panel = ({filterOptions, onToggle, onClose, onApply, onReset}) => {
+    const filterOptionsByRow = [
+        {image: Furniture_Image, text: 'Furniture'},
+        {image: Textbooks_Image, text: 'Textbooks'},
+        {image: Budget_Image, text: 'Budget'},
+        {image: Distance_Image, text: 'Distance'},
+        {image: Electronics_Image, text: 'Electronics'},
+        {image: Clothing_Image, text: 'Clothing'},
+        {image: Convenience_Image, text: 'Convenience'},
+    ];
+
+    return (
+        <>
+            <View style={styles.options_header}>
+                <Text
+                    style={styles.options_title}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.7}
+                >
+                    Filter options
+                </Text>
+                <Pressable onPress={onClose} style={styles.close_button} accessibilityLabel="Close options">
+                    <Ionicons name="close" size={28} color={colors.ink} />
+                </Pressable>
+            </View>
+            <Text style={styles.options_description}>
+                Choose your marketplace filters.
+            </Text>
+            <ScrollView style={styles.filter_panel_grid} showsVerticalScrollIndicator={false}>
+                {Array.from({length: Math.ceil(filterOptionsByRow.length / 2)}, (_, rowIndex) => (
+                    <View key={rowIndex} style={styles.filter_panel_grid_row}>
+                        {filterOptionsByRow.slice(rowIndex * 2, rowIndex * 2 + 2).map((option) => (
+                            <Filter_Option
+                                key={option.text}
+                                image={option.image}
+                                text={option.text}
+                                enabled={filterOptions[option.text]}
+                                onPress={onToggle}
+                            />
+                        ))}
+                    </View>
+                ))}
+            </ScrollView>
+            <View style={styles.options_actions}>
+                <Button style={styles.apply_button} onPress={onApply}>
+                    <Text style={styles.apply_button_text}>Apply changes</Text>
+                </Button>
+                <Button style={styles.reset_button} onPress={onReset}>
+                    <Text style={styles.reset_button_text}>Reset changes</Text>
+                </Button>
+            </View>
+        </>
+    );
+};
+
+const Sort_Option = ({id, image, selected, onPress, onLayout}) => {
+    const labelOpacity = useState(new Animated.Value(0))[0];
+    const labelPosition = useState(new Animated.Value(-10))[0];
+    const iconPosition = useState(new Animated.Value(0))[0];
+
+    useEffect(() => {
+        if (selected) {
+            labelPosition.setValue(-10);
+            Animated.parallel([
+                Animated.timing(labelOpacity, {
+                    toValue: 1,
+                    duration: 180,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(labelPosition, {
+                    toValue: 14,
+                    duration: 180,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(iconPosition, {
+                    toValue: -10,
+                    duration: 180,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        } else {
+            Animated.parallel([
+                Animated.timing(labelOpacity, {
+                    toValue: 0,
+                    duration: 180,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(iconPosition, {
+                    toValue: 0,
+                    duration: 180,
+                    useNativeDriver: true,
+                }),
+            ]).start(({finished}) => {
+                if (!finished) return;
+
+                labelPosition.setValue(-10);
+            });
+        }
+    }, [iconPosition, labelOpacity, labelPosition, selected]);
+
+    return (
+        <Pressable
+            style={[styles.sort_option, selected && styles.selected_sort_option]}
+            onPress={onPress}
+            onLayout={onLayout}
+            accessibilityLabel={`Sort ${id}`}
+        >
+            <Animated.Image
+                source={image}
+                style={[
+                    styles.sort_option_image,
+                    {transform: [{translateY: iconPosition}]},
+                ]}
+            />
+            <Animated.Text
+                style={[
+                    styles.sort_option_label,
+                    {
+                        opacity: labelOpacity,
+                        transform: [{translateY: labelPosition}],
+                    },
+                ]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.6}
+            >
+                {id}
+            </Animated.Text>
+        </Pressable>
+    );
+};
+
+const Sort_Checkbox_Option = ({text, enabled = false, onToggle}) => {
+    return (
+        <Pressable
+            style={styles.sort_option_row}
+            onPress={onToggle}
+            accessibilityRole="checkbox"
+            accessibilityState={{checked: enabled}}
+        >
+            <Ionicons
+                name={enabled ? 'checkbox' : 'square-outline'}
+                size={24}
+                color="#000000"
+            />
+            <Text style={styles.sort_option_row_text}>{text}</Text>
+        </Pressable>
+    );
+};
+
+const Sort_Panel = ({onClose}) => {
+    const [selectedSort, setSelectedSort] = useState('Unsorted');
+    const [sortOptionsEnabled, setSortOptionsEnabled] = useState({
+        Name: false,
+        Seller: false,
+        Relevance: false,
+        Price: false,
+        'Date Published': false,
+    });
+    const [sortLayouts, setSortLayouts] = useState({});
+    const highlightPosition = useState(new Animated.Value(0))[0];
+    const highlightWidth = useState(new Animated.Value(0))[0];
+    const sortOptions = [
+        {id: 'Ascending', image: Sort_Up_Image},
+        {id: 'Descending', image: Sort_Down_Image},
+        {id: 'Unsorted', image: No_Sort_Image},
+    ];
+
+    const selectSort = (sortId) => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setSelectedSort(sortId);
+    };
+
+    const resetSortOptions = () => {
+        setSelectedSort('Unsorted');
+        setSortOptionsEnabled({
+            Name: false,
+            Seller: false,
+            Relevance: false,
+            Price: false,
+            'Date Published': false,
+        });
+    };
+
+    useEffect(() => {
+        const selectedLayout = sortLayouts[selectedSort];
+        if (!selectedLayout) return;
+
+        Animated.parallel([
+            Animated.timing(highlightPosition, {
+                toValue: selectedLayout.x,
+                duration: 180,
+                useNativeDriver: false,
+            }),
+            Animated.timing(highlightWidth, {
+                toValue: selectedLayout.width,
+                duration: 180,
+                useNativeDriver: false,
+            }),
+        ]).start();
+    }, [highlightPosition, highlightWidth, selectedSort, sortLayouts]);
+
+    return (
+        <>
+            <View style={styles.options_header}>
+                <Text
+                    style={styles.options_title}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.7}
+                >
+                    Sort options
+                </Text>
+                <Pressable onPress={onClose} style={styles.close_button} accessibilityLabel="Close options">
+                    <Ionicons name="close" size={28} color={colors.ink} />
+                </Pressable>
+            </View>
+            <Text style={styles.options_description}>
+                Choose how marketplace listings are sorted.
+            </Text>
+            <View style={styles.sort_options}>
+                <Animated.View
+                    style={[
+                        styles.sort_option_highlight,
+                        {
+                            left: highlightPosition,
+                            width: highlightWidth,
+                            pointerEvents: "none"
+                        },
+                    ]}
+                />
+                {sortOptions.map((option) => (
+                    <Sort_Option
+                        key={option.id}
+                        id={option.id}
+                        image={option.image}
+                        selected={selectedSort === option.id}
+                        onPress={() => selectSort(option.id)}
+                        onLayout={(event) => {
+                            const {x, width} = event.nativeEvent.layout;
+                            setSortLayouts((current) => ({
+                                ...current,
+                                [option.id]: {x, width},
+                            }));
+                        }}
+                    />
+                ))}
+            </View>
+            <ScrollView style={{marginVertical: 24}}>
+                <Sort_Checkbox_Option
+                    text="Name"
+                    enabled={sortOptionsEnabled.Name}
+                    onToggle={() => setSortOptionsEnabled((current) => ({...current, Name: !current.Name}))}
+                />
+                <Sort_Checkbox_Option
+                    text="Seller"
+                    enabled={sortOptionsEnabled.Seller}
+                    onToggle={() => setSortOptionsEnabled((current) => ({...current, Seller: !current.Seller}))}
+                />
+                <Sort_Checkbox_Option
+                    text="Relevance"
+                    enabled={sortOptionsEnabled.Relevance}
+                    onToggle={() => setSortOptionsEnabled((current) => ({...current, Relevance: !current.Relevance}))}
+                />
+                <Sort_Checkbox_Option
+                    text="Price"
+                    enabled={sortOptionsEnabled.Price}
+                    onToggle={() => setSortOptionsEnabled((current) => ({...current, Price: !current.Price}))}
+                />
+                <Sort_Checkbox_Option
+                    text="Date Published"
+                    enabled={sortOptionsEnabled['Date Published']}
+                    onToggle={() => setSortOptionsEnabled((current) => ({
+                        ...current,
+                        'Date Published': !current['Date Published'],
+                    }))}
+                />
+            </ScrollView>
+            <View style={styles.options_actions}>
+                <Button style={styles.apply_button} onPress={onClose}>
+                    <Text style={styles.apply_button_text}>Apply changes</Text>
+                </Button>
+                <Button style={styles.reset_button} onPress={resetSortOptions}>
+                    <Text style={styles.reset_button_text}>Reset changes</Text>
+                </Button>
+            </View>
+        </>
+    );
+};
 
 const Listing_Card = (props) => {
     const [isFavorite, setIsFavorite] = useState(false);
@@ -102,11 +432,15 @@ const Store = () => {
         Budget: false,
         Convenience: false,
         Distance: false,
+        Furniture: false,
+        Electronics: false,
+        Textbooks: false,
+        Clothing: false,
         filter: false,
         sort: false,
     });
     const [activePanel, setActivePanel] = useState(null);
-    const [draftEnabled, setDraftEnabled] = useState(false);
+    const [draftFilterOptions, setDraftFilterOptions] = useState({});
     const { width: screenWidth } = Dimensions.get('window');
     const panelPosition = useState(new Animated.Value(screenWidth))[0];
     const router = useRouter();
@@ -118,8 +452,18 @@ const Store = () => {
     const hasUserFilters = enabledFilters.Budget
         || enabledFilters.Convenience
         || enabledFilters.Distance
+        || enabledFilters.Furniture
+        || enabledFilters.Electronics
+        || enabledFilters.Textbooks
+        || enabledFilters.Clothing
         || enabledFilters.filter
         || enabledFilters.sort;
+
+    const categoryFilters = ['Furniture', 'Electronics', 'Textbooks', 'Clothing'];
+    const selectedCategories = categoryFilters.filter((category) => enabledFilters[category]);
+    const visibleListings = selectedCategories.length === 0
+        ? listings
+        : listings.filter((listing) => selectedCategories.includes(formatCategory(listing.category)));
 
     useEffect(() => {
         if (activePanel) {
@@ -160,7 +504,17 @@ const Store = () => {
     }, []);
 
     const openPanel = (panel) => {
-        setDraftEnabled(true);
+        if (panel === 'filter') {
+            setDraftFilterOptions({
+                Budget: enabledFilters.Budget,
+                Convenience: enabledFilters.Convenience,
+                Distance: enabledFilters.Distance,
+                Furniture: enabledFilters.Furniture,
+                Electronics: enabledFilters.Electronics,
+                Textbooks: enabledFilters.Textbooks,
+                Clothing: enabledFilters.Clothing,
+            });
+        }
         setActivePanel(panel);
     };
 
@@ -173,14 +527,36 @@ const Store = () => {
     };
 
     const applyPanelChanges = () => {
-        setEnabledFilters((current) => ({ ...current, [activePanel]: draftEnabled }));
+        if (activePanel === 'filter') {
+            const hasAppliedFilter = Object.values(draftFilterOptions).some(Boolean);
+            setEnabledFilters((current) => ({
+                ...current,
+                ...draftFilterOptions,
+                filter: hasAppliedFilter,
+            }));
+        } else {
+            setEnabledFilters((current) => ({ ...current, [activePanel]: true }));
+        }
         closePanel();
     };
 
     const resetPanelChanges = () => {
-        setDraftEnabled(false);
-        setEnabledFilters((current) => ({ ...current, [activePanel]: false }));
-        closePanel();
+        if (activePanel === 'filter') {
+            const resetFilters = {
+                Budget: false,
+                Convenience: false,
+                Distance: false,
+                Furniture: false,
+                Electronics: false,
+                Textbooks: false,
+                Clothing: false,
+                filter: false,
+            };
+            setDraftFilterOptions(resetFilters);
+        } else {
+            setEnabledFilters((current) => ({ ...current, [activePanel]: false }));
+            closePanel();
+        }
     };
 
     return (
@@ -247,12 +623,12 @@ const Store = () => {
                         </View>
                     ) : listingError ? (
                         <Text style={styles.listingMessage}>{listingError}</Text>
-                    ) : listings.length === 0 ? (
+                    ) : visibleListings.length === 0 ? (
                         <Text style={styles.listingMessage}>No active listings are available.</Text>
                     ) : (
-                        Array.from({ length: Math.ceil(listings.length / 2) }, (_, rowIndex) => (
+                        Array.from({ length: Math.ceil(visibleListings.length / 2) }, (_, rowIndex) => (
                             <Row key={rowIndex}>
-                                {listings.slice(rowIndex * 2, rowIndex * 2 + 2).map((listing) => {
+                                {visibleListings.slice(rowIndex * 2, rowIndex * 2 + 2).map((listing) => {
                                     const sellerWords = listing.seller_name.trim().split(/\s+/);
                                     const sellerInitials = sellerWords.slice(0, 2)
                                         .map((word) => word[0]?.toUpperCase())
@@ -286,31 +662,22 @@ const Store = () => {
                             { transform: [{ translateX: panelPosition }] },
                         ]}
                     >
-                        <View style={styles.options_header}>
-                        <Text
-                            style={styles.options_title}
-                            adjustsFontSizeToFit
-                            minimumFontScale={0.7}
-                        >
-                            {activePanel === 'filter' ? 'Filter options' : 'Sort options'}
-                        </Text>
-                            <Pressable onPress={closePanel} style={styles.close_button} accessibilityLabel="Close options">
-                                <Ionicons name="close" size={28} color={colors.ink} />
-                            </Pressable>
-                        </View>
-                        <Text style={styles.options_description}>
-                            {activePanel === 'filter'
-                                ? 'Choose your marketplace filters.'
-                                : 'Choose how marketplace listings are sorted.'}
-                        </Text>
-                        <View style={styles.options_actions}>
-                            <Button style={styles.apply_button} onPress={applyPanelChanges}>
-                                <Text style={styles.apply_button_text}>Apply changes</Text>
-                            </Button>
-                            <Button style={styles.reset_button} onPress={resetPanelChanges}>
-                                <Text style={styles.reset_button_text}>Reset changes</Text>
-                            </Button>
-                        </View>
+                        {activePanel === 'filter' ? (
+                            <Filter_Panel
+                                filterOptions={draftFilterOptions}
+                                onToggle={(filter) => setDraftFilterOptions((current) => ({
+                                    ...current,
+                                    [filter]: !current[filter],
+                                }))}
+                                onClose={closePanel}
+                                onApply={applyPanelChanges}
+                                onReset={resetPanelChanges}
+                            />
+                        ) : (
+                            <Sort_Panel
+                                onClose={closePanel}
+                            />
+                        )}
                     </Animated.View>
                 </View>
             )}
@@ -358,6 +725,47 @@ const styles = StyleSheet.create({
     },
     enabled_filter_button_text: {
         color: '#FFFFFF',
+    },
+    filter_panel_grid: {
+        marginTop: 24,
+        gap: 6,
+    },
+    filter_panel_grid_row: {
+        flexDirection: 'row',
+    },
+    sample_filter: {
+        flex: 1,
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 4,
+        minWidth: 0,
+        padding: 8,
+        borderRadius: 12,
+    },
+    enabled_sample_filter: {
+        opacity: 0.9,
+    },
+    sample_filter_image_container: {
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 12,
+        borderRadius: 12,
+    },
+    sample_filter_image: {
+        width: 52,
+        height: 31,
+    },
+    sample_filter_text: {
+        maxWidth: '100%',
+        textAlign: 'center',
+        color: colors.ink,
+        fontFamily: 'Caveat',
+        fontSize: 24,
+        fontWeight: '800',
+    },
+    enabled_sample_filter_text: {
+        color: colors.maroon,
     },
 
     marketplace_listing_container: {
@@ -418,12 +826,12 @@ const styles = StyleSheet.create({
         top: 0,
         right: 0,
         bottom: 0,
-        width: '65%',
+        width: '75%',
         backgroundColor: colors.white,
         padding: 24,
         shadowColor: colors.ink,
-        shadowOpacity: 0.2,
-        shadowRadius: 12,
+        shadowOpacity: 0.15,
+        shadowRadius: 15,
         shadowOffset: { width: -4, height: 0 },
         elevation: 8,
     },
@@ -455,6 +863,61 @@ const styles = StyleSheet.create({
         fontFamily: 'Outfit',
         fontSize: 16,
         color: colors.muted,
+    },
+    sort_options: {
+        flexDirection: 'row',
+        marginTop: 24,
+        padding: 12,
+        borderRadius: 22,
+        backgroundColor: '#EEE',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    sort_option: {
+        flex: 1,
+        height: 82,
+        borderRadius: 22,
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 4,
+        overflow: 'hidden',
+    },
+    selected_sort_option: {
+        zIndex: 1,
+    },
+    sort_option_highlight: {
+        position: 'absolute',
+        top: 12,
+        bottom: 12,
+        borderRadius: 22,
+        backgroundColor: '#FFF',
+    },
+    sort_option_label: {
+        position: 'absolute',
+        top: 38,
+        width: '100%',
+        textAlign: 'center',
+        color: colors.ink,
+        fontFamily: 'Caveat',
+        fontSize: 15,
+        fontWeight: '800',
+        whiteSpace: 'nowrap',
+    },
+    sort_option_image: {
+        width: 36,
+        height: 36,
+    },
+    sort_option_row: {
+        marginBottom: 15,
+        borderRadius: 22,
+        padding: 12,
+        backgroundColor: '#EEEEEE',
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    sort_option_row_text: {
+        marginLeft: 10,
     },
     options_actions: {
         marginTop: 'auto',
