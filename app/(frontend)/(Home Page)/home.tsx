@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../root_styles';
 import TabBar from '../components/tab_bar';
 import { items } from '../../../data/items';
-import { formatCategory, recordListingInteraction, RecommendedListing } from '../../../lib/recommendations';
+import { formatCategory, formatListingPrice, formatSellerName, recordListingInteraction, RecommendedListing } from '../../../lib/recommendations';
 
 import PaperBg from '../../../assets/images/paper_bg.png';
 
@@ -304,15 +304,16 @@ const Home = () => {
 };
 
 function toFeedListing(listing: RecommendedListing): FeedListing {
-    const words = listing.seller_name.trim().split(/\s+/);
+    const sellerName = formatSellerName(listing.seller_name);
+    const words = sellerName.split(/\s+/);
     const initials = words.slice(0, 2).map((word) => word[0]?.toUpperCase()).join('') || '?';
 
     return {
         id: `live-${listing.listing_id}`,
         title: listing.title,
-        seller: listing.seller_name,
+        seller: sellerName,
         initials,
-        price: `$${Number(listing.price).toFixed(2)}`,
+        price: formatListingPrice(listing.price),
         category: formatCategory(listing.category),
         reason: listing.recommendation_reason,
         isLive: true,

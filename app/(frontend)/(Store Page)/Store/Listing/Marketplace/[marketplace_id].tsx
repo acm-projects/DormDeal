@@ -5,7 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../../../root_styles';
 import { items } from '../../../../../../data/items';
 import { supabase } from '../../../../../../lib/supabase';
-import { formatCategory, recordListingInteraction } from '../../../../../../lib/recommendations';
+import { getListing } from '../../../../../../lib/api/listings';
+import { formatCategory, formatListingPrice, formatSellerName, recordListingInteraction } from '../../../../../../lib/recommendations';
 
 type DisplayItem = {
     id: string;
@@ -25,12 +26,17 @@ type DisplayItem = {
 const Marketplace_Listing = () => {
     const { marketplace_id } = useLocalSearchParams<{ marketplace_id: string }>(); // the number at the end of the address
     const router = useRouter();
-    const liveListingId = marketplace_id?.startsWith('live-')
+    const parsedLiveListingId = marketplace_id?.startsWith('live-')
         ? Number(marketplace_id.slice('live-'.length))
+        : null;
+    const liveListingId = parsedLiveListingId !== null
+        && Number.isInteger(parsedLiveListingId)
+        && parsedLiveListingId > 0
+        ? parsedLiveListingId
         : null;
     const demoItem = liveListingId ? undefined : items.find((candidate) => candidate.id === marketplace_id);
     const [item, setItem] = useState<DisplayItem | null>(demoItem ? { ...demoItem, isLive: false } : null);
-    const [loading, setLoading] = useState(!demoItem);
+    const [loading, setLoading] = useState(Boolean(liveListingId && !demoItem));
 
     useEffect(() => {
         if (!liveListingId || demoItem) return;
@@ -38,21 +44,17 @@ const Marketplace_Listing = () => {
         let active = true;
 
         const loadListing = async () => {
-            const { data, error } = await supabase
-                .from('listings')
-                .select('listing_id, seller_id, title, description, price, category, created_at')
-                .eq('listing_id', liveListingId)
-                .single();
+            try {
+                const data = await getListing(liveListingId);
 
-            if (!active) return;
+                if (!active) return;
 
-            if (!error && data) {
                 const { data: sellerData } = await supabase
                     .from('app-users')
                     .select('name')
                     .eq('user_id', data.seller_id)
                     .maybeSingle();
-                const seller = sellerData?.name ?? 'Student seller';
+                const seller = formatSellerName(sellerData?.name);
                 const initials = seller.split(/\s+/).slice(0, 2).map((word: string) => word[0]?.toUpperCase()).join('');
 
                 setItem({
@@ -61,19 +63,21 @@ const Marketplace_Listing = () => {
                     title: data.title,
                     seller,
                     initials,
-                    price: `$${Number(data.price).toFixed(2)}`,
+                    price: formatListingPrice(data.price),
                     condition: 'Available',
                     category: formatCategory(data.category),
-                    description: data.description,
+                    description: data.description ?? 'No description provided.',
                     pickup: 'Arrange with seller',
                     posted: new Date(data.created_at).toLocaleDateString(),
                     isLive: true,
                 });
 
                 recordListingInteraction(data.listing_id, 'view').catch(() => undefined);
+            } catch {
+                if (active) setItem(null);
             }
 
-            setLoading(false);
+            if (active) setLoading(false);
         };
 
         loadListing();
@@ -93,7 +97,7 @@ const Marketplace_Listing = () => {
     if (!item) {
         return (
             <View style={page.notFound}>
-                <Text style={page.notFoundText}>Couldn't find that item.</Text>
+                <Text style={page.notFoundText}>Could not find that item.</Text>
                 <Pressable onPress={() => router.back()}>
                     <Text style={page.link}>Go back</Text>
                 </Pressable>
