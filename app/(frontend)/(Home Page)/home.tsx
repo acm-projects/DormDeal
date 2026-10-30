@@ -240,6 +240,7 @@ const Home = () => {
     const initials = 'MR';   // same, comes from login later
     const [mode, setMode] = useState<'buy' | 'sell'>('buy'); // which tab is picked
     const shown = pickups.filter((p) => p.type === mode);   // only the matching pickups
+    const router = useRouter();
 
     return (
         <ImageBackground source={PaperBg} style={home.screen}>
@@ -253,8 +254,17 @@ const Home = () => {
                         <Text style={home.subtitle}>What are you looking for today?</Text>
                     </View>
 
-                    <View style={home.avatar}>
-                        <Text style={home.avatarText}>{initials}</Text>
+                    <View style={home.profileActions}>
+                        <Pressable
+                            style={home.settingsButton}
+                            onPress={() => router.push('/Settings')}
+                            accessibilityLabel="Open settings"
+                        >
+                            <Ionicons name="settings-outline" size={20} color={colors.ink} />
+                        </Pressable>
+                        <View style={home.avatar}>
+                            <Text style={home.avatarText}>{initials}</Text>
+                        </View>
                     </View>
                 </View>
 
@@ -327,6 +337,11 @@ const home = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
     },
+    profileActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
     greeting: {
         gap: 2,
     },
@@ -362,6 +377,15 @@ const home = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
         fontFamily: 'Outfit',
+    },
+    settingsButton: {
+        width: 30,
+        height: 30,
+        padding: 6,
+        borderRadius: 28,
+        backgroundColor: colors.white,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 
     // section title rows
