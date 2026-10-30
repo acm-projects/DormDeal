@@ -13,6 +13,8 @@ import Filter_Image from '../../../assets/svgs/filter.svg';
 import Sort_Image from '../../../assets/svgs/sort.svg';
 import {
     formatCategory,
+    formatListingPrice,
+    formatSellerName,
     getCategoryPreferences,
     getRecommendations,
 } from '../../../lib/recommendations';
@@ -253,7 +255,8 @@ const Store = () => {
                         Array.from({ length: Math.ceil(listings.length / 2) }, (_, rowIndex) => (
                             <Row key={rowIndex}>
                                 {listings.slice(rowIndex * 2, rowIndex * 2 + 2).map((listing) => {
-                                    const sellerWords = listing.seller_name.trim().split(/\s+/);
+                                    const sellerName = formatSellerName(listing.seller_name);
+                                    const sellerWords = sellerName.split(/\s+/);
                                     const sellerInitials = sellerWords.slice(0, 2)
                                         .map((word) => word[0]?.toUpperCase())
                                         .join('') || '?';
@@ -263,9 +266,9 @@ const Store = () => {
                                             key={listing.listing_id}
                                             id={listing.listing_id}
                                             title={listing.title}
-                                            seller={listing.seller_name}
+                                            seller={sellerName}
                                             initials={sellerInitials}
-                                            price={`$${Number(listing.price).toFixed(2)}`}
+                                            price={formatListingPrice(listing.price)}
                                             category={formatCategory(listing.category)}
                                             status={!hasUserFilters ? 'For you' : undefined}
                                         />
