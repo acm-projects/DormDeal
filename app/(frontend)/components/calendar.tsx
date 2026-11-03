@@ -3,10 +3,15 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '../../root_styles';
 import { events } from '../../../data/events';
+import type { CalEvent } from '../../../data/events';
+import { items } from '../../../data/items';
 
 const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'];
 const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+const body = 'Outfit';
+const heading = 'Bricolage Grotesque';
 
 // year, month (0-11), day -> 'YYYY-MM-DD'
 function toKey(year: number, month: number, day: number) {
@@ -19,6 +24,17 @@ export default function Calendar() {
   const router = useRouter();
   const today = new Date();
   const todayKey = toKey(today.getFullYear(), today.getMonth(), today.getDate());
+
+// pickups come from items, events come from events.ts
+const pickupEvents: CalEvent[] = items.map((i): CalEvent => ({
+  id: `pickup-${i.id}`,
+  date: i.pickupDate,
+  title: `Pick up: ${i.title}`,
+  time: i.pickupTime,
+  place: i.pickup,
+  type: 'pickup',
+}));
+const allEvents: CalEvent[] = [...events, ...pickupEvents];
 
   // shown = first day of the month we're looking at
   const [shown, setShown] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
@@ -42,9 +58,9 @@ export default function Calendar() {
   for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
 
   // label for the info panel, like "October 31"
-  const [py, pm, pd] = picked.split('-').map(Number);
+  const [, pm, pd] = picked.split('-').map(Number);
   const pickedLabel = `${monthNames[pm - 1]} ${pd}`;
-  const dayEvents = events.filter(e => e.date === picked);
+  const dayEvents = allEvents.filter(e => e.date === picked);
 
   function changeMonth(step: number) {
     setShown(new Date(year, month + step, 1));
@@ -74,7 +90,7 @@ export default function Calendar() {
             if (day === null) return <View key={di} style={styles.cell} />;
 
             const key = toKey(year, month, day);
-            const dayEvs = events.filter(e => e.date === key);
+            const dayEvs = allEvents.filter(e => e.date === key);
             const hasEvent = dayEvs.some(e => e.type === 'event');
             const hasPickup = dayEvs.some(e => e.type === 'pickup');
             const isPicked = key === picked;
@@ -160,11 +176,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  monthTitle: { fontSize: 18, fontWeight: '700', color: colors.ink },
-  arrow: { fontSize: 26, color: colors.maroon, paddingHorizontal: 8 },
+  monthTitle: { fontFamily: heading, fontSize: 18, color: colors.ink },
+  arrow: { fontFamily: body, fontSize: 26, color: colors.maroon, paddingHorizontal: 8 },
   weekRow: { flexDirection: 'row' },
   weekday: {
     flex: 1,
+    fontFamily: body,
     textAlign: 'center',
     color: colors.muted,
     fontSize: 12,
@@ -180,25 +197,25 @@ const styles = StyleSheet.create({
   },
   dayPicked: { backgroundColor: colors.maroon },
   dayToday: { borderWidth: 1.5, borderColor: colors.gold },
-  dayText: { color: colors.ink, fontSize: 14 },
-  dayTextPicked: { color: colors.white, fontWeight: '700' },
+  dayText: { fontFamily: body, color: colors.ink, fontSize: 14 },
+  dayTextPicked: { color: colors.white },
   dotRow: { flexDirection: 'row', gap: 3, marginTop: 3, height: 6 },
   dot: { width: 5, height: 5, borderRadius: 3 },
   legend: { flexDirection: 'row', gap: 14, marginTop: 10 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  legendText: { fontSize: 12, color: colors.muted },
+  legendText: { fontFamily: body, fontSize: 12, color: colors.muted },
   dayPanel: {
     marginTop: 14,
     borderTopWidth: 1,
     borderTopColor: colors.blush,
     paddingTop: 12,
   },
-  panelTitle: { fontSize: 16, fontWeight: '700', color: colors.ink, marginBottom: 8 },
-  emptyText: { color: colors.muted, fontStyle: 'italic' },
+  panelTitle: { fontFamily: heading, fontSize: 16, color: colors.ink, marginBottom: 8 },
+  emptyText: { fontFamily: body, color: colors.muted, fontStyle: 'italic' },
   eventRow: { marginBottom: 12 },
-  eventTitle: { fontSize: 15, fontWeight: '600', color: colors.ink },
-  eventMeta: { fontSize: 13, color: colors.muted, marginTop: 2 },
-  borrowLabel: { fontSize: 12, color: colors.muted, marginTop: 6 },
+  eventTitle: { fontFamily: heading, fontSize: 15, color: colors.ink },
+  eventMeta: { fontFamily: body, fontSize: 13, color: colors.muted, marginTop: 2 },
+  borrowLabel: { fontFamily: body, fontSize: 12, color: colors.muted, marginTop: 6 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
   chip: {
     backgroundColor: colors.goldLight,
@@ -206,5 +223,5 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 12,
   },
-  chipText: { color: colors.maroonDark, fontSize: 12, fontWeight: '600' },
+  chipText: { fontFamily: body, color: colors.maroonDark, fontSize: 12 },
 });

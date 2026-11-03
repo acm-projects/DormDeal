@@ -59,6 +59,8 @@ const Create_Listing = () => {
             description: description.trim(),
             pickup: pickup.trim(),
             posted: 'Just now',
+            pickupDate: '',   // we'll add a date input to the form next
+            pickupTime: '',
         };
 
         items.push(newItem); // add to the list (only lasts until the app reloads for now)
