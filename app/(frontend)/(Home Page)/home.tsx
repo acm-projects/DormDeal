@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../root_styles';
 import TabBar from '../components/tab_bar';
+import Calendar from '../components/calendar';
 import { items } from '../../../data/items';
 import { formatCategory, formatListingPrice, formatSellerName, recordListingInteraction, RecommendedListing } from '../../../lib/recommendations';
 
