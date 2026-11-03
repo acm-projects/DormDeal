@@ -1,281 +1,100 @@
 import { useState } from 'react';
-import { Text, View, ImageBackground, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
+import {
+    ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable,
+    ScrollView, StyleSheet, Text, TextInput, View,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { colors } from '../../root_styles';
-import TabBar from '../components/tab_bar';
-import { items } from '../../../data/items';
+import { createListing } from '../../../lib/api/listings';
+import { LISTING_CATEGORIES, type ListingCategory } from '../../../lib/api/types';
+import { formatCategory } from '../../../lib/recommendations';
 
-import PaperBg from '../../../assets/images/paper_bg.png';
-
-const categories = ['Appliances', 'Dorm decor', 'Bedding', 'Textbooks', 'Other'];
-const conditions = ['Like new', 'Good', 'Fair'];
-
-// a row of pill buttons, only one can be picked
-const ChipPicker = (props: { options: string[]; picked: string; onPick: (value: string) => void }) => {
-    return (
-        <View style={form.chips}>
-            {props.options.map((option) => {
-                const isPicked = option === props.picked;
-                return (
-                    <Pressable
-                        key={option}
-                        onPress={() => props.onPick(option)}
-                        style={[form.chip, isPicked && form.chipPicked]}
-                    >
-                        <Text style={[form.chipText, isPicked && form.chipTextPicked]}>{option}</Text>
-                    </Pressable>
-                );
-            })}
-        </View>
-    );
-};
-
-const Create_Listing = () => {
+const CreateListing = () => {
     const router = useRouter();
-
-    // one piece of state per box in the form
     const [title, setTitle] = useState('');
-    const [price, setPrice] = useState('');
-    const [category, setCategory] = useState(categories[0]);
-    const [condition, setCondition] = useState(conditions[0]);
     const [description, setDescription] = useState('');
-    const [pickup, setPickup] = useState('');
+    const [price, setPrice] = useState('');
+    const [category, setCategory] = useState<ListingCategory>('other');
+    const [submitting, setSubmitting] = useState(false);
 
-    // can't post until the must-haves are filled in
-    const canPost = title.trim() !== '' && price !== '' && pickup.trim() !== '';
-
-    const postListing = () => {
-        if (!canPost) return; // safety check
-
-        const newItem = {
-            id: String(items.length + 1),
-            title: title.trim(),
-            seller: 'Maya R.',  // swap for logged in user later
-            initials: 'MR',
-            price: `$${price}`,
-            condition: condition,
-            category: category,
-            description: description.trim(),
-            pickup: pickup.trim(),
-            posted: 'Just now',
-            pickupDate: '',   // we'll add a date input to the form next
-            pickupTime: '',
-        };
-
-        items.push(newItem); // add to the list (only lasts until the app reloads for now)
-        router.push(`/Store/Listing/Marketplace/${newItem.id}`); // show the new listing
+    const submit = async () => {
+        const numericPrice = price.trim() === '' ? Number.NaN : Number(price);
+        setSubmitting(true);
+        try {
+            await createListing({ title, description, price: numericPrice, category });
+            Alert.alert('Listing published', 'Your listing is now available in the marketplace.');
+            router.replace('/Listings');
+        } catch (error) {
+            Alert.alert('Could not publish listing', error instanceof Error ? error.message : 'Please try again.');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
-        <ImageBackground source={PaperBg} style={form.screen}>
-            <ScrollView contentContainerStyle={form.content}>
-
-                <Text style={form.note}>sell something!</Text>
-                <Text style={form.title}>New listing</Text>
-
-                {/* photos, placeholder for now */}
-                <Pressable style={form.photoBox}>
-                    <Ionicons name="camera-outline" size={30} color={colors.maroon} />
-                    <Text style={form.photoText}>Add photos</Text>
-                </Pressable>
-
-                <Text style={form.label}>Title</Text>
-                <TextInput
-                    style={form.input}
-                    placeholder="What are you selling?"
-                    placeholderTextColor={colors.muted}
-                    value={title}
-                    onChangeText={setTitle}
-                />
-
-                <Text style={form.label}>Price</Text>
-                <View style={form.priceBox}>
-                    <Text style={form.dollar}>$</Text>
-                    <TextInput
-                        style={form.priceInput}
-                        placeholder="0"
-                        placeholderTextColor={colors.muted}
-                        keyboardType="decimal-pad"
-                        value={price}
-                        onChangeText={(text) => setPrice(text.replace(/[^0-9.]/g, ''))} // numbers only
-                    />
+        <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+                <View style={styles.header}>
+                    <Pressable style={styles.backButton} onPress={() => router.back()} accessibilityLabel="Go back">
+                        <Ionicons name="chevron-back" size={22} color={colors.ink} />
+                    </Pressable>
+                    <View>
+                        <Text style={styles.eyebrow}>SELL ON CAMPUS</Text>
+                        <Text style={styles.heading}>Create a listing</Text>
+                    </View>
                 </View>
 
-                <Text style={form.label}>Category</Text>
-                <ChipPicker options={categories} picked={category} onPick={setCategory} />
+                <Text style={styles.label}>Title</Text>
+                <TextInput value={title} onChangeText={setTitle} placeholder="Mini fridge, 3.1 cu ft" placeholderTextColor={colors.muted} maxLength={120} style={styles.input} />
 
-                <Text style={form.label}>Condition</Text>
-                <ChipPicker options={conditions} picked={condition} onPick={setCondition} />
+                <Text style={styles.label}>Description</Text>
+                <TextInput value={description} onChangeText={setDescription} placeholder="Condition, what is included, and pickup details" placeholderTextColor={colors.muted} maxLength={5000} multiline textAlignVertical="top" style={[styles.input, styles.description]} />
 
-                <Text style={form.label}>Description</Text>
-                <TextInput
-                    style={[form.input, form.textArea]}
-                    placeholder="Size, how long you've had it, why you're selling..."
-                    placeholderTextColor={colors.muted}
-                    multiline
-                    value={description}
-                    onChangeText={setDescription}
-                />
+                <Text style={styles.label}>Price</Text>
+                <View style={styles.priceInput}>
+                    <Text style={styles.currency}>$</Text>
+                    <TextInput value={price} onChangeText={setPrice} placeholder="0.00" placeholderTextColor={colors.muted} keyboardType="decimal-pad" style={styles.priceTextInput} />
+                </View>
 
-                <Text style={form.label}>Pickup spot</Text>
-                <TextInput
-                    style={form.input}
-                    placeholder="e.g. West Hall lobby"
-                    placeholderTextColor={colors.muted}
-                    value={pickup}
-                    onChangeText={setPickup}
-                />
+                <Text style={styles.label}>Category</Text>
+                <View style={styles.categories}>
+                    {LISTING_CATEGORIES.map((value) => (
+                        <Pressable key={value} onPress={() => setCategory(value)} style={[styles.category, category === value && styles.categorySelected]}>
+                            <Text style={[styles.categoryText, category === value && styles.categoryTextSelected]}>{formatCategory(value)}</Text>
+                        </Pressable>
+                    ))}
+                </View>
 
-                <Pressable
-                    style={[form.postButton, !canPost && form.postButtonOff]}
-                    onPress={postListing}
-                    disabled={!canPost}
-                >
-                    <Text style={form.postText}>Post listing</Text>
+                <Pressable onPress={submit} disabled={submitting} style={[styles.publishButton, submitting && styles.disabled]}>
+                    {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.publishText}>Publish listing</Text>}
                 </Pressable>
-                {!canPost && (
-                    <Text style={form.hint}>Add a title, price and pickup spot to post</Text>
-                )}
-
             </ScrollView>
-
-            <TabBar active="post" />
-        </ImageBackground>
+        </KeyboardAvoidingView>
     );
 };
 
-const form = StyleSheet.create({
-    screen: {
-        flex: 1,
-        width: '100%',
-        backgroundColor: colors.cream,
-    },
-    content: {
-        paddingTop: 60,
-        paddingHorizontal: 20,
-        paddingBottom: 140, // room for the tab bar
-    },
-    note: {
-        fontSize: 26,
-        color: colors.maroon,
-        fontFamily: 'Caveat',
-    },
-    title: {
-        fontSize: 34,
-        fontWeight: '700',
-        color: colors.ink,
-        fontFamily: 'Outfit',
-        marginBottom: 16,
-    },
-    photoBox: {
-        height: 130,
-        borderRadius: 22,
-        borderWidth: 2,
-        borderStyle: 'dashed',
-        borderColor: colors.maroon,
-        backgroundColor: colors.white,
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 6,
-    },
-    photoText: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: colors.maroon,
-        fontFamily: 'Outfit',
-    },
-    label: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: colors.ink,
-        fontFamily: 'Outfit',
-        marginTop: 18,
-        marginBottom: 8,
-    },
-    input: {
-        height: 50,
-        paddingHorizontal: 16,
-        borderRadius: 16,
-        backgroundColor: colors.white,
-        fontSize: 15,
-        color: colors.ink,
-        fontFamily: 'Outfit',
-    },
-    textArea: {
-        height: 110,
-        paddingTop: 14,
-        textAlignVertical: 'top', // android: start typing at the top
-    },
-    priceBox: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        height: 50,
-        paddingHorizontal: 16,
-        borderRadius: 16,
-        backgroundColor: colors.white,
-        gap: 4,
-    },
-    dollar: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: colors.maroon,
-        fontFamily: 'Outfit',
-    },
-    priceInput: {
-        flex: 1,
-        fontSize: 18,
-        fontWeight: '600',
-        color: colors.ink,
-        fontFamily: 'Outfit',
-    },
-    chips: {
-        flexDirection: 'row',
-        flexWrap: 'wrap', // drop to the next line if they don't fit
-        gap: 8,
-    },
-    chip: {
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 18,
-        backgroundColor: colors.white,
-    },
-    chipPicked: {
-        backgroundColor: colors.maroon,
-    },
-    chipText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: colors.ink,
-        fontFamily: 'Outfit',
-    },
-    chipTextPicked: {
-        color: colors.white,
-    },
-    postButton: {
-        height: 54,
-        marginTop: 28,
-        borderRadius: 27,
-        backgroundColor: colors.maroon,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    postButtonOff: {
-        opacity: 0.4, // faded until the form is ready
-    },
-    postText: {
-        fontSize: 17,
-        fontWeight: '700',
-        color: colors.white,
-        fontFamily: 'Outfit',
-    },
-    hint: {
-        fontSize: 18,
-        color: colors.muted,
-        fontFamily: 'Caveat',
-        textAlign: 'center',
-        marginTop: 8,
-    },
+const styles = StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.cream },
+    content: { padding: 20, paddingTop: 58, paddingBottom: 60 },
+    header: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 18 },
+    backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
+    eyebrow: { color: colors.maroon, fontFamily: 'Outfit', fontWeight: '700', fontSize: 11, letterSpacing: 1.2 },
+    heading: { color: colors.ink, fontFamily: 'Outfit', fontWeight: '700', fontSize: 30 },
+    label: { color: colors.ink, fontFamily: 'Outfit', fontWeight: '700', fontSize: 15, marginTop: 18, marginBottom: 7 },
+    input: { minHeight: 52, borderRadius: 16, backgroundColor: colors.white, paddingHorizontal: 16, color: colors.ink, fontFamily: 'Outfit', fontSize: 16, borderWidth: 1, borderColor: '#E5DDDA' },
+    description: { minHeight: 130, paddingTop: 14 },
+    priceInput: { minHeight: 52, borderRadius: 16, backgroundColor: colors.white, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#E5DDDA' },
+    currency: { color: colors.maroon, fontFamily: 'Outfit', fontWeight: '700', fontSize: 19 },
+    priceTextInput: { flex: 1, color: colors.ink, fontFamily: 'Outfit', fontSize: 16, paddingHorizontal: 8 },
+    categories: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    category: { borderRadius: 18, paddingHorizontal: 13, paddingVertical: 9, backgroundColor: colors.white, borderWidth: 1, borderColor: '#E5DDDA' },
+    categorySelected: { backgroundColor: colors.maroon, borderColor: colors.maroon },
+    categoryText: { color: colors.ink, fontFamily: 'Outfit', fontSize: 13, fontWeight: '600' },
+    categoryTextSelected: { color: colors.white },
+    publishButton: { height: 56, borderRadius: 18, backgroundColor: colors.maroon, alignItems: 'center', justifyContent: 'center', marginTop: 30 },
+    publishText: { color: colors.white, fontFamily: 'Outfit', fontSize: 17, fontWeight: '700' },
+    disabled: { opacity: 0.6 },
 });
 
-export default Create_Listing;
+export default CreateListing;

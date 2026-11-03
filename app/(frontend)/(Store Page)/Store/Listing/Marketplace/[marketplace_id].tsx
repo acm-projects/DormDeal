@@ -1,8 +1,27 @@
-import { Text, View, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Text, View, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../../../root_styles';
 import { items } from '../../../../../../data/items';
+import { supabase } from '../../../../../../lib/supabase';
+import { getListing } from '../../../../../../lib/api/listings';
+import { formatCategory, formatListingPrice, formatSellerName, recordListingInteraction } from '../../../../../../lib/recommendations';
+
+type DisplayItem = {
+    id: string;
+    liveListingId?: number;
+    title: string;
+    seller: string;
+    initials: string;
+    price: string;
+    condition: string;
+    category: string;
+    description: string;
+    pickup: string;
+    posted: string;
+    isLive: boolean;
+};
 
 const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
@@ -17,15 +36,78 @@ function prettyDate(key: string) {
 const Marketplace_Listing = () => {
     const { marketplace_id } = useLocalSearchParams<{ marketplace_id: string }>(); // the number at the end of the address
     const router = useRouter();
+    const parsedLiveListingId = marketplace_id?.startsWith('live-')
+        ? Number(marketplace_id.slice('live-'.length))
+        : null;
+    const liveListingId = parsedLiveListingId !== null
+        && Number.isInteger(parsedLiveListingId)
+        && parsedLiveListingId > 0
+        ? parsedLiveListingId
+        : null;
+    const demoItem = liveListingId ? undefined : items.find((candidate) => candidate.id === marketplace_id);
+    const [item, setItem] = useState<DisplayItem | null>(demoItem ? { ...demoItem, isLive: false } : null);
+    const [loading, setLoading] = useState(Boolean(liveListingId && !demoItem));
 
-    // find the item whose id matches the address
-    const item = items.find((i) => i.id === marketplace_id);
+    useEffect(() => {
+        if (!liveListingId || demoItem) return;
+
+        let active = true;
+
+        const loadListing = async () => {
+            try {
+                const data = await getListing(liveListingId);
+
+                if (!active) return;
+
+                const { data: sellerData } = await supabase
+                    .from('app-users')
+                    .select('name')
+                    .eq('user_id', data.seller_id)
+                    .maybeSingle();
+                const seller = formatSellerName(sellerData?.name);
+                const initials = seller.split(/\s+/).slice(0, 2).map((word: string) => word[0]?.toUpperCase()).join('');
+
+                setItem({
+                    id: String(data.listing_id),
+                    liveListingId: data.listing_id,
+                    title: data.title,
+                    seller,
+                    initials,
+                    price: formatListingPrice(data.price),
+                    condition: 'Available',
+                    category: formatCategory(data.category),
+                    description: data.description ?? 'No description provided.',
+                    pickup: 'Arrange with seller',
+                    posted: new Date(data.created_at).toLocaleDateString(),
+                    isLive: true,
+                });
+
+                recordListingInteraction(data.listing_id, 'view').catch(() => undefined);
+            } catch {
+                if (active) setItem(null);
+            }
+
+            if (active) setLoading(false);
+        };
+
+        loadListing();
+        return () => { active = false; };
+    }, [demoItem, liveListingId]);
+
+    if (loading) {
+        return (
+            <View style={page.notFound}>
+                <ActivityIndicator color={colors.maroon} />
+                <Text style={page.notFoundText}>Loading listing…</Text>
+            </View>
+        );
+    }
 
     // bad link, no item with that id
     if (!item) {
         return (
             <View style={page.notFound}>
-                <Text style={page.notFoundText}>Couldn't find that item.</Text>
+                <Text style={page.notFoundText}>Could not find that item.</Text>
                 <Pressable onPress={() => router.back()}>
                     <Text style={page.link}>Go back</Text>
                 </Pressable>
@@ -97,10 +179,16 @@ const Marketplace_Listing = () => {
 
             {/* buttons stuck to the bottom */}
             <View style={page.actionBar}>
-                <Pressable style={page.messageButton}>
+                <Pressable
+                    style={page.messageButton}
+                    onPress={() => item.liveListingId && recordListingInteraction(item.liveListingId, 'message').catch(() => undefined)}
+                >
                     <Text style={page.messageText}>Message</Text>
                 </Pressable>
-                <Pressable style={page.buyButton} onPress={() => router.push('/Store/Checkout')}>
+                <Pressable style={page.buyButton} onPress={() => {
+                    if (item.liveListingId) recordListingInteraction(item.liveListingId, 'purchase').catch(() => undefined);
+                    router.push('/Store/Checkout');
+                }}>
                     <Text style={page.buyText}>Buy now</Text>
                 </Pressable>
             </View>

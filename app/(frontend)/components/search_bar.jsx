@@ -1,4 +1,4 @@
-import { View, Image, StyleSheet, TextInput } from 'react-native';
+import { View, Image, StyleSheet, TextInput, Pressable } from 'react-native';
 import component_root_styles from '../../root_styles'
 import search_icon from '../../../assets/images/search_icon.png'
 
@@ -6,7 +6,9 @@ const Search_Bar = ({placeholder = "", style = {}}) => {
     return (
         <View style={[styles.search_bar_container, style]}>
             <TextInput style={[component_root_styles.default_text, styles.search_bar_txt]} placeholder={placeholder}></TextInput>
-            <Image source={search_icon} style={styles.search_icon}/>
+            <Pressable>
+                <Image source={search_icon} style={styles.search_icon}/>
+            </Pressable>
         </View>
     );
 }
@@ -20,6 +22,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         flexDirection: 'row',
         backgroundColor: '#E4E4E4',
+        border: '1px solid #CCCCCC',
         width: '100%',
         height: 45,
         borderRadius: 24,
