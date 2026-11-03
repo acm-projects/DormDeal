@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import Calendar from '../components/calendar';
 import { Text, View, ImageBackground, StyleSheet, ScrollView, Pressable, Animated, PanResponder } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -259,6 +260,15 @@ const Home = () => {
                         <Text style={home.emptyText}>No pickups yet!</Text>
                     )}
                 </View>
+                
+                <View style={home.sectionRow}>
+                    <Text style={home.sectionTitle}>Your calendar</Text>
+                    <Text style={home.sectionNote}>plan ahead!</Text>
+                </View>
+
+                <Calendar />
+
+
 
             </ScrollView>
 
