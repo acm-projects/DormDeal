@@ -10,10 +10,12 @@ import { formatCategory, formatListingPrice, formatSellerName, recordListingInte
 
 import PaperBg from '../../../assets/images/paper_bg.png';
 
+
+
+
 // what one pickup looks like
 type Pickup = {
     id: string;
-    itemId: string;   // which listing this pickup belongs to
     type: 'buy' | 'sell';
     day: string;
     date: string;
@@ -24,9 +26,9 @@ type Pickup = {
 
 // fake pickups for now
 const pickups: Pickup[] = [
-    { id: 'p1', itemId: '2', type: 'buy', day: 'THU', date: '15', item: 'Adjustable desk lamp', time: '5:30 PM', place: 'Helix Hall Lobby' },
-    { id: 'p2', itemId: '1', type: 'buy', day: 'SAT', date: '17', item: 'Mini fridge, 3.1 ft', time: '11:00 AM', place: 'Sciences Building' },
-    { id: 'p3', itemId: '3', type: 'sell', day: 'FRI', date: '16', item: 'Twin XL sheets', time: '2:00 PM', place: 'Student Union' },
+    { id: 'p1', type: 'buy', day: 'THU', date: '15', item: 'Adjustable desk lamp', time: '5:30 PM', place: 'Helix Hall Lobby' },
+    { id: 'p2', type: 'buy', day: 'SAT', date: '17', item: 'Mini fridge, 3.1 ft', time: '11:00 AM', place: 'Sciences Building' },
+    { id: 'p3', type: 'sell', day: 'FRI', date: '16', item: 'Twin XL sheets', time: '2:00 PM', place: 'Student Union' },
 ];
 
 // what a card needs
@@ -210,16 +212,12 @@ const CardStack = ({ listings }: { listings: FeedListing[] }) => {
     );
 };
 
-// one pickup row, tap it to open the listing
+// one pickup row
 const PickupCard = (props: { pickup: Pickup }) => {
     const p = props.pickup;
-    const router = useRouter();
 
     return (
-        <Pressable
-            style={home.pickupCard}
-            onPress={() => router.push(`/Store/Listing/Marketplace/${p.itemId}`)}
-        >
+        <Pressable style={home.pickupCard}>
             <View style={home.dateBox}>
                 <Text style={home.dateDay}>{p.day}</Text>
                 <Text style={home.dateNum}>{p.date}</Text>
@@ -232,6 +230,8 @@ const PickupCard = (props: { pickup: Pickup }) => {
                     <Text style={home.pickupWhereText}>{p.time} · {p.place}</Text>
                 </View>
             </View>
+
+            <Ionicons name="chevron-forward" size={22} color={colors.ink} />
         </Pressable>
     );
 };
@@ -296,13 +296,6 @@ const Home = () => {
                         <Text style={home.emptyText}>No pickups yet!</Text>
                     )}
                 </View>
-
-                <View style={home.sectionRow}>
-                    <Text style={home.sectionTitle}>Your calendar</Text>
-                    <Text style={home.sectionNote}>plan ahead!</Text>
-                </View>
-
-                <Calendar />
 
             </ScrollView>
 
@@ -600,7 +593,7 @@ const home = StyleSheet.create({
         fontFamily: 'Outfit',
     },
     pickupInfo: {
-        flex: 1, // take the middle space
+        flex: 1, // take the middle space so the arrow sits on the right
         gap: 4,
     },
     pickupItem: {
