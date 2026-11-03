@@ -1,4 +1,3 @@
-// what every item has
 export type Item = {
     id: string;
     title: string;
@@ -10,6 +9,8 @@ export type Item = {
     description: string;
     pickup: string;
     posted: string;
+    pickupDate: string;   // 'YYYY-MM-DD', shows up on the calendar
+    pickupTime: string;
 };
 
 // fake items for now, later these come from the backend
@@ -25,6 +26,8 @@ export const items: Item[] = [
         description: 'Kept it in my dorm for one semester. Freezer works, super quiet, fits under a lofted bed.',
         pickup: 'West Hall lobby',
         posted: '5 hours ago',
+        pickupDate: '2026-11-03',
+        pickupTime: '11:00 AM',
     },
     {
         id: '2',
@@ -37,6 +40,8 @@ export const items: Item[] = [
         description: 'Adjustable arm, three brightness levels, bulb included. Moving rooms so it needs to go.',
         pickup: 'Helix Hall lobby',
         posted: '2 hours ago',
+        pickupDate: '2026-11-05',
+        pickupTime: '5:30 PM',
     },
     {
         id: '3',
@@ -49,5 +54,7 @@ export const items: Item[] = [
         description: 'Full set: fitted sheet, flat sheet and two pillowcases. Washed and folded.',
         pickup: 'Student Union',
         posted: '1 day ago',
+        pickupDate: '2026-11-16',
+        pickupTime: '2:00 PM',
     },
 ];

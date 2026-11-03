@@ -23,6 +23,16 @@ type DisplayItem = {
     isLive: boolean;
 };
 
+const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
+
+// 'YYYY-MM-DD' -> 'Nov 3'
+function prettyDate(key: string) {
+    if (!key) return 'Not set';
+    const [, m, d] = key.split('-').map(Number);
+    return `${monthNames[m - 1].slice(0, 3)} ${d}`;
+}
+
 const Marketplace_Listing = () => {
     const { marketplace_id } = useLocalSearchParams<{ marketplace_id: string }>(); // the number at the end of the address
     const router = useRouter();
@@ -154,6 +164,10 @@ const Marketplace_Listing = () => {
                         <View style={page.detailRow}>
                             <Text style={page.detailLabel}>Pickup</Text>
                             <Text style={page.detailValue}>{item.pickup}</Text>
+                        </View>
+                        <View style={page.detailRow}>
+                            <Text style={page.detailLabel}>Pickup date</Text>
+                            <Text style={page.detailValue}>{prettyDate(item.pickupDate)} · {item.pickupTime}</Text>
                         </View>
                         <View style={[page.detailRow, page.detailRowLast]}>
                             <Text style={page.detailLabel}>Posted</Text>
