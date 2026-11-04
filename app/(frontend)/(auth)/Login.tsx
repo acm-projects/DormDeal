@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Image, Text, View, TextInput, TouchableOpacity } from 'react-native';
+import { StyleSheet, Image, Text, View, TextInput, TouchableOpacity, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Header1, ErrorText } from '../components/text_styles'
 import Base from '../components/base'
@@ -7,6 +7,7 @@ import microsoft_logo from '../../../assets/images/microsoft.png'
 import line_bar from '../../../assets/svgs/line.svg'
 import line_bar2 from '../../../assets/svgs/line2.svg'
 import { signInWithMicrosoft, signInWithPassword } from '../../../lib/auth'
+import { supabase } from '../../../lib/supabase'
 import styles from '../../root_styles'
 
 const Login: React.FC = () => {
@@ -14,6 +15,7 @@ const Login: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState('');
+    const [info, setInfo] = useState('');
     const [loading, setLoading] = useState(false);
 
     const handleLogin = async () => {
@@ -21,6 +23,7 @@ const Login: React.FC = () => {
         try {
             setLoading(true);
             setMessage('');
+            setInfo('');
             await signInWithPassword(email.trim(), password);
             router.replace('/');
         } catch (e: any) {
@@ -28,6 +31,17 @@ const Login: React.FC = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleForgot = async () => {
+        setMessage('');
+        setInfo('');
+        if (!email.trim()) return setMessage('Enter your email first.');
+        const redirectTo =
+            Platform.OS === 'web' ? `${window.location.origin}/ResetPassword` : undefined;
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
+        if (error) setMessage(error.message);
+        else setInfo('If an account exists for that email, a reset link is on its way.');
     };
 
     return (
@@ -52,7 +66,12 @@ const Login: React.FC = () => {
                         value={password} onChangeText={setPassword}
                         secureTextEntry autoCapitalize='none'></TextInput>
                     <Image source={line_bar2} style={[login_styles.line_bar]}/>
-                    <Text style={[login_styles.extra_text_guide, {color: "#B26666"}]}>Forgot your password?</Text>
+                    <TouchableOpacity onPress={handleForgot}>
+                        <Text style={[login_styles.extra_text_guide, {color: "#B26666"}]}>Forgot your password?</Text>
+                    </TouchableOpacity>
+                    {info ? (
+                        <Text style={[login_styles.extra_text_guide, {color: "#2E7D32"}]}>{info}</Text>
+                    ) : null}
                 </View>
             </View>
 
