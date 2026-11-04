@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router'
-import { ActivityIndicator, Animated, Dimensions, Image, LayoutAnimation, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, Dimensions, Image, LayoutAnimation, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../root_styles';
 import { Header1 } from '../components/text_styles';
@@ -19,14 +19,13 @@ import Electronics_Image from '../../../assets/svgs/electronics.svg';
 import Textbooks_Image from '../../../assets/svgs/textbooks.svg';
 import Clothing_Image from '../../../assets/svgs/clothing.svg';
 import Budget_Image from '../../../assets/svgs/budget.svg';
-import Convenience_Image from '../../../assets/svgs/convenience.svg';
-import Distance_Image from '../../../assets/svgs/distance.svg';
 import {
     formatCategory,
     formatListingPrice,
     formatSellerName,
 } from '../../../lib/recommendations';
 import { getMarketplaceListings } from '../../../lib/api/listings';
+import { getFavoriteListingIds, setListingFavorite } from '../../../lib/api/favorites';
 
 const Base_Filter_Button = ({text = "", enabled = false, onPress}) => {
     return (
@@ -47,6 +46,7 @@ const Base_Filter_Button = ({text = "", enabled = false, onPress}) => {
 const Filter_Option = ({
     backgroundColor = colors.blush,
     image,
+    iconName,
     text,
     enabled = false,
     onPress,
@@ -61,6 +61,11 @@ const Filter_Option = ({
             {image && (
                 <View style={[styles.sample_filter_image_container, {backgroundColor: enabled ? colors.maroon : backgroundColor}]}>
                     <Image source={image} style={styles.sample_filter_image} />
+                </View>
+            )}
+            {iconName && (
+                <View style={[styles.sample_filter_image_container, {backgroundColor: enabled ? colors.maroon : backgroundColor}]}>
+                    <Ionicons name={iconName} size={34} color={enabled ? colors.white : colors.maroon} />
                 </View>
             )}
             <Text
@@ -79,11 +84,10 @@ const Filter_Panel = ({filterOptions, onToggle, onClose, onApply, onReset}) => {
     const filterOptionsByRow = [
         {image: Furniture_Image, text: 'Furniture'},
         {image: Textbooks_Image, text: 'Textbooks'},
-        {image: Budget_Image, text: 'Budget'},
-        {image: Distance_Image, text: 'Distance'},
+        {image: Budget_Image, text: 'Under $25'},
         {image: Electronics_Image, text: 'Electronics'},
         {image: Clothing_Image, text: 'Clothing'},
-        {image: Convenience_Image, text: 'Convenience'},
+        {iconName: 'heart', text: 'Favorites'},
     ];
 
     return (
@@ -110,6 +114,7 @@ const Filter_Panel = ({filterOptions, onToggle, onClose, onApply, onReset}) => {
                             <Filter_Option
                                 key={option.text}
                                 image={option.image}
+                                iconName={option.iconName}
                                 text={option.text}
                                 enabled={filterOptions[option.text]}
                                 onPress={onToggle}
@@ -225,15 +230,9 @@ const Sort_Checkbox_Option = ({text, enabled = false, onToggle}) => {
     );
 };
 
-const Sort_Panel = ({onClose}) => {
-    const [selectedSort, setSelectedSort] = useState('Unsorted');
-    const [sortOptionsEnabled, setSortOptionsEnabled] = useState({
-        Name: false,
-        Seller: false,
-        Relevance: false,
-        Price: false,
-        'Date Published': false,
-    });
+const Sort_Panel = ({onClose, sortConfig, onApply, onReset}) => {
+    const [selectedSort, setSelectedSort] = useState(sortConfig.direction);
+    const [selectedField, setSelectedField] = useState(sortConfig.field);
     const [sortLayouts, setSortLayouts] = useState({});
     const highlightPosition = useState(new Animated.Value(0))[0];
     const highlightWidth = useState(new Animated.Value(0))[0];
@@ -249,14 +248,9 @@ const Sort_Panel = ({onClose}) => {
     };
 
     const resetSortOptions = () => {
-        setSelectedSort('Unsorted');
-        setSortOptionsEnabled({
-            Name: false,
-            Seller: false,
-            Relevance: false,
-            Price: false,
-            'Date Published': false,
-        });
+        setSelectedSort('Descending');
+        setSelectedField('Date Published');
+        onReset();
     };
 
     useEffect(() => {
@@ -325,35 +319,32 @@ const Sort_Panel = ({onClose}) => {
             <ScrollView style={{marginVertical: 24}}>
                 <Sort_Checkbox_Option
                     text="Name"
-                    enabled={sortOptionsEnabled.Name}
-                    onToggle={() => setSortOptionsEnabled((current) => ({...current, Name: !current.Name}))}
+                    enabled={selectedField === 'Name'}
+                    onToggle={() => setSelectedField('Name')}
                 />
                 <Sort_Checkbox_Option
                     text="Seller"
-                    enabled={sortOptionsEnabled.Seller}
-                    onToggle={() => setSortOptionsEnabled((current) => ({...current, Seller: !current.Seller}))}
+                    enabled={selectedField === 'Seller'}
+                    onToggle={() => setSelectedField('Seller')}
                 />
                 <Sort_Checkbox_Option
                     text="Relevance"
-                    enabled={sortOptionsEnabled.Relevance}
-                    onToggle={() => setSortOptionsEnabled((current) => ({...current, Relevance: !current.Relevance}))}
+                    enabled={selectedField === 'Relevance'}
+                    onToggle={() => setSelectedField('Relevance')}
                 />
                 <Sort_Checkbox_Option
                     text="Price"
-                    enabled={sortOptionsEnabled.Price}
-                    onToggle={() => setSortOptionsEnabled((current) => ({...current, Price: !current.Price}))}
+                    enabled={selectedField === 'Price'}
+                    onToggle={() => setSelectedField('Price')}
                 />
                 <Sort_Checkbox_Option
                     text="Date Published"
-                    enabled={sortOptionsEnabled['Date Published']}
-                    onToggle={() => setSortOptionsEnabled((current) => ({
-                        ...current,
-                        'Date Published': !current['Date Published'],
-                    }))}
+                    enabled={selectedField === 'Date Published'}
+                    onToggle={() => setSelectedField('Date Published')}
                 />
             </ScrollView>
             <View style={styles.options_actions}>
-                <Button style={styles.apply_button} onPress={onClose}>
+                <Button style={styles.apply_button} onPress={() => onApply({field: selectedField, direction: selectedSort})}>
                     <Text style={styles.apply_button_text}>Apply changes</Text>
                 </Button>
                 <Button style={styles.reset_button} onPress={resetSortOptions}>
@@ -365,12 +356,14 @@ const Sort_Panel = ({onClose}) => {
 };
 
 const Listing_Card = (props) => {
-    const [isFavorite, setIsFavorite] = useState(false);
     const router = useRouter();
 
     return (
         <Pressable style={styles.card} onPress={() => router.push(`/Store/Listing/Marketplace/live-${props.id}`)}>
             <View style={styles.cardPhoto}>
+                {props.imageUrl && (
+                    <Image source={{uri: props.imageUrl}} style={styles.cardPhotoImage} resizeMode="cover" />
+                )}
                 <View style={[
                     styles.cardPhotoHeader,
                     !props.status && styles.cardPhotoHeaderWithoutCondition,
@@ -380,13 +373,17 @@ const Listing_Card = (props) => {
                     )}
                     <Button
                         style={styles.favoriteButton}
-                        onPress={() => setIsFavorite((favorite) => !favorite)}
-                        accessibilityLabel={isFavorite ? 'Remove listing from favorites' : 'Add listing to favorites'}
+                        disabled={props.favoriteBusy}
+                        onPress={(event) => {
+                            event.stopPropagation();
+                            props.onToggleFavorite();
+                        }}
+                        accessibilityLabel={props.isFavorite ? 'Remove listing from favorites' : 'Add listing to favorites'}
                     >
                         <Ionicons
-                            name={isFavorite ? 'heart' : 'heart-outline'}
+                            name={props.isFavorite ? 'heart' : 'heart-outline'}
                             size={16}
-                            color={colors.ink}
+                            color={props.isFavorite ? colors.maroon : colors.ink}
                         />
                     </Button>
                 </View>
@@ -430,9 +427,8 @@ const End_Row = () => {
 
 const Store = () => {
     const [enabledFilters, setEnabledFilters] = useState({
-        Budget: false,
-        Convenience: false,
-        Distance: false,
+        'Under $25': false,
+        Favorites: false,
         Furniture: false,
         Electronics: false,
         Textbooks: false,
@@ -450,12 +446,18 @@ const Store = () => {
     const [listingError, setListingError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchFocused, setSearchFocused] = useState(false);
+    const [favoriteListingIds, setFavoriteListingIds] = useState(new Set());
+    const [favoriteBusyIds, setFavoriteBusyIds] = useState(new Set());
+    const [sortConfig, setSortConfig] = useState({field: 'Date Published', direction: 'Descending'});
 
     const categoryFilters = ['Furniture', 'Electronics', 'Textbooks', 'Clothing'];
     const selectedCategories = categoryFilters.filter((category) => enabledFilters[category]);
-    const categoryListings = selectedCategories.length === 0
-        ? listings
-        : listings.filter((listing) => selectedCategories.includes(formatCategory(listing.category)));
+    const filteredListings = listings.filter((listing) => {
+        if (selectedCategories.length > 0 && !selectedCategories.includes(formatCategory(listing.category))) return false;
+        if (enabledFilters['Under $25'] && Number(listing.price) > 25) return false;
+        if (enabledFilters.Favorites && !favoriteListingIds.has(listing.listing_id)) return false;
+        return true;
+    });
     const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
     const scoreListing = useCallback((listing) => {
         if (!normalizedQuery) return 0;
@@ -473,13 +475,23 @@ const Store = () => {
         return 0;
     }, [normalizedQuery]);
     const visibleListings = useMemo(() => {
-        if (!normalizedQuery) return categoryListings;
-        return categoryListings
+        const scoredListings = filteredListings
             .map((listing) => ({listing, score: scoreListing(listing)}))
-            .filter(({score}) => score > 0)
-            .sort((a, b) => b.score - a.score || a.listing.title.localeCompare(b.listing.title))
-            .map(({listing}) => listing);
-    }, [categoryListings, normalizedQuery, scoreListing]);
+            .filter(({score}) => !normalizedQuery || score > 0);
+
+        if (sortConfig.direction === 'Unsorted') return scoredListings.map(({listing}) => listing);
+
+        const direction = sortConfig.direction === 'Ascending' ? 1 : -1;
+        return scoredListings.sort((a, b) => {
+            let comparison = 0;
+            if (sortConfig.field === 'Name') comparison = a.listing.title.localeCompare(b.listing.title);
+            if (sortConfig.field === 'Seller') comparison = formatSellerName(a.listing.seller_name).localeCompare(formatSellerName(b.listing.seller_name));
+            if (sortConfig.field === 'Price') comparison = Number(a.listing.price) - Number(b.listing.price);
+            if (sortConfig.field === 'Date Published') comparison = new Date(a.listing.created_at).getTime() - new Date(b.listing.created_at).getTime();
+            if (sortConfig.field === 'Relevance') comparison = a.score - b.score;
+            return comparison * direction || a.listing.title.localeCompare(b.listing.title);
+        }).map(({listing}) => listing);
+    }, [filteredListings, normalizedQuery, scoreListing, sortConfig]);
     const searchSuggestions = searchFocused && normalizedQuery
         ? visibleListings.slice(0, 5)
         : [];
@@ -502,10 +514,14 @@ const Store = () => {
             setListingError(null);
 
             try {
-                const marketplaceListings = await getMarketplaceListings();
+                const [marketplaceListings, favoriteIds] = await Promise.all([
+                    getMarketplaceListings(),
+                    getFavoriteListingIds(),
+                ]);
 
                 if (active) {
                     setListings(marketplaceListings);
+                    setFavoriteListingIds(new Set(favoriteIds));
                 }
             } catch (error) {
                 if (active) {
@@ -523,9 +539,8 @@ const Store = () => {
     const openPanel = (panel) => {
         if (panel === 'filter') {
             setDraftFilterOptions({
-                Budget: enabledFilters.Budget,
-                Convenience: enabledFilters.Convenience,
-                Distance: enabledFilters.Distance,
+                'Under $25': enabledFilters['Under $25'],
+                Favorites: enabledFilters.Favorites,
                 Furniture: enabledFilters.Furniture,
                 Electronics: enabledFilters.Electronics,
                 Textbooks: enabledFilters.Textbooks,
@@ -560,9 +575,8 @@ const Store = () => {
     const resetPanelChanges = () => {
         if (activePanel === 'filter') {
             const resetFilters = {
-                Budget: false,
-                Convenience: false,
-                Distance: false,
+                'Under $25': false,
+                Favorites: false,
                 Furniture: false,
                 Electronics: false,
                 Textbooks: false,
@@ -573,6 +587,36 @@ const Store = () => {
         } else {
             setEnabledFilters((current) => ({ ...current, [activePanel]: false }));
             closePanel();
+        }
+    };
+
+    const toggleFavorite = async (listingId) => {
+        if (favoriteBusyIds.has(listingId)) return;
+        const wasFavorite = favoriteListingIds.has(listingId);
+        setFavoriteBusyIds((current) => new Set(current).add(listingId));
+        setFavoriteListingIds((current) => {
+            const next = new Set(current);
+            if (wasFavorite) next.delete(listingId);
+            else next.add(listingId);
+            return next;
+        });
+
+        try {
+            await setListingFavorite(listingId, !wasFavorite);
+        } catch (error) {
+            setFavoriteListingIds((current) => {
+                const next = new Set(current);
+                if (wasFavorite) next.add(listingId);
+                else next.delete(listingId);
+                return next;
+            });
+            Alert.alert('Could not update favorite', error instanceof Error ? error.message : 'Please try again.');
+        } finally {
+            setFavoriteBusyIds((current) => {
+                const next = new Set(current);
+                next.delete(listingId);
+                return next;
+            });
         }
     };
 
@@ -641,19 +685,14 @@ const Store = () => {
                             <Image source={Sort_Image}/>
                         </Button>
                         <Base_Filter_Button
-                            text="Budget"
-                            enabled={enabledFilters.Budget}
-                            onPress={() => setEnabledFilters((current) => ({ ...current, Budget: !current.Budget }))}
+                            text="Under $25"
+                            enabled={enabledFilters['Under $25']}
+                            onPress={() => setEnabledFilters((current) => ({ ...current, 'Under $25': !current['Under $25'] }))}
                         />
                         <Base_Filter_Button
-                            text="Convenience"
-                            enabled={enabledFilters.Convenience}
-                            onPress={() => setEnabledFilters((current) => ({ ...current, Convenience: !current.Convenience }))}
-                        />
-                        <Base_Filter_Button
-                            text="Distance"
-                            enabled={enabledFilters.Distance}
-                            onPress={() => setEnabledFilters((current) => ({ ...current, Distance: !current.Distance }))}
+                            text="Favorites"
+                            enabled={enabledFilters.Favorites}
+                            onPress={() => setEnabledFilters((current) => ({ ...current, Favorites: !current.Favorites }))}
                         />
                     </ScrollView>
                     {loadingListings ? (
@@ -664,7 +703,11 @@ const Store = () => {
                         <Text style={styles.listingMessage}>{listingError}</Text>
                     ) : visibleListings.length === 0 ? (
                         <Text style={styles.listingMessage}>
-                            {normalizedQuery ? `No listings match “${searchQuery.trim()}”.` : 'No active listings are available.'}
+                            {normalizedQuery
+                                ? `No listings match “${searchQuery.trim()}”.`
+                                : enabledFilters.Favorites
+                                    ? 'You have no favorites matching these filters.'
+                                    : 'No active listings match these filters.'}
                         </Text>
                     ) : (
                         Array.from({ length: Math.ceil(visibleListings.length / 2) }, (_, rowIndex) => (
@@ -685,6 +728,10 @@ const Store = () => {
                                             initials={sellerInitials}
                                             price={formatListingPrice(listing.price)}
                                             category={formatCategory(listing.category)}
+                                            imageUrl={listing.image_url}
+                                            isFavorite={favoriteListingIds.has(listing.listing_id)}
+                                            favoriteBusy={favoriteBusyIds.has(listing.listing_id)}
+                                            onToggleFavorite={() => toggleFavorite(listing.listing_id)}
                                         />
                                     );
                                 })}
@@ -717,6 +764,20 @@ const Store = () => {
                         ) : (
                             <Sort_Panel
                                 onClose={closePanel}
+                                sortConfig={sortConfig}
+                                onApply={(nextSort) => {
+                                    setSortConfig(nextSort);
+                                    setEnabledFilters((current) => ({
+                                        ...current,
+                                        sort: nextSort.field !== 'Date Published' || nextSort.direction !== 'Descending',
+                                    }));
+                                    closePanel();
+                                }}
+                                onReset={() => {
+                                    setSortConfig({field: 'Date Published', direction: 'Descending'});
+                                    setEnabledFilters((current) => ({...current, sort: false}));
+                                    closePanel();
+                                }}
                             />
                         )}
                     </Animated.View>
@@ -1022,6 +1083,11 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         position: 'relative',
         padding: 10,
+    },
+    cardPhotoImage: {
+        ...StyleSheet.absoluteFillObject,
+        width: '100%',
+        height: '100%',
     },
     cardPhotoHeader: {
         flexDirection: 'row',

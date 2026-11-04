@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Text, View, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { Text, View, StyleSheet, ScrollView, Pressable, ActivityIndicator, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../../../root_styles';
@@ -21,6 +21,7 @@ type DisplayItem = {
     pickup: string;
     posted: string;
     isLive: boolean;
+    imageUrl?: string | null;
 };
 
 const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
@@ -80,6 +81,7 @@ const Marketplace_Listing = () => {
                     pickup: 'Arrange with seller',
                     posted: new Date(data.created_at).toLocaleDateString(),
                     isLive: true,
+                    imageUrl: data.image_url,
                 });
 
                 recordListingInteraction(data.listing_id, 'view').catch(() => undefined);
@@ -119,8 +121,11 @@ const Marketplace_Listing = () => {
         <View style={page.screen}>
             <ScrollView contentContainerStyle={page.content}>
 
-                {/* photo placeholder with back button on top */}
+                {/* listing photo with a placeholder color when none was uploaded */}
                 <View style={page.photo}>
+                    {item.imageUrl && (
+                        <Image source={{uri: item.imageUrl}} style={page.photoImage} resizeMode="cover" />
+                    )}
                     <Pressable style={page.backButton} onPress={() => router.back()} accessibilityLabel="Go back">
                         <Ionicons name="chevron-back" size={22} color={colors.ink} />
                     </Pressable>
@@ -207,7 +212,16 @@ const page = StyleSheet.create({
     },
     photo: {
         height: 380,
-        backgroundColor: colors.maroon, // placeholder until real photos
+        backgroundColor: colors.maroon,
+    },
+    photoImage: {
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
     },
     backButton: {
         position: 'absolute',
