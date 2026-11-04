@@ -9,6 +9,7 @@ import Button from '../components/button';
 import Base from '../components/base';
 import Search_Bar from '../components/search_bar';
 import TabBar from '../components/tab_bar';
+import Shopping_Cart_Image from '../../../assets/images/shopping_cart.png';
 import Filter_Image from '../../../assets/svgs/filter.svg';
 import Sort_Image from '../../../assets/svgs/sort.svg';
 import Sort_Up_Image from '../../../assets/svgs/sort_up.svg';
@@ -449,8 +450,17 @@ const Store = () => {
     const [loadingListings, setLoadingListings] = useState(true);
     const [listingError, setListingError] = useState(null);
     const [current_tab, set_new_tab] = useState("marketplace");
+    const tabHeightAnimation = useState(new Animated.Value(0))[0];
     const [searchQuery, setSearchQuery] = useState('');
     const [searchFocused, setSearchFocused] = useState(false);
+
+    useEffect(() => {
+        Animated.timing(tabHeightAnimation, {
+            toValue: current_tab === 'services' ? 1 : 0,
+            duration: 180,
+            useNativeDriver: false,
+        }).start();
+    }, [current_tab, tabHeightAnimation]);
 
     const categoryFilters = ['Furniture', 'Electronics', 'Textbooks', 'Clothing'];
     const selectedCategories = categoryFilters.filter((category) => enabledFilters[category]);
@@ -582,14 +592,30 @@ const Store = () => {
             <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 30}}>
                 <Header1 style={{flex: 1,marginBottom: 0}}>catalog</Header1>
                 <Button style={styles.shopping_Cart} onPress={() => router.push('/Store/Shopping Cart')}>
-                    <Text>S</Text>
+                    <Image source={Shopping_Cart_Image} style={styles.shopping_Cart_Image} resizeMode="contain" />
                 </Button>
             </View>
             <View style={styles.listing_area}>
                 <View style={styles.search_overlay}>
-                    <View style={{marginLeft: 22, flexDirection: 'row', gap: 5}}>
-                        <Button style={{height: 40, width: 'auto', paddingHorizontal: 10, paddingTop: 3, borderRadius: 10, marginBottom: 0, boxShadow: '', backgroundColor: colors.maroonLight, justifyContent: 'flex-start'}}><Text selectable={false} style={{color: colors.white}}>Marketplace</Text></Button>
-                        <Button style={{height: 40, width: 'auto', paddingHorizontal: 10, paddingTop: 3, borderRadius: 10, marginBottom: -10, boxShadow: '', backgroundColor: colors.maroonDark, justifyContent: 'flex-start'}}><Text selectable={false} style={{color: colors.white}}>Services</Text></Button>
+                    <View style={{marginLeft: 22, marginTop: 10, marginBottom: -10, height: 40, flexDirection: 'row', alignItems: 'flex-end', gap: 5}}>
+                        <Animated.View style={{height: tabHeightAnimation.interpolate({inputRange: [0, 1], outputRange: [50, 40]})}}>
+                            <Button
+                                style={{height: '100%', width: 'auto', paddingHorizontal: 10, paddingTop: 3, paddingBottom: 10, borderRadius: 10, boxShadow: '', backgroundColor: colors.maroonLight, justifyContent: 'flex-start'}}
+                                onPress={() => set_new_tab('marketplace')}
+                                accessibilityState={{selected: current_tab === 'marketplace'}}
+                            >
+                                <Text selectable={false} style={{color: colors.white}}>Marketplace</Text>
+                            </Button>
+                        </Animated.View>
+                        <Animated.View style={{height: tabHeightAnimation.interpolate({inputRange: [0, 1], outputRange: [40, 50]})}}>
+                            <Button
+                                style={{height: '100%', width: 'auto', paddingHorizontal: 10, paddingTop: 3, paddingBottom: 10, borderRadius: 10, boxShadow: '', backgroundColor: colors.maroonDark, justifyContent: 'flex-start'}}
+                                onPress={() => set_new_tab('services')}
+                                accessibilityState={{selected: current_tab === 'services'}}
+                            >
+                                <Text selectable={false} style={{color: colors.white}}>Services</Text>
+                            </Button>
+                        </Animated.View>
                     </View>
                     <Search_Bar
                         placeholder="What are you looking for?"
@@ -626,7 +652,7 @@ const Store = () => {
                     )}
                 </View>
                 <ScrollView contentContainerStyle={styles.marketplace_listing_container} style={{marginTop: 48}} showsVerticalScrollIndicator={false}>
-                    <ScrollView contentContainerStyle={styles.filter_container} showsHorizontalScrollIndicator={false}>
+                    <ScrollView horizontal contentContainerStyle={styles.filter_container} showsHorizontalScrollIndicator={false}>
                         <Button
                             style={[[styles.filter_button,{backgroundColor: "#D4D4D4", border: '1px solid #c0c0c0',}], enabledFilters.filter && styles.enabled_filter_button]}
                             onPress={() => openPanel('filter')}
@@ -881,7 +907,12 @@ const styles = StyleSheet.create({
     shopping_Cart: {
         width: 40,
         height: 40,
-        backgroundColor: colors.white,
+        backgroundColor: 'transparent',
+        boxShadow: '',
+    },
+    shopping_Cart_Image: {
+        width: 30,
+        height: 30,
     },  
     options_panel: {
         position: 'absolute',

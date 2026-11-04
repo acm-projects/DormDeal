@@ -103,10 +103,12 @@ const Shopping_Cart = () => {
     return (
         <Base>
             <View style={styles.header_container}>
+                <View style={styles.top_row}>
+                    <Button style={styles.back_button} onPress={() => router.push('/Store')}>
+                        <Text>X</Text>
+                    </Button>
+                </View>
                 <Header1 style={styles.header1_custom}>your cart</Header1>
-                <Button style={styles.back_button} onPress={() => router.push('/Store')}>
-                    <Text>X</Text>
-                </Button>
             </View>
             <Text selectable={false} style={styles.reference_guide}>
                 ${subtotal.toFixed(2)} subtotal • {item_count} items
@@ -184,11 +186,14 @@ const styles = StyleSheet.create({
         color: colors.white,
     },
     header_container: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        width: '100%',
+    },
+    top_row: {
+        width: '100%',
+        alignItems: 'flex-start',
+        marginBottom: 10,
     },
     header1_custom: {
-        flex: 1,
         marginBottom: 0,
     },
     list_of_listings_container: {
