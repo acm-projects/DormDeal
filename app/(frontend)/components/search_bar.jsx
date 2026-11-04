@@ -2,11 +2,15 @@ import { View, Image, StyleSheet, TextInput, Pressable } from 'react-native';
 import component_root_styles from '../../root_styles'
 import search_icon from '../../../assets/images/search_icon.png'
 
-const Search_Bar = ({placeholder = "", style = {}}) => {
+const Search_Bar = ({placeholder = "", style = {}, inputStyle = null, ...inputProps}) => {
     return (
         <View style={[styles.search_bar_container, style]}>
-            <TextInput style={[component_root_styles.default_text, styles.search_bar_txt]} placeholder={placeholder}></TextInput>
-            <Pressable>
+            <TextInput
+                {...inputProps}
+                style={[component_root_styles.default_text, styles.search_bar_txt, inputStyle]}
+                placeholder={placeholder}
+            />
+            <Pressable onPress={inputProps.onSubmitEditing} accessibilityLabel="Search">
                 <Image source={search_icon} style={styles.search_icon}/>
             </Pressable>
         </View>
