@@ -146,7 +146,10 @@ const Profile = () => {
                     </View>
                 </View>
                 <View style={{flex: 1, alignItems: 'center', textAlign: 'center', marginTop: 195}}>
-                    <ScrollView contentContainerStyle={{gap: 15, paddingTop: 40}}>
+                    <ScrollView
+                        style={styles.listingsScroll}
+                        contentContainerStyle={styles.listingsContent}
+                    >
                         <Header1 style={{fontSize: 30, marginBottom: 15}}>Current Listings</Header1>
                         <Row>
                             <Listing_Card title={"Tree"} price={"$67"} status={"new"}></Listing_Card>
@@ -232,8 +235,17 @@ const styles = StyleSheet.create({
     },
     marketplace_listing_row: {
         flexDirection: 'row',
+        width: '100%',
         justifyContent: 'space-between',
         gap: 15,
+    },
+    listingsScroll: {
+        width: '100%',
+    },
+    listingsContent: {
+        width: '100%',
+        gap: 15,
+        paddingTop: 40,
     },
     cardLeft: {
         flex: 1,
