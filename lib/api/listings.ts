@@ -2,6 +2,10 @@ import { supabase } from '../supabase';
 import { ApiError } from './apiError';
 import type { CreateListingInput, Listing, UpdateListingInput } from './types';
 
+export type MarketplaceListing = Listing & {
+  seller_name: string | null;
+};
+
 const LISTING_COLUMNS = 'listing_id, seller_id, title, description, price, category, status, created_at';
 
 function requirePositiveId(id: number) {
@@ -26,6 +30,28 @@ export async function getListings(): Promise<Listing[]> {
 
   if (error) throw new ApiError('Could not load listings.', error.code, error);
   return (data ?? []) as Listing[];
+}
+
+export async function getMarketplaceListings(): Promise<MarketplaceListing[]> {
+  const listings = await getListings();
+  if (!listings.length) return [];
+
+  const sellerIds = [...new Set(listings.map((listing) => listing.seller_id))];
+  const { data: sellers, error } = await supabase
+    .from('app-users')
+    .select('user_id, name')
+    .in('user_id', sellerIds);
+
+  if (error) throw new ApiError('Could not load listing sellers.', error.code, error);
+
+  const sellerNames = new Map(
+    (sellers ?? []).map((seller) => [seller.user_id, seller.name as string | null]),
+  );
+
+  return listings.map((listing) => ({
+    ...listing,
+    seller_name: sellerNames.get(listing.seller_id) ?? null,
+  }));
 }
 
 export async function getMyListings(): Promise<Listing[]> {

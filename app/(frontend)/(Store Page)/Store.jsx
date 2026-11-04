@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useRouter } from 'expo-router'
+import { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router'
 import { ActivityIndicator, Animated, Dimensions, Image, LayoutAnimation, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../root_styles';
@@ -25,9 +25,8 @@ import {
     formatCategory,
     formatListingPrice,
     formatSellerName,
-    getCategoryPreferences,
-    getRecommendations,
 } from '../../../lib/recommendations';
+import { getMarketplaceListings } from '../../../lib/api/listings';
 
 const Base_Filter_Button = ({text = "", enabled = false, onPress}) => {
     return (
@@ -447,19 +446,8 @@ const Store = () => {
     const panelPosition = useState(new Animated.Value(screenWidth))[0];
     const router = useRouter();
     const [listings, setListings] = useState([]);
-    const [preferences, setPreferences] = useState([]);
     const [loadingListings, setLoadingListings] = useState(true);
     const [listingError, setListingError] = useState(null);
-
-    const hasUserFilters = enabledFilters.Budget
-        || enabledFilters.Convenience
-        || enabledFilters.Distance
-        || enabledFilters.Furniture
-        || enabledFilters.Electronics
-        || enabledFilters.Textbooks
-        || enabledFilters.Clothing
-        || enabledFilters.filter
-        || enabledFilters.sort;
 
     const categoryFilters = ['Furniture', 'Electronics', 'Textbooks', 'Clothing'];
     const selectedCategories = categoryFilters.filter((category) => enabledFilters[category]);
@@ -477,7 +465,7 @@ const Store = () => {
         }
     }, [activePanel, panelPosition]);
 
-    useEffect(() => {
+    useFocusEffect(useCallback(() => {
         let active = true;
 
         const loadListings = async () => {
@@ -485,12 +473,10 @@ const Store = () => {
             setListingError(null);
 
             try {
-                const recommendedListings = await getRecommendations(50);
-                const learnedPreferences = await getCategoryPreferences().catch(() => []);
+                const marketplaceListings = await getMarketplaceListings();
 
                 if (active) {
-                    setListings(recommendedListings);
-                    setPreferences(learnedPreferences);
+                    setListings(marketplaceListings);
                 }
             } catch (error) {
                 if (active) {
@@ -503,7 +489,7 @@ const Store = () => {
 
         loadListings();
         return () => { active = false; };
-    }, []);
+    }, []));
 
     const openPanel = (panel) => {
         if (panel === 'filter') {
@@ -609,16 +595,6 @@ const Store = () => {
                             onPress={() => setEnabledFilters((current) => ({ ...current, Distance: !current.Distance }))}
                         />
                     </ScrollView>
-                    {!hasUserFilters && (
-                        <View style={styles.personalizationNote}>
-                            <Text style={styles.personalizationTitle}>Picked for you</Text>
-                            <Text style={styles.personalizationText}>
-                                {preferences.length > 0
-                                    ? `Based on ${preferences.slice(0, 3).map((preference) => formatCategory(preference.category)).join(', ')}`
-                                    : 'Personalized automatically as you browse listings'}
-                            </Text>
-                        </View>
-                    )}
                     {loadingListings ? (
                         <View style={styles.loadingListings}>
                             <ActivityIndicator color={colors.maroon} />
@@ -646,7 +622,6 @@ const Store = () => {
                                             initials={sellerInitials}
                                             price={formatListingPrice(listing.price)}
                                             category={formatCategory(listing.category)}
-                                            status={!hasUserFilters ? 'For you' : undefined}
                                         />
                                     );
                                 })}
@@ -779,24 +754,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         gap: 15,
-    },
-    personalizationNote: {
-        backgroundColor: colors.white,
-        borderRadius: 16,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-    },
-    personalizationTitle: {
-        color: colors.maroon,
-        fontFamily: 'Outfit',
-        fontSize: 13,
-        fontWeight: '700',
-    },
-    personalizationText: {
-        color: colors.muted,
-        fontFamily: 'Outfit',
-        fontSize: 12,
-        marginTop: 2,
     },
     loadingListings: {
         alignItems: 'center',
