@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router'
 import { ActivityIndicator, Animated, Dimensions, Image, LayoutAnimation, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -448,12 +448,41 @@ const Store = () => {
     const [listings, setListings] = useState([]);
     const [loadingListings, setLoadingListings] = useState(true);
     const [listingError, setListingError] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchFocused, setSearchFocused] = useState(false);
 
     const categoryFilters = ['Furniture', 'Electronics', 'Textbooks', 'Clothing'];
     const selectedCategories = categoryFilters.filter((category) => enabledFilters[category]);
-    const visibleListings = selectedCategories.length === 0
+    const categoryListings = selectedCategories.length === 0
         ? listings
         : listings.filter((listing) => selectedCategories.includes(formatCategory(listing.category)));
+    const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
+    const scoreListing = useCallback((listing) => {
+        if (!normalizedQuery) return 0;
+
+        const title = listing.title.toLocaleLowerCase();
+        const category = formatCategory(listing.category).toLocaleLowerCase();
+        const seller = formatSellerName(listing.seller_name).toLocaleLowerCase();
+        const description = (listing.description ?? '').toLocaleLowerCase();
+
+        if (title === normalizedQuery) return 5;
+        if (title.startsWith(normalizedQuery)) return 4;
+        if (title.includes(normalizedQuery)) return 3;
+        if (category.startsWith(normalizedQuery) || seller.startsWith(normalizedQuery)) return 2;
+        if (category.includes(normalizedQuery) || seller.includes(normalizedQuery) || description.includes(normalizedQuery)) return 1;
+        return 0;
+    }, [normalizedQuery]);
+    const visibleListings = useMemo(() => {
+        if (!normalizedQuery) return categoryListings;
+        return categoryListings
+            .map((listing) => ({listing, score: scoreListing(listing)}))
+            .filter(({score}) => score > 0)
+            .sort((a, b) => b.score - a.score || a.listing.title.localeCompare(b.listing.title))
+            .map(({listing}) => listing);
+    }, [categoryListings, normalizedQuery, scoreListing]);
+    const searchSuggestions = searchFocused && normalizedQuery
+        ? visibleListings.slice(0, 5)
+        : [];
 
     useEffect(() => {
         if (activePanel) {
@@ -561,7 +590,39 @@ const Store = () => {
                         <Button style={{height: 40, width: 'auto', paddingHorizontal: 10, paddingTop: 3, borderRadius: 10, marginBottom: -10, boxShadow: '', backgroundColor: colors.maroonLight, justifyContent: 'flex-start'}}><Text selectable={false} style={{color: colors.white}}>Marketplace</Text></Button>
                         <Button style={{height: 40, width: 'auto', paddingHorizontal: 10, paddingTop: 3, borderRadius: 10, marginBottom: -10, boxShadow: '', backgroundColor: colors.maroonDark, justifyContent: 'flex-start'}}><Text selectable={false} style={{color: colors.white}}>Services</Text></Button>
                     </View>
-                    <Search_Bar placeholder="What are you looking for?" />
+                    <Search_Bar
+                        placeholder="What are you looking for?"
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        onFocus={() => setSearchFocused(true)}
+                        onBlur={() => setSearchFocused(false)}
+                        onSubmitEditing={() => setSearchFocused(false)}
+                        returnKeyType="search"
+                        accessibilityLabel="Search marketplace listings"
+                    />
+                    {searchSuggestions.length > 0 && (
+                        <View style={styles.search_suggestions}>
+                            {searchSuggestions.map((listing, index) => (
+                                <Pressable
+                                    key={listing.listing_id}
+                                    style={[
+                                        styles.search_suggestion,
+                                        index < searchSuggestions.length - 1 && styles.search_suggestion_border,
+                                    ]}
+                                    onPressIn={() => router.push(`/Store/Listing/Marketplace/live-${listing.listing_id}`)}
+                                    accessibilityLabel={`Open ${listing.title}`}
+                                >
+                                    <Ionicons name="search" size={17} color={colors.muted} />
+                                    <View style={styles.search_suggestion_text}>
+                                        <Text style={styles.search_suggestion_title} numberOfLines={1}>{listing.title}</Text>
+                                        <Text style={styles.search_suggestion_category} numberOfLines={1}>
+                                            {formatCategory(listing.category)} · {formatListingPrice(listing.price)}
+                                        </Text>
+                                    </View>
+                                </Pressable>
+                            ))}
+                        </View>
+                    )}
                 </View>
                 <ScrollView contentContainerStyle={styles.marketplace_listing_container} style={{marginTop: 48}} showsVerticalScrollIndicator={false}>
                     <ScrollView contentContainerStyle={styles.filter_container} showsHorizontalScrollIndicator={false}>
@@ -602,7 +663,9 @@ const Store = () => {
                     ) : listingError ? (
                         <Text style={styles.listingMessage}>{listingError}</Text>
                     ) : visibleListings.length === 0 ? (
-                        <Text style={styles.listingMessage}>No active listings are available.</Text>
+                        <Text style={styles.listingMessage}>
+                            {normalizedQuery ? `No listings match “${searchQuery.trim()}”.` : 'No active listings are available.'}
+                        </Text>
                     ) : (
                         Array.from({ length: Math.ceil(visibleListings.length / 2) }, (_, rowIndex) => (
                             <Row key={rowIndex}>
@@ -679,6 +742,44 @@ const styles = StyleSheet.create({
         right: 0,
         zIndex: 2,
         elevation: 2,
+    },
+    search_suggestions: {
+        marginTop: 6,
+        marginHorizontal: 4,
+        borderRadius: 16,
+        backgroundColor: colors.white,
+        overflow: 'hidden',
+        shadowColor: colors.ink,
+        shadowOpacity: 0.14,
+        shadowRadius: 12,
+        shadowOffset: {width: 0, height: 5},
+        elevation: 7,
+    },
+    search_suggestion: {
+        minHeight: 58,
+        paddingHorizontal: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    search_suggestion_border: {
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: '#D8D8D8',
+    },
+    search_suggestion_text: {
+        flex: 1,
+    },
+    search_suggestion_title: {
+        color: colors.ink,
+        fontFamily: 'Outfit',
+        fontSize: 15,
+        fontWeight: '600',
+    },
+    search_suggestion_category: {
+        marginTop: 2,
+        color: colors.muted,
+        fontFamily: 'Outfit',
+        fontSize: 12,
     },
     filter_container: {
         flexDirection: 'row',
