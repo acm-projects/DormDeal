@@ -448,6 +448,7 @@ const Store = () => {
     const [preferences, setPreferences] = useState([]);
     const [loadingListings, setLoadingListings] = useState(true);
     const [listingError, setListingError] = useState(null);
+    const [current_tab, set_new_tab] = useState("marketplace");
 
     const hasUserFilters = enabledFilters.Budget
         || enabledFilters.Convenience
@@ -570,7 +571,7 @@ const Store = () => {
             <View style={styles.listing_area}>
                 <View style={styles.search_overlay}>
                     <View style={{marginLeft: 22, flexDirection: 'row', gap: 5}}>
-                        <Button style={{height: 40, width: 'auto', paddingHorizontal: 10, paddingTop: 3, borderRadius: 10, marginBottom: -10, boxShadow: '', backgroundColor: colors.maroonLight, justifyContent: 'flex-start'}}><Text selectable={false} style={{color: colors.white}}>Marketplace</Text></Button>
+                        <Button style={{height: 40, width: 'auto', paddingHorizontal: 10, paddingTop: 3, borderRadius: 10, marginBottom: 0, boxShadow: '', backgroundColor: colors.maroonLight, justifyContent: 'flex-start'}}><Text selectable={false} style={{color: colors.white}}>Marketplace</Text></Button>
                         <Button style={{height: 40, width: 'auto', paddingHorizontal: 10, paddingTop: 3, borderRadius: 10, marginBottom: -10, boxShadow: '', backgroundColor: colors.maroonDark, justifyContent: 'flex-start'}}><Text selectable={false} style={{color: colors.white}}>Services</Text></Button>
                     </View>
                     <Search_Bar placeholder="What are you looking for?" />
