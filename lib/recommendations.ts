@@ -6,18 +6,18 @@ export type RecommendedListing = {
   listing_id: number;
   title: string;
   description: string;
-  price: number;
-  category: string;
+  price: number | null;
+  category: string | null;
   created_at: string;
   seller_id: string;
-  seller_name: string;
+  seller_name: string | null;
   image_url: string | null;
   recommendation_score: number;
   recommendation_reason: string;
 };
 
 export type CategoryPreference = {
-  category: string;
+  category: string | null;
   affinity_score: number;
   views: number;
   messages: number;
@@ -54,9 +54,23 @@ export async function recordListingInteraction(
 }
 
 export function formatCategory(category: string | null | undefined) {
-  if (!category) return 'Other';
-  return category
+  const normalizedCategory = category?.trim();
+  if (!normalizedCategory) return 'Other';
+
+  return normalizedCategory
     .split('_')
+    .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+}
+
+export function formatSellerName(sellerName: string | null | undefined) {
+  return sellerName?.trim() || 'Student seller';
+}
+
+export function formatListingPrice(price: number | string | null | undefined) {
+  if (price === null || price === undefined || price === '') return 'Price unavailable';
+
+  const numericPrice = Number(price);
+  return Number.isFinite(numericPrice) ? `$${numericPrice.toFixed(2)}` : 'Price unavailable';
 }

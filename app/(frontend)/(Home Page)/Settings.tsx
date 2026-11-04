@@ -13,7 +13,7 @@ const Settings = () => {
     return (
         <Base>
             <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                <Back_Button href="/"/>
+                <Back_Button href="/home"/>
                 <Header1 style={{textAlign: 'left', marginBottom: 0, marginLeft: 15}}>
                     settings
                 </Header1>

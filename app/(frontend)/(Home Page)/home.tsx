@@ -4,17 +4,16 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../root_styles';
 import TabBar from '../components/tab_bar';
+import Calendar from '../components/calendar';
 import { items } from '../../../data/items';
-import { formatCategory, recordListingInteraction, RecommendedListing } from '../../../lib/recommendations';
+import { formatCategory, formatListingPrice, formatSellerName, recordListingInteraction, RecommendedListing } from '../../../lib/recommendations';
 
 import PaperBg from '../../../assets/images/paper_bg.png';
-
-
-
 
 // what one pickup looks like
 type Pickup = {
     id: string;
+    itemId: string;   // which listing this pickup belongs to
     type: 'buy' | 'sell';
     day: string;
     date: string;
@@ -25,9 +24,9 @@ type Pickup = {
 
 // fake pickups for now
 const pickups: Pickup[] = [
-    { id: 'p1', type: 'buy', day: 'THU', date: '15', item: 'Adjustable desk lamp', time: '5:30 PM', place: 'Helix Hall Lobby' },
-    { id: 'p2', type: 'buy', day: 'SAT', date: '17', item: 'Mini fridge, 3.1 ft', time: '11:00 AM', place: 'Sciences Building' },
-    { id: 'p3', type: 'sell', day: 'FRI', date: '16', item: 'Twin XL sheets', time: '2:00 PM', place: 'Student Union' },
+    { id: 'p1', itemId: '2', type: 'buy', day: 'THU', date: '15', item: 'Adjustable desk lamp', time: '5:30 PM', place: 'Helix Hall Lobby' },
+    { id: 'p2', itemId: '1', type: 'buy', day: 'SAT', date: '17', item: 'Mini fridge, 3.1 ft', time: '11:00 AM', place: 'Sciences Building' },
+    { id: 'p3', itemId: '3', type: 'sell', day: 'FRI', date: '16', item: 'Twin XL sheets', time: '2:00 PM', place: 'Student Union' },
 ];
 
 // what a card needs
@@ -211,12 +210,16 @@ const CardStack = ({ listings }: { listings: FeedListing[] }) => {
     );
 };
 
-// one pickup row
+// one pickup row, tap it to open the listing
 const PickupCard = (props: { pickup: Pickup }) => {
     const p = props.pickup;
+    const router = useRouter();
 
     return (
-        <Pressable style={home.pickupCard}>
+        <Pressable
+            style={home.pickupCard}
+            onPress={() => router.push(`/Store/Listing/Marketplace/${p.itemId}`)}
+        >
             <View style={home.dateBox}>
                 <Text style={home.dateDay}>{p.day}</Text>
                 <Text style={home.dateNum}>{p.date}</Text>
@@ -229,8 +232,6 @@ const PickupCard = (props: { pickup: Pickup }) => {
                     <Text style={home.pickupWhereText}>{p.time} · {p.place}</Text>
                 </View>
             </View>
-
-            <Ionicons name="chevron-forward" size={22} color={colors.ink} />
         </Pressable>
     );
 };
@@ -240,6 +241,7 @@ const Home = () => {
     const initials = 'MR';   // same, comes from login later
     const [mode, setMode] = useState<'buy' | 'sell'>('buy'); // which tab is picked
     const shown = pickups.filter((p) => p.type === mode);   // only the matching pickups
+    const router = useRouter();
 
     return (
         <ImageBackground source={PaperBg} style={home.screen}>
@@ -253,8 +255,17 @@ const Home = () => {
                         <Text style={home.subtitle}>What are you looking for today?</Text>
                     </View>
 
-                    <View style={home.avatar}>
-                        <Text style={home.avatarText}>{initials}</Text>
+                    <View style={home.profileActions}>
+                        <Pressable
+                            style={home.settingsButton}
+                            onPress={() => router.push('/Settings')}
+                            accessibilityLabel="Open settings"
+                        >
+                            <Ionicons name="settings-outline" size={20} color={colors.ink} />
+                        </Pressable>
+                        <View style={home.avatar}>
+                            <Text style={home.avatarText}>{initials}</Text>
+                        </View>
                     </View>
                 </View>
 
@@ -286,6 +297,13 @@ const Home = () => {
                     )}
                 </View>
 
+                <View style={home.sectionRow}>
+                    <Text style={home.sectionTitle}>Your calendar</Text>
+                    <Text style={home.sectionNote}>plan ahead!</Text>
+                </View>
+
+                <Calendar />
+
             </ScrollView>
 
             <TabBar active="home" />
@@ -294,15 +312,16 @@ const Home = () => {
 };
 
 function toFeedListing(listing: RecommendedListing): FeedListing {
-    const words = listing.seller_name.trim().split(/\s+/);
+    const sellerName = formatSellerName(listing.seller_name);
+    const words = sellerName.split(/\s+/);
     const initials = words.slice(0, 2).map((word) => word[0]?.toUpperCase()).join('') || '?';
 
     return {
         id: `live-${listing.listing_id}`,
         title: listing.title,
-        seller: listing.seller_name,
+        seller: sellerName,
         initials,
-        price: `$${Number(listing.price).toFixed(2)}`,
+        price: formatListingPrice(listing.price),
         category: formatCategory(listing.category),
         reason: listing.recommendation_reason,
         isLive: true,
@@ -325,6 +344,11 @@ const home = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+    },
+    profileActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
     },
     greeting: {
         gap: 2,
@@ -361,6 +385,15 @@ const home = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
         fontFamily: 'Outfit',
+    },
+    settingsButton: {
+        width: 30,
+        height: 30,
+        padding: 6,
+        borderRadius: 28,
+        backgroundColor: colors.white,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 
     // section title rows
@@ -567,7 +600,7 @@ const home = StyleSheet.create({
         fontFamily: 'Outfit',
     },
     pickupInfo: {
-        flex: 1, // take the middle space so the arrow sits on the right
+        flex: 1, // take the middle space
         gap: 4,
     },
     pickupItem: {
