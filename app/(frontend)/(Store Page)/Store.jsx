@@ -9,6 +9,7 @@ import Button from '../components/button';
 import Base from '../components/base';
 import Search_Bar from '../components/search_bar';
 import TabBar from '../components/tab_bar';
+import Shopping_Cart_Image from '../../../assets/images/shopping_cart.png';
 import Filter_Image from '../../../assets/svgs/filter.svg';
 import Sort_Image from '../../../assets/svgs/sort.svg';
 import Sort_Up_Image from '../../../assets/svgs/sort_up.svg';
@@ -19,6 +20,8 @@ import Electronics_Image from '../../../assets/svgs/electronics.svg';
 import Textbooks_Image from '../../../assets/svgs/textbooks.svg';
 import Clothing_Image from '../../../assets/svgs/clothing.svg';
 import Budget_Image from '../../../assets/svgs/budget.svg';
+import Convenience_Image from '../../../assets/svgs/convenience.svg';
+import Distance_Image from '../../../assets/svgs/distance.svg';
 import {
     formatCategory,
     formatListingPrice,
@@ -85,8 +88,10 @@ const Filter_Panel = ({filterOptions, onToggle, onClose, onApply, onReset}) => {
         {image: Furniture_Image, text: 'Furniture'},
         {image: Textbooks_Image, text: 'Textbooks'},
         {image: Budget_Image, text: 'Under $25'},
+        {image: Distance_Image, text: 'Distance'},
         {image: Electronics_Image, text: 'Electronics'},
         {image: Clothing_Image, text: 'Clothing'},
+        {image: Convenience_Image, text: 'Convenience'},
         {iconName: 'heart', text: 'Favorites'},
     ];
 
@@ -433,6 +438,8 @@ const Store = () => {
         Electronics: false,
         Textbooks: false,
         Clothing: false,
+        Convenience: false,
+        Distance: false,
         filter: false,
         sort: false,
     });
@@ -444,11 +451,21 @@ const Store = () => {
     const [listings, setListings] = useState([]);
     const [loadingListings, setLoadingListings] = useState(true);
     const [listingError, setListingError] = useState(null);
+    const [current_tab, set_new_tab] = useState("marketplace");
+    const tabHeightAnimation = useState(new Animated.Value(0))[0];
     const [searchQuery, setSearchQuery] = useState('');
     const [searchFocused, setSearchFocused] = useState(false);
     const [favoriteListingIds, setFavoriteListingIds] = useState(new Set());
     const [favoriteBusyIds, setFavoriteBusyIds] = useState(new Set());
     const [sortConfig, setSortConfig] = useState({field: 'Date Published', direction: 'Descending'});
+
+    useEffect(() => {
+        Animated.timing(tabHeightAnimation, {
+            toValue: current_tab === 'services' ? 1 : 0,
+            duration: 180,
+            useNativeDriver: false,
+        }).start();
+    }, [current_tab, tabHeightAnimation]);
 
     const categoryFilters = ['Furniture', 'Electronics', 'Textbooks', 'Clothing'];
     const selectedCategories = categoryFilters.filter((category) => enabledFilters[category]);
@@ -545,6 +562,8 @@ const Store = () => {
                 Electronics: enabledFilters.Electronics,
                 Textbooks: enabledFilters.Textbooks,
                 Clothing: enabledFilters.Clothing,
+                Convenience: enabledFilters.Convenience,
+                Distance: enabledFilters.Distance,
             });
         }
         setActivePanel(panel);
@@ -581,6 +600,8 @@ const Store = () => {
                 Electronics: false,
                 Textbooks: false,
                 Clothing: false,
+                Convenience: false,
+                Distance: false,
                 filter: false,
             };
             setDraftFilterOptions(resetFilters);
@@ -625,14 +646,30 @@ const Store = () => {
             <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 30}}>
                 <Header1 style={{flex: 1,marginBottom: 0}}>catalog</Header1>
                 <Button style={styles.shopping_Cart} onPress={() => router.push('/Store/Shopping Cart')}>
-                    <Text>S</Text>
+                    <Image source={Shopping_Cart_Image} style={styles.shopping_Cart_Image} resizeMode="contain" />
                 </Button>
             </View>
             <View style={styles.listing_area}>
                 <View style={styles.search_overlay}>
-                    <View style={{marginLeft: 22, flexDirection: 'row', gap: 5}}>
-                        <Button style={{height: 40, width: 'auto', paddingHorizontal: 10, paddingTop: 3, borderRadius: 10, marginBottom: -10, boxShadow: '', backgroundColor: colors.maroonLight, justifyContent: 'flex-start'}}><Text selectable={false} style={{color: colors.white}}>Marketplace</Text></Button>
-                        <Button style={{height: 40, width: 'auto', paddingHorizontal: 10, paddingTop: 3, borderRadius: 10, marginBottom: -10, boxShadow: '', backgroundColor: colors.maroonDark, justifyContent: 'flex-start'}}><Text selectable={false} style={{color: colors.white}}>Services</Text></Button>
+                    <View style={{marginLeft: 22, marginTop: 10, marginBottom: -10, height: 40, flexDirection: 'row', alignItems: 'flex-end', gap: 5}}>
+                        <Animated.View style={{height: tabHeightAnimation.interpolate({inputRange: [0, 1], outputRange: [50, 40]})}}>
+                            <Button
+                                style={{height: '100%', width: 'auto', paddingHorizontal: 10, paddingTop: 3, paddingBottom: 10, borderRadius: 10, boxShadow: '', backgroundColor: colors.maroonLight, justifyContent: 'flex-start'}}
+                                onPress={() => set_new_tab('marketplace')}
+                                accessibilityState={{selected: current_tab === 'marketplace'}}
+                            >
+                                <Text selectable={false} style={{color: colors.white}}>Marketplace</Text>
+                            </Button>
+                        </Animated.View>
+                        <Animated.View style={{height: tabHeightAnimation.interpolate({inputRange: [0, 1], outputRange: [40, 50]})}}>
+                            <Button
+                                style={{height: '100%', width: 'auto', paddingHorizontal: 10, paddingTop: 3, paddingBottom: 10, borderRadius: 10, boxShadow: '', backgroundColor: colors.maroonDark, justifyContent: 'flex-start'}}
+                                onPress={() => set_new_tab('services')}
+                                accessibilityState={{selected: current_tab === 'services'}}
+                            >
+                                <Text selectable={false} style={{color: colors.white}}>Services</Text>
+                            </Button>
+                        </Animated.View>
                     </View>
                     <Search_Bar
                         placeholder="What are you looking for?"
@@ -693,6 +730,16 @@ const Store = () => {
                             text="Favorites"
                             enabled={enabledFilters.Favorites}
                             onPress={() => setEnabledFilters((current) => ({ ...current, Favorites: !current.Favorites }))}
+                        />
+                        <Base_Filter_Button
+                            text="Convenience"
+                            enabled={enabledFilters.Convenience}
+                            onPress={() => setEnabledFilters((current) => ({ ...current, Convenience: !current.Convenience }))}
+                        />
+                        <Base_Filter_Button
+                            text="Distance"
+                            enabled={enabledFilters.Distance}
+                            onPress={() => setEnabledFilters((current) => ({ ...current, Distance: !current.Distance }))}
                         />
                     </ScrollView>
                     {loadingListings ? (
@@ -941,8 +988,13 @@ const styles = StyleSheet.create({
     shopping_Cart: {
         width: 40,
         height: 40,
-        backgroundColor: colors.white,
-    },  
+        backgroundColor: 'transparent',
+        boxShadow: '',
+    },
+    shopping_Cart_Image: {
+        width: 30,
+        height: 30,
+    },
     options_panel: {
         position: 'absolute',
         top: 0,

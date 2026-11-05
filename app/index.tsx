@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router'
 
 const App = () => {
     const router = useRouter();
-    router.push("/home");
+    router.push("/Landing");
 
     return (
         <View>

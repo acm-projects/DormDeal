@@ -11,7 +11,7 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
 const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 const body = 'Outfit';
-const heading = 'Bricolage Grotesque';
+const heading = 'Caveat';
 
 // year, month (0-11), day -> 'YYYY-MM-DD'
 function toKey(year: number, month: number, day: number) {
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  monthTitle: { fontFamily: heading, fontSize: 18, color: colors.ink },
+  monthTitle: { fontFamily: heading, fontSize: 22, fontWeight: '500', color: colors.ink },
   arrow: { fontFamily: body, fontSize: 26, color: colors.maroon, paddingHorizontal: 8 },
   weekRow: { flexDirection: 'row' },
   weekday: {
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     borderTopColor: colors.blush,
     paddingTop: 12,
   },
-  panelTitle: { fontFamily: heading, fontSize: 16, color: colors.ink, marginBottom: 8 },
+  panelTitle: { fontFamily: heading, fontSize: 20, fontWeight: '500', color: colors.ink, marginBottom: 8 },
   emptyText: { fontFamily: body, color: colors.muted, fontStyle: 'italic' },
   eventRow: { marginBottom: 12 },
   eventTitle: { fontFamily: heading, fontSize: 15, color: colors.ink },
