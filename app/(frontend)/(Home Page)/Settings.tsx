@@ -10,6 +10,7 @@ import {
     type StyleProp,
     type ViewStyle,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Header1 } from '../components/text_styles'
 import Search_Bar from '../components/search_bar'
 import Back_Button from '../components/back_button'
@@ -307,9 +308,13 @@ const SettingsPage = ({ title, onBack, children }: SettingsPageProps) => {
 };
 
 const Settings = () => {
+    const router = useRouter();
     const [activePage, setActivePage] = useState<SettingsPageTitle | null>(null);
+    const [sign_out_open, set_sign_out_open] = useState(false);
     const pagePosition = useRef(new Animated.Value(0)).current;
+    const sign_out_position = useRef(new Animated.Value(Dimensions.get('window').height)).current;
     const screenWidth = Dimensions.get('window').width;
+    const screenHeight = Dimensions.get('window').height;
 
     useEffect(() => {
         if (activePage) {
@@ -332,6 +337,34 @@ const Settings = () => {
             duration: 200,
             useNativeDriver: true,
         }).start(() => setActivePage(null));
+    };
+
+    const open_sign_out = () => {
+        set_sign_out_open(true);
+        sign_out_position.setValue(screenHeight);
+        requestAnimationFrame(() => {
+            Animated.timing(sign_out_position, {
+                toValue: 0,
+                duration: 250,
+                useNativeDriver: true,
+            }).start();
+        });
+    };
+
+    const close_sign_out = () => {
+        Animated.timing(sign_out_position, {
+            toValue: screenHeight,
+            duration: 200,
+            useNativeDriver: true,
+        }).start(() => set_sign_out_open(false));
+    };
+
+    const confirm_sign_out = () => {
+        Animated.timing(sign_out_position, {
+            toValue: screenHeight,
+            duration: 200,
+            useNativeDriver: true,
+        }).start(() => router.replace('/Landing'));
     };
 
     return (
@@ -369,7 +402,12 @@ const Settings = () => {
                     <Settings_Button text="Privacy Controls" style={{backgroundColor: colors.sage}} onPress={() => openPage('Privacy Controls')}/>
                     <Settings_Button text="Help & Support" style={{backgroundColor: colors.maroon}} onPress={() => openPage('Help & Support')}/>
                 </Settings_Holder>
-                <Pressable style={{backgroundColor: colors.maroon, borderRadius: 22, padding: 10,}}>
+                <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Sign Out"
+                    onPress={open_sign_out}
+                    style={{backgroundColor: colors.maroon, borderRadius: 22, padding: 10,}}
+                >
                     <Text style={{color: colors.white}}>Sign Out</Text>
                 </Pressable>
             </ScrollView>
@@ -387,6 +425,49 @@ const Settings = () => {
                     </SettingsPage>
                 </Animated.View>
             )}
+            <Modal
+                visible={sign_out_open}
+                transparent
+                animationType="none"
+                onRequestClose={close_sign_out}
+            >
+                <View style={settingsStyles.options_overlay}>
+                    <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Close sign out confirmation"
+                        onPress={close_sign_out}
+                        style={settingsStyles.options_backdrop}
+                    />
+                    <Animated.View
+                        style={[
+                            settingsStyles.options_sheet,
+                            { transform: [{ translateY: sign_out_position }] },
+                        ]}
+                    >
+                        <Text style={settingsStyles.options_title}>
+                            Are you sure you want to sign out?
+                        </Text>
+                        <View style={settingsStyles.confirmation_actions}>
+                            <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel="Cancel sign out"
+                                onPress={close_sign_out}
+                                style={settingsStyles.cancel_button}
+                            >
+                                <Text style={settingsStyles.cancel_button_text}>Cancel</Text>
+                            </Pressable>
+                            <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel="Confirm sign out"
+                                onPress={confirm_sign_out}
+                                style={settingsStyles.confirm_button}
+                            >
+                                <Text style={settingsStyles.confirm_button_text}>Confirm</Text>
+                            </Pressable>
+                        </View>
+                    </Animated.View>
+                </View>
+            </Modal>
         </Base>
     );
 }
@@ -513,6 +594,31 @@ const settingsStyles = StyleSheet.create({
     },
     option_text: {
         textAlign: 'left',
+    },
+    confirmation_actions: {
+        flexDirection: 'row',
+        gap: 10,
+        marginTop: 8,
+    },
+    cancel_button: {
+        flex: 1,
+        alignItems: 'center',
+        paddingVertical: 12,
+        borderRadius: 18,
+        backgroundColor: colors.blush,
+    },
+    cancel_button_text: {
+        color: colors.maroonDark,
+    },
+    confirm_button: {
+        flex: 1,
+        alignItems: 'center',
+        paddingVertical: 12,
+        borderRadius: 18,
+        backgroundColor: colors.maroon,
+    },
+    confirm_button_text: {
+        color: colors.white,
     },
     page: {
         position: 'absolute',
