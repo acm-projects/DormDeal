@@ -145,7 +145,7 @@ const Profile = () => {
                         </View>
                     </View>
                 </View>
-                <View style={{flex: 1, alignItems: 'center', textAlign: 'center', marginTop: 195}}>
+                <View style={{flex: 1, alignItems: 'center', textAlign: 'center', marginTop: 20}}>
                     <ScrollView
                         style={styles.listingsScroll}
                         contentContainerStyle={styles.listingsContent}
@@ -185,14 +185,8 @@ export default Profile
 const styles = StyleSheet.create({
     profileContent: {
         flex: 1,
-        position: 'relative',
     },
     profileCard: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1,
         backgroundColor: colors.white,
         borderRadius: 22,
         padding: 15,
@@ -245,7 +239,7 @@ const styles = StyleSheet.create({
     listingsContent: {
         width: '100%',
         gap: 15,
-        paddingTop: 40,
+        paddingTop: 20,
     },
     cardLeft: {
         flex: 1,

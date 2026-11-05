@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Text, View, ImageBackground, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native';
+import { View, ImageBackground, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { Header1 } from '../components/text_styles'
+import Text from '../components/text_styles'
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../root_styles';
 import TabBar from '../components/tab_bar';
 import { chats, Chat } from '../../../data/chats';
+import Search_Bar from '../components/search_bar';
 
 import PaperBg from '../../../assets/images/paper_bg.png';
 
@@ -50,20 +52,18 @@ const Contacts = () => {
         <ImageBackground source={PaperBg} style={contacts.screen}>
             <ScrollView contentContainerStyle={contacts.content}>
 
-                <Text style={contacts.title}>Messages</Text>
+                <Header1 style={{marginBottom: 30}}>messages</Header1>
 
                 {/* search bar + edit */}
                 <View style={contacts.searchRow}>
-                    <View style={contacts.searchBox}>
-                        <Ionicons name="search" size={18} color={colors.muted} />
-                        <TextInput
-                            style={contacts.searchInput}
-                            placeholder="Search"
-                            placeholderTextColor={colors.muted}
-                            value={query}
-                            onChangeText={setQuery}
-                        />
-                    </View>
+                    <Search_Bar
+                        style={contacts.searchBox}
+                        placeholder="Search"
+                        value={query}
+                        onChangeText={setQuery}
+                        returnKeyType="search"
+                        accessibilityLabel="Search messages"
+                    />
                     <Pressable style={contacts.editButton}>
                         <Text style={contacts.editText}>Edit</Text>
                     </Pressable>
@@ -128,31 +128,21 @@ const contacts = StyleSheet.create({
     },
     searchBox: {
         flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        height: 46,
-        paddingHorizontal: 14,
-        borderRadius: 23,
-        backgroundColor: colors.white,
-    },
-    searchInput: {
-        flex: 1,
-        fontSize: 15,
-        color: colors.ink,
-        fontFamily: 'Outfit',
+        width: undefined,
     },
     editButton: {
-        height: 46,
+        height: 45,
         paddingHorizontal: 16,
-        borderRadius: 23,
-        backgroundColor: colors.white,
+        borderRadius: 24,
+        backgroundColor: '#E4E4E4',
         justifyContent: 'center',
+        border: '1px solid #CCCCCC',
+        boxShadow: '0px 4px 15px rgba(0, 0, 0, 0.08)',
     },
     editText: {
         fontSize: 15,
-        fontWeight: '600',
-        color: colors.maroon,
+        fontWeight: 'bold',
+        color: '#7D7D7D',
         fontFamily: 'Outfit',
     },
 
@@ -161,6 +151,7 @@ const contacts = StyleSheet.create({
         fontSize: 22,
         color: colors.maroon,
         fontFamily: 'Caveat',
+        textAlign: 'left',
         marginTop: 20,
         marginBottom: 8,
     },
@@ -249,11 +240,13 @@ const contacts = StyleSheet.create({
         fontSize: 12,
         color: colors.maroon,
         fontFamily: 'Outfit',
+        textAlign: 'left',
     },
     rowMessage: {
         fontSize: 13,
         color: colors.muted,
         fontFamily: 'Outfit',
+        textAlign: 'left',
     },
     rowMessageUnread: {
         color: colors.ink,
