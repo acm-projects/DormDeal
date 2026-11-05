@@ -3,11 +3,14 @@ import { useRouter } from 'expo-router'
 import Arrow_Up from '../../../assets/svgs/black_arrow.svg'
 import Button from './button'
 
-const Back_Button = ({href}) => {
+const Back_Button = ({href, onPress, ...buttonProps}) => {
     const router = useRouter();
 
     return (
-        <Button onPress={() => router.push(href)}>
+        <Button
+            {...buttonProps}
+            onPress={onPress || (() => router.push(href))}
+        >
             <Image source={Arrow_Up} style={styles.image}/>
         </Button>
     );

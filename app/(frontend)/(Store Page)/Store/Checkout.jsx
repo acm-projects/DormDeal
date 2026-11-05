@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'expo-router'
 import { Animated, Dimensions, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../root_styles';
 import { Header1, Header4 } from '../../components/text_styles';
 import Text from '../../components/text_styles';
@@ -47,11 +48,32 @@ const ordered_items = [
     { image: null },
 ];
 
+const Payment_Icon = ({method}) => {
+    if (method === 'Visa *6767') {
+        return <Image source={Visa_Img_Test} style={styles.payment_method_image} resizeMode='contain'/>;
+    }
+
+    return (
+        <Ionicons
+            name={method === 'Zelle' ? 'send-outline' : 'cash-outline'}
+            size={30}
+            color={colors.maroon}
+        />
+    );
+};
+
 const Shopping_Cart = () => {
     const router = useRouter();
     const [isCartExpanded, setIsCartExpanded] = useState(false);
     const cartHeight = useState(new Animated.Value(100))[0];
     const arrowRotation = useState(new Animated.Value(0))[0];
+    const [isPaymentExpanded, setIsPaymentExpanded] = useState(false);
+    const paymentHeight = useState(new Animated.Value(106))[0];
+    const paymentArrowRotation = useState(new Animated.Value(0))[0];
+    const paymentContentOpacity = useState(new Animated.Value(0))[0];
+    const [paymentMethod, setPaymentMethod] = useState('Visa *6767');
+    const [paymentOptionsMethod, setPaymentOptionsMethod] = useState('Visa *6767');
+    const paymentMethodChangeTimeout = useRef(null);
 
     useEffect(() => {
         Animated.timing(cartHeight, {
@@ -66,8 +88,44 @@ const Shopping_Cart = () => {
         }).start();
     }, [arrowRotation, cartHeight, isCartExpanded]);
 
+    useEffect(() => {
+        Animated.timing(paymentHeight, {
+            toValue: isPaymentExpanded ? 255 : 106,
+            duration: 250,
+            useNativeDriver: false,
+        }).start();
+        Animated.timing(paymentArrowRotation, {
+            toValue: isPaymentExpanded ? 1 : 0,
+            duration: 250,
+            useNativeDriver: true,
+        }).start();
+        Animated.timing(paymentContentOpacity, {
+            toValue: isPaymentExpanded ? 1 : 0,
+            duration: 180,
+            useNativeDriver: true,
+        }).start();
+    }, [isPaymentExpanded, paymentArrowRotation, paymentContentOpacity, paymentHeight]);
+
+    useEffect(() => {
+        return () => {
+            if (paymentMethodChangeTimeout.current) {
+                clearTimeout(paymentMethodChangeTimeout.current);
+            }
+        };
+    }, []);
+
     const toggleCart = () => {
         setIsCartExpanded((expanded) => !expanded);
+    };
+
+    const togglePayment = () => {
+        setIsPaymentExpanded((expanded) => {
+            if (expanded && paymentMethodChangeTimeout.current) {
+                clearTimeout(paymentMethodChangeTimeout.current);
+                paymentMethodChangeTimeout.current = null;
+            }
+            return !expanded;
+        });
     };
 
     return (
@@ -114,23 +172,65 @@ const Shopping_Cart = () => {
                         </View>
                     </Animated.View>
                 </Pressable>
-                <View style={{backgroundColor: colors.white, borderRadius: 22, paddingHorizontal: 20, paddingVertical: 15, marginTop: 15}}>
-                    <Header4 style={{fontWeight: 500, textAlign: 'left'}}>Meeting Location</Header4>
-                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
-                        <Image source={Location_Dot} style={{height: 30, width: 30, aspectRatio: 1}} resizeMode='contain'/>
-                        <View>
-                            <Text style={{textAlign: 'left'}}>UT Dallas • 3:00 PM</Text>
-                            <Text style={{color: "#373737", opacity: 0.9, fontSize: 11, textAlign: 'left'}}>800 W Campbell Rd, Richardson, TX 75080</Text>
+                <Pressable onPress={togglePayment}>
+                    <Animated.View style={[styles.payment_preview, {height: paymentHeight}]}>
+                        <View style={styles.payment_header}>
+                            <Header4 style={{fontWeight: 500, textAlign: 'left', marginBottom: 8}}>Payment</Header4>
+                            <View style={styles.payment_method_row}>
+                                <Payment_Icon method={paymentMethod}/>
+                                <Text>{paymentMethod}</Text>
+                            </View>
                         </View>
-                    </View>  
-                </View>
-                <View style={{backgroundColor: colors.white, borderRadius: 22, paddingHorizontal: 20, paddingVertical: 15, marginTop: 15, justifyContent: 'flex-start'}}>
-                    <Header4 style={{fontWeight: 500, textAlign: 'left'}}>Payment</Header4>
-                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
-                        <Image source={Visa_Img_Test} style={{height: 30, width: 30, aspectRatio: 1}} resizeMode='contain'/>
-                        <Text>Visa *6767</Text>
-                    </View>
-                </View>
+                        <Animated.View style={[styles.payment_options, {
+                            opacity: paymentContentOpacity,
+                        }]}>
+                            {['Visa *6767', 'Zelle', 'Cash']
+                                .filter((method) => method !== paymentOptionsMethod)
+                                .map((method) => (
+                                <Pressable
+                                    key={method}
+                                    style={[styles.payment_option, paymentOptionsMethod === method && styles.selected_payment_option]}
+                                    onPress={(event) => {
+                                        event.stopPropagation();
+                                        if (!isPaymentExpanded) {
+                                            return;
+                                        }
+                                        setPaymentMethod(method);
+                                        setIsPaymentExpanded(false);
+                                        if (paymentMethodChangeTimeout.current) {
+                                            clearTimeout(paymentMethodChangeTimeout.current);
+                                        }
+                                        paymentMethodChangeTimeout.current = setTimeout(() => {
+                                            setPaymentOptionsMethod(method);
+                                            paymentMethodChangeTimeout.current = null;
+                                        }, 250);
+                                    }}
+                                >
+                                    <Payment_Icon method={method}/>
+                                    <Text>{method}</Text>
+                                </Pressable>
+                                ))}
+                            <Text style={styles.payment_prompt}>Which payment method do you want to use instead?</Text>
+                        </Animated.View>
+                        <View style={styles.payment_arrow}>
+                            <Animated.Image
+                                source={Arrow_Img}
+                                style={[
+                                    styles.arrow_image,
+                                    {
+                                        transform: [{
+                                            rotate: paymentArrowRotation.interpolate({
+                                                inputRange: [0, 1],
+                                                outputRange: ['0deg', '90deg'],
+                                            }),
+                                        }],
+                                    },
+                                ]}
+                                resizeMode='contain'
+                            />
+                        </View>
+                    </Animated.View>
+                </Pressable>
                 <View style={{backgroundColor: "#FFFAFA", borderRadius: 22, paddingHorizontal: 20, paddingVertical: 15, marginTop: 15}}>
                     <Header4 style={{fontWeight: 500, textAlign: 'left'}}>Order Summary</Header4>
                     <Order_Summary_Info text={"Subtotal"} value={"$10.99"}/>
@@ -178,6 +278,57 @@ const styles = StyleSheet.create({
         top: 0,
         right: 15,
         height: 100,
+        justifyContent: 'center',
+    },
+    payment_preview: {
+        backgroundColor: colors.white,
+        borderRadius: 22,
+        paddingHorizontal: 20,
+        paddingVertical: 15,
+        marginTop: 15,
+        overflow: 'hidden',
+    },
+    payment_header: {
+        height: 76,
+        justifyContent: 'flex-start',
+    },
+    payment_method_row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        minHeight: 40,
+    },
+    payment_method_image: {
+        height: 30,
+        width: 30,
+        aspectRatio: 1,
+    },
+    payment_options: {
+        gap: 8,
+        marginTop: 0,
+    },
+    payment_prompt: {
+        marginTop: 0,
+        width: '100%',
+        textAlign: 'left',
+    },
+    payment_option: {
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: '#FFFAFA',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        paddingHorizontal: 0,
+    },
+    selected_payment_option: {
+        backgroundColor: colors.blush,
+    },
+    payment_arrow: {
+        position: 'absolute',
+        top: 0,
+        right: 15,
+        height: 106,
         justifyContent: 'center',
     },
     arrow_image: {

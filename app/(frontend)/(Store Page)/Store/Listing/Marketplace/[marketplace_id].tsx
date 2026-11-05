@@ -189,7 +189,7 @@ const Marketplace_Listing = () => {
                     if (item.liveListingId) recordListingInteraction(item.liveListingId, 'purchase').catch(() => undefined);
                     router.push('/Store/Checkout');
                 }}>
-                    <Text style={page.buyText}>Buy now</Text>
+                    <Text style={page.buyText}>Add to cart</Text>
                 </Pressable>
             </View>
         </View>
