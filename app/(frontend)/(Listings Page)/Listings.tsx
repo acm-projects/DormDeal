@@ -155,7 +155,7 @@ const Listings = () => {
                         </View>
                     ))}
             </ScrollView>
-            <TabBar active="post" />
+            <TabBar />
         </View>
     );
 };

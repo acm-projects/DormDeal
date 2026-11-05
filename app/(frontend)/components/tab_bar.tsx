@@ -14,7 +14,7 @@ const tabs = [
     { name: 'profile', icon: 'person-circle-outline', iconActive: 'person-circle', href: '/Profile/1' },
 ] as const;
 
-const TabBar = (props: { active: TabName }) => {
+const TabBar = (props: { active?: TabName }) => {
     const router = useRouter();
 
     return (
