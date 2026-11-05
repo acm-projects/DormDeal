@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Text, View, ImageBackground, StyleSheet, ScrollView, Pressable, Animated, PanResponder } from 'react-native';
+import { Text, View, ImageBackground, StyleSheet, ScrollView, Pressable, Animated, PanResponder, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../root_styles';
 import TabBar from '../components/tab_bar';
 import Calendar from '../components/calendar';
 import { items } from '../../../data/items';
-import { formatCategory, formatListingPrice, formatSellerName, recordListingInteraction, RecommendedListing } from '../../../lib/recommendations';
+import { formatCategory, formatListingPrice, formatSellerName, getRecommendations, recordListingInteraction, RecommendedListing } from '../../../lib/recommendations';
 
 import PaperBg from '../../../assets/images/paper_bg.png';
 
@@ -243,6 +243,32 @@ const Home = () => {
     const shown = pickups.filter((p) => p.type === mode);   // only the matching pickups
     const router = useRouter();
 
+    // recommended cards: start with the demo items, swap in real ones once they load
+    const [listings, setListings] = useState<FeedListing[]>(fallbackListings);
+    const [loadingRecs, setLoadingRecs] = useState(true);
+    const [recError, setRecError] = useState<string | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        getRecommendations(20)
+            .then((recs) => {
+                if (cancelled) return;
+                // nothing recommended yet (new account, no listings): keep the demo cards
+                if (recs.length > 0) setListings(recs.map(toFeedListing));
+            })
+            .catch((err) => {
+                if (cancelled) return;
+                console.warn('Could not load recommendations', err);
+                setRecError("Couldn't load your recommendations, showing examples.");
+            })
+            .finally(() => {
+                if (!cancelled) setLoadingRecs(false);
+            });
+
+        return () => { cancelled = true; };
+    }, []);
+
     return (
         <ImageBackground source={PaperBg} style={home.screen}>
             <ScrollView contentContainerStyle={home.content}>
@@ -270,6 +296,24 @@ const Home = () => {
                 </View>
 
                 <CardStack listings={fallbackListings}/>
+
+                <View style={home.sectionRow}>
+                    <Text style={home.sectionTitle}>Recommended</Text>
+                    <Text style={home.sectionNote}>just for you!</Text>
+                    <Pressable style={home.seeAll} onPress={() => router.push('/Store')}>
+                        <Text style={home.seeAllText}>See all</Text>
+                    </Pressable>
+                </View>
+
+                {loadingRecs ? (
+                    <View style={home.loadingRecommendations}>
+                        <ActivityIndicator color={colors.maroon} />
+                    </View>
+                ) : (
+                    <CardStack listings={listings} />
+                )}
+                {recError ? <Text style={home.recommendationError}>{recError}</Text> : null}
+                <Text style={home.swipeHint}>swipe for more →</Text>
 
                 <View style={home.sectionRow}>
                     <Text style={home.sectionTitle}>Upcoming pickups</Text>
