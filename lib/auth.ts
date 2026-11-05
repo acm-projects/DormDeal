@@ -5,7 +5,7 @@ import { supabase } from './supabase';
 WebBrowser.maybeCompleteAuthSession();
 
 export async function signInWithMicrosoft() {
-  const redirectTo = Linking.createURL('/');
+  const redirectTo = Linking.createURL('/home');
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'azure',
     options: {
