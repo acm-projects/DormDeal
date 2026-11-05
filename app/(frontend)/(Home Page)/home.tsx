@@ -269,6 +269,8 @@ const Home = () => {
                     </View>
                 </View>
 
+                <CardStack listings={fallbackListings}/>
+
                 <View style={home.sectionRow}>
                     <Text style={home.sectionTitle}>Upcoming pickups</Text>
 
