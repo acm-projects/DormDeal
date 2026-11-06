@@ -11,7 +11,6 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     storage: localStorage,
     autoRefreshToken: true,
     persistSession: true,
-    // web needs this to pick up the session after the Microsoft redirect
     detectSessionInUrl: Platform.OS === 'web',
   },
 });

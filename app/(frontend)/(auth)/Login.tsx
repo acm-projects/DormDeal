@@ -37,9 +37,12 @@ const Login: React.FC = () => {
         setMessage('');
         setInfo('');
         if (!email.trim()) return setMessage('Enter your email first.');
-        const redirectTo =
-            Platform.OS === 'web' ? `${window.location.origin}/ResetPassword` : undefined;
+
+        const redirectTo = Platform.OS === 'web'
+            ? `${window.location.origin}/ResetPassword`
+            : undefined;
         const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
+
         if (error) setMessage(error.message);
         else setInfo('If an account exists for that email, a reset link is on its way.');
     };

@@ -381,7 +381,7 @@ const Settings = () => {
                 <Header1 style={{textAlign: 'left', marginBottom: 0, marginTop: -5}}>
                     settings
                 </Header1>
-            
+
                 {/* needs button later */}
                 <Search_Bar style={{marginTop: 10}} placeholder='Search'/>
                 <Settings_Holder title="Marketplace & Orders">
