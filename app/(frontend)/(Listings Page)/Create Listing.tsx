@@ -10,6 +10,7 @@ import { colors } from '../../root_styles';
 import { createListing, deleteListing, uploadListingImage } from '../../../lib/api/listings';
 import { LISTING_CATEGORIES, type ListingCategory } from '../../../lib/api/types';
 import { formatCategory } from '../../../lib/recommendations';
+import Base from '../components/base';
 
 const CreateListing = () => {
     const router = useRouter();

@@ -467,6 +467,14 @@ const Store = () => {
         }).start();
     }, [current_tab, tabHeightAnimation]);
 
+    useEffect(() => {
+        Animated.timing(tabHeightAnimation, {
+            toValue: current_tab === 'services' ? 1 : 0,
+            duration: 180,
+            useNativeDriver: false,
+        }).start();
+    }, [current_tab, tabHeightAnimation]);
+
     const categoryFilters = ['Furniture', 'Electronics', 'Textbooks', 'Clothing'];
     const selectedCategories = categoryFilters.filter((category) => enabledFilters[category]);
     const filteredListings = listings.filter((listing) => {
@@ -706,7 +714,7 @@ const Store = () => {
                     )}
                 </View>
                 <ScrollView contentContainerStyle={styles.marketplace_listing_container} style={{marginTop: 48}} showsVerticalScrollIndicator={false}>
-                    <ScrollView contentContainerStyle={styles.filter_container} showsHorizontalScrollIndicator={false}>
+                    <ScrollView horizontal contentContainerStyle={styles.filter_container} showsHorizontalScrollIndicator={false}>
                         <Button
                             style={[[styles.filter_button,{backgroundColor: "#D4D4D4", border: '1px solid #c0c0c0',}], enabledFilters.filter && styles.enabled_filter_button]}
                             onPress={() => openPanel('filter')}
