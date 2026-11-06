@@ -87,6 +87,7 @@ export async function getMyListings(): Promise<Listing[]> {
     .from('listings')
     .select(LISTING_COLUMNS)
     .eq('seller_id', authData.user.id)
+    .neq('status', 'removed')
     .order('created_at', { ascending: false });
 
   if (error) throw new ApiError('Could not load your listings.', error.code, error);
@@ -231,10 +232,16 @@ export async function updateListing(id: number, changes: UpdateListingInput): Pr
 export async function deleteListing(id: number): Promise<void> {
   requirePositiveId(id);
 
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData.user) {
+    throw new ApiError('Sign in to delete a listing.', 'UNAUTHENTICATED', authError);
+  }
+
   const { data, error } = await supabase
     .from('listings')
-    .delete()
+    .update({ status: 'removed' })
     .eq('listing_id', id)
+    .eq('seller_id', authData.user.id)
     .select('listing_id')
     .maybeSingle();
 

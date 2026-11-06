@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Text, View, ImageBackground, StyleSheet, ScrollView, Pressable, Animated, PanResponder, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../root_styles';
 import TabBar from '../components/tab_bar';
@@ -248,14 +248,17 @@ const Home = () => {
     const [loadingRecs, setLoadingRecs] = useState(true);
     const [recError, setRecError] = useState<string | null>(null);
 
-    useEffect(() => {
+    useFocusEffect(useCallback(() => {
         let cancelled = false;
+
+        setLoadingRecs(true);
+        setRecError(null);
 
         getRecommendations(20)
             .then((recs) => {
                 if (cancelled) return;
                 // nothing recommended yet (new account, no listings): keep the demo cards
-                if (recs.length > 0) setListings(recs.map(toFeedListing));
+                setListings(recs.length > 0 ? recs.map(toFeedListing) : fallbackListings);
             })
             .catch((err) => {
                 if (cancelled) return;
@@ -267,7 +270,7 @@ const Home = () => {
             });
 
         return () => { cancelled = true; };
-    }, []);
+    }, []));
 
     return (
         <ImageBackground source={PaperBg} style={home.screen}>

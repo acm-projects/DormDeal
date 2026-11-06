@@ -141,7 +141,7 @@ const Listings = () => {
                                     </View>
                                     {deleteConfirmId === listing.listing_id ? (
                                         <View style={styles.deleteConfirm}>
-                                            <Text style={styles.deleteConfirmText}>Delete this listing permanently?</Text>
+                                            <Text style={styles.deleteConfirmText}>Remove this listing from the marketplace?</Text>
                                             <View style={styles.actions}>
                                                 <Pressable style={styles.secondaryButton} onPress={() => setDeleteConfirmId(null)}><Text style={styles.secondaryText}>Cancel</Text></Pressable>
                                                 <Pressable style={styles.confirmDeleteButton} disabled={busyId === listing.listing_id} onPress={() => removeListing(listing)}>
