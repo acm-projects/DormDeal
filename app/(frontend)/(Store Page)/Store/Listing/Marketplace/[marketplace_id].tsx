@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Text, View, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { Text, View, StyleSheet, ScrollView, Pressable, ActivityIndicator, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../../../root_styles';
@@ -19,15 +19,18 @@ type DisplayItem = {
     category: string;
     description: string;
     pickup: string;
+    pickupDate?: string;
+    pickupTime?: string;
     posted: string;
     isLive: boolean;
+    imageUrl?: string | null;
 };
 
 const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
 
 // 'YYYY-MM-DD' -> 'Nov 3'
-function prettyDate(key: string) {
+function prettyDate(key?: string) {
     if (!key) return 'Not set';
     const [, m, d] = key.split('-').map(Number);
     return `${monthNames[m - 1].slice(0, 3)} ${d}`;
@@ -47,6 +50,8 @@ const Marketplace_Listing = () => {
     const demoItem = liveListingId ? undefined : items.find((candidate) => candidate.id === marketplace_id);
     const [item, setItem] = useState<DisplayItem | null>(demoItem ? { ...demoItem, isLive: false } : null);
     const [loading, setLoading] = useState(Boolean(liveListingId && !demoItem));
+    const [messaging, setMessaging] = useState(false);
+    const [messageError, setMessageError] = useState('');
 
     useEffect(() => {
         if (!liveListingId || demoItem) return;
@@ -80,6 +85,7 @@ const Marketplace_Listing = () => {
                     pickup: 'Arrange with seller',
                     posted: new Date(data.created_at).toLocaleDateString(),
                     isLive: true,
+                    imageUrl: data.image_url,
                 });
 
                 recordListingInteraction(data.listing_id, 'view').catch(() => undefined);
@@ -93,6 +99,30 @@ const Marketplace_Listing = () => {
         loadListing();
         return () => { active = false; };
     }, [demoItem, liveListingId]);
+
+    // open (or create) a chat with this listing's seller, then go to it
+    const messageSeller = async () => {
+        if (!item?.liveListingId) {
+            setMessageError("This listing can't be messaged yet.");
+            return;
+        }
+        setMessageError('');
+        setMessaging(true);
+
+        recordListingInteraction(item.liveListingId, 'message').catch(() => undefined);
+
+        const { data: conversationId, error } = await supabase.rpc('start_conversation', {
+            p_listing_id: item.liveListingId,
+        });
+
+        setMessaging(false);
+
+        if (error) {
+            setMessageError(error.message);
+            return;
+        }
+        router.push(`/Messages/${conversationId}`);
+    };
 
     if (loading) {
         return (
@@ -119,8 +149,11 @@ const Marketplace_Listing = () => {
         <View style={page.screen}>
             <ScrollView contentContainerStyle={page.content}>
 
-                {/* photo placeholder with back button on top */}
+                {/* listing photo with a placeholder color when none was uploaded */}
                 <View style={page.photo}>
+                    {item.imageUrl && (
+                        <Image source={{ uri: item.imageUrl }} style={page.photoImage} resizeMode="cover" />
+                    )}
                     <Pressable style={page.backButton} onPress={() => router.back()} accessibilityLabel="Go back">
                         <Ionicons name="chevron-back" size={22} color={colors.ink} />
                     </Pressable>
@@ -167,7 +200,9 @@ const Marketplace_Listing = () => {
                         </View>
                         <View style={page.detailRow}>
                             <Text style={page.detailLabel}>Pickup date</Text>
-                            <Text style={page.detailValue}>{prettyDate(item.pickupDate)} · {item.pickupTime}</Text>
+                            <Text style={page.detailValue}>
+                                {prettyDate(item.pickupDate)}{item.pickupTime ? ` · ${item.pickupTime}` : ''}
+                            </Text>
                         </View>
                         <View style={[page.detailRow, page.detailRowLast]}>
                             <Text style={page.detailLabel}>Posted</Text>
@@ -179,18 +214,22 @@ const Marketplace_Listing = () => {
 
             {/* buttons stuck to the bottom */}
             <View style={page.actionBar}>
-                <Pressable
-                    style={page.messageButton}
-                    onPress={() => item.liveListingId && recordListingInteraction(item.liveListingId, 'message').catch(() => undefined)}
-                >
-                    <Text style={page.messageText}>Message</Text>
-                </Pressable>
-                <Pressable style={page.buyButton} onPress={() => {
-                    if (item.liveListingId) recordListingInteraction(item.liveListingId, 'purchase').catch(() => undefined);
-                    router.push('/Store/Checkout');
-                }}>
-                    <Text style={page.buyText}>Add to cart</Text>
-                </Pressable>
+                {messageError ? <Text style={page.errorText}>{messageError}</Text> : null}
+                <View style={page.actionRow}>
+                    <Pressable
+                        style={[page.messageButton, messaging && { opacity: 0.6 }]}
+                        onPress={messageSeller}
+                        disabled={messaging}
+                    >
+                        <Text style={page.messageText}>{messaging ? 'Opening…' : 'Message'}</Text>
+                    </Pressable>
+                    <Pressable style={page.buyButton} onPress={() => {
+                        if (item.liveListingId) recordListingInteraction(item.liveListingId, 'purchase').catch(() => undefined);
+                        router.push('/Store/Checkout');
+                    }}>
+                        <Text style={page.buyText}>Add to cart</Text>
+                    </Pressable>
+                </View>
             </View>
         </View>
     );
@@ -203,11 +242,20 @@ const page = StyleSheet.create({
         backgroundColor: colors.cream,
     },
     content: {
-        paddingBottom: 120, // room for the button bar
+        paddingBottom: 140, // room for the button bar
     },
     photo: {
         height: 380,
-        backgroundColor: colors.maroon, // placeholder until real photos
+        backgroundColor: colors.maroon,
+    },
+    photoImage: {
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
     },
     backButton: {
         position: 'absolute',
@@ -332,14 +380,23 @@ const page = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        flexDirection: 'row',
-        gap: 10,
+        gap: 8,
         paddingHorizontal: 20,
         paddingTop: 14,
         paddingBottom: 30,
         backgroundColor: colors.white,
         borderTopLeftRadius: 28,
         borderTopRightRadius: 28,
+    },
+    actionRow: {
+        flexDirection: 'row',
+        gap: 10,
+    },
+    errorText: {
+        fontSize: 13,
+        color: '#B00020',
+        fontFamily: 'Outfit',
+        textAlign: 'center',
     },
     messageButton: {
         flex: 1,

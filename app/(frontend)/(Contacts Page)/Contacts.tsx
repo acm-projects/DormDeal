@@ -1,14 +1,44 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { View, ImageBackground, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Header1 } from '../components/text_styles'
 import Text from '../components/text_styles'
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { colors } from '../../root_styles';
 import TabBar from '../components/tab_bar';
-import { chats, Chat } from '../../../data/chats';
+import { supabase } from '../../../lib/supabase';
 import Search_Bar from '../components/search_bar';
 
 import PaperBg from '../../../assets/images/paper_bg.png';
+
+type Chat = {
+    id: number;
+    name: string;
+    initials: string;
+    item: string;
+    lastMessage: string;
+    time: string;
+    unread: boolean;
+};
+
+const time_ago = (iso: string) => {
+    // DB timestamps have no timezone but are UTC
+    const t = /Z|[+-]\d\d:?\d\d$/.test(iso) ? iso : iso + 'Z';
+    const s = Math.max(0, Math.floor((Date.now() - new Date(t).getTime()) / 1000));
+    if (s < 60) return 'now';
+    const m = Math.floor(s / 60);
+    if (m < 60) return `${m}m`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h`;
+    return `${Math.floor(h / 24)}d`;
+};
+
+const get_initials = (name: string) =>
+    name
+        .split(/[\s._-]+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((w) => w[0].toUpperCase())
+        .join('') || '?';
 
 // one row in the chat list
 const ChatRow = (props: { chat: Chat; onPress: () => void }) => {
@@ -42,6 +72,76 @@ const ChatRow = (props: { chat: Chat; onPress: () => void }) => {
 const Contacts = () => {
     const router = useRouter();
     const [query, setQuery] = useState(''); // what's typed in the search bar
+    const [chats, setChats] = useState<Chat[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // load real conversations every time this screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            const load = async () => {
+                const { data: auth } = await supabase.auth.getUser();
+                const me = auth.user?.id;
+
+                const { data: convos, error } = await supabase
+                    .from('conversations')
+                    .select('conversation_id, last_message_at, buyer_id, seller_id, listings(title)')
+                    .order('last_message_at', { ascending: false, nullsFirst: false });
+
+                if (error || !convos) {
+                    console.error(error);
+                    setLoading(false);
+                    return;
+                }
+
+                const rows: any[] = convos;
+                if (rows.length === 0) {
+                    setChats([]);
+                    setLoading(false);
+                    return;
+                }
+
+                const other_of = (r: any) => (r.buyer_id === me ? r.seller_id : r.buyer_id);
+                const other_ids = rows.map(other_of);
+                const convo_ids = rows.map((r) => r.conversation_id);
+
+                const [{ data: users }, { data: msgs }] = await Promise.all([
+                    supabase.from('app-users').select('user_id, name').in('user_id', other_ids),
+                    supabase
+                        .from('messages')
+                        .select('conversation_id, content, sent_at')
+                        .in('conversation_id', convo_ids)
+                        .order('sent_at', { ascending: false }),
+                ]);
+
+                const names = new Map((users ?? []).map((u: any) => [u.user_id, u.name]));
+
+                // newest message per conversation (messages arrive newest first)
+                const last_msg = new Map<number, any>();
+                (msgs ?? []).forEach((m: any) => {
+                    if (!last_msg.has(m.conversation_id)) last_msg.set(m.conversation_id, m);
+                });
+
+                setChats(
+                    rows.map((r) => {
+                        const name = names.get(other_of(r)) ?? 'Unknown user';
+                        const last = last_msg.get(r.conversation_id);
+                        const stamp = last?.sent_at ?? r.last_message_at;
+                        return {
+                            id: r.conversation_id,
+                            name,
+                            initials: get_initials(name),
+                            item: r.listings?.title ?? 'a listing',
+                            lastMessage: last?.content ?? 'No messages yet',
+                            time: stamp ? time_ago(stamp) : '',
+                            unread: false, // no read column in the database yet
+                        };
+                    })
+                );
+                setLoading(false);
+            };
+            load();
+        }, [])
+    );
 
     // only chats whose name matches the search
     const shown = chats.filter((c) =>
@@ -91,7 +191,13 @@ const Contacts = () => {
 
                 {/* end of list / no matches */}
                 <Text style={contacts.endNote}>
-                    {shown.length === 0 ? `No one named "${query}"` : 'Hooray! No more messages!'}
+                    {loading
+                        ? 'Loading...'
+                        : shown.length === 0
+                        ? query
+                            ? `No one named "${query}"`
+                            : 'No conversations yet'
+                        : 'Hooray! No more messages!'}
                 </Text>
 
             </ScrollView>
