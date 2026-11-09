@@ -7,6 +7,7 @@ import { colors } from '../../root_styles';
 import TabBar from '../components/tab_bar';
 import { supabase } from '../../../lib/supabase';
 import Search_Bar from '../components/search_bar';
+import Svg, { Path } from 'react-native-svg';
 
 import PaperBg from '../../../assets/images/paper_bg.png';
 
@@ -46,6 +47,16 @@ const ChatRow = (props: { chat: Chat; onPress: () => void }) => {
 
     return (
         <Pressable style={contacts.row} onPress={props.onPress}>
+            <Svg style={contacts.paperclip} width={30} height={43} viewBox="0 0 30 43" accessibilityLabel="Pinned message">
+                <Path
+                    d="M7 17.5 3.8 14a5 5 0 0 1 7.4-6.8l14.2 15.4a7 7 0 0 1-10.3 9.5L4.3 17.4a4.8 4.8 0 0 1 7-6.5l12.2 13.2"
+                    fill="none"
+                    stroke="#8f969e"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                />
+            </Svg>
             <View style={contacts.rowAvatar}>
                 <Text style={contacts.rowInitials}>{c.initials}</Text>
             </View>
@@ -152,7 +163,18 @@ const Contacts = () => {
         <ImageBackground source={PaperBg} style={contacts.screen}>
             <ScrollView contentContainerStyle={contacts.content}>
 
-                <Header1 style={{marginBottom: 30}}>messages</Header1>
+                <View style={contacts.titleBlock}>
+                    <Header1 style={contacts.title}>messages</Header1>
+                    <Svg width={154} height={13} viewBox="0 0 154 13" style={contacts.titleUnderline}>
+                        <Path
+                            d="M2 5c12-6 21 5 34 1s21-5 34 0 20 4 32 0 21-4 49 1"
+                            fill="none"
+                            stroke={colors.maroon}
+                            strokeWidth={2.2}
+                            strokeLinecap="round"
+                        />
+                    </Svg>
+                </View>
 
                 {/* search bar + edit */}
                 <View style={contacts.searchRow}>
@@ -172,10 +194,13 @@ const Contacts = () => {
                 {/* recent people, scroll sideways */}
                 <Text style={contacts.recentLabel}>recent</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={contacts.recentRow}>
-                    {chats.map((c) => (
+                    {chats.slice(0, 4).map((c, index) => (
                         <Pressable key={c.id} style={contacts.recentPerson} onPress={() => router.push(`/Messages/${c.id}`)}>
-                            <View style={contacts.recentAvatar}>
-                                <Text style={contacts.recentInitials}>{c.initials}</Text>
+                            <View style={contacts.recentAvatarWrap}>
+                                <View style={contacts.recentAvatar}>
+                                    <Text style={contacts.recentInitials}>{c.initials}</Text>
+                                </View>
+                                {index === 0 && <View style={contacts.recentNotification} />}
                             </View>
                             <Text style={contacts.recentName} numberOfLines={1}>{c.name.split(' ')[0]}</Text>
                         </Pressable>
@@ -211,19 +236,28 @@ const contacts = StyleSheet.create({
     screen: {
         flex: 1,
         width: '100%',
-        backgroundColor: colors.cream,
+        backgroundColor: colors.white,
     },
     content: {
-        paddingTop: 70,
-        paddingHorizontal: 20,
+        paddingTop: 76,
+        paddingHorizontal: 28,
         paddingBottom: 130, // room for the tab bar
     },
     title: {
-        fontSize: 34,
+        fontSize: 40,
         fontWeight: '700',
-        color: colors.ink,
+        color: colors.maroon,
         fontFamily: 'Outfit',
-        marginBottom: 14,
+        lineHeight: 44,
+        marginBottom: 0,
+    },
+    titleBlock: {
+        height: 74,
+        justifyContent: 'flex-start',
+    },
+    titleUnderline: {
+        marginTop: 1,
+        marginLeft: 2,
     },
 
     // search
@@ -235,46 +269,65 @@ const contacts = StyleSheet.create({
     searchBox: {
         flex: 1,
         width: undefined,
+        height: 48,
+        borderWidth: 2,
+        borderColor: colors.maroon,
+        borderRadius: 0,
+        backgroundColor: colors.cream,
+        boxShadow: '',
     },
     editButton: {
-        height: 45,
-        paddingHorizontal: 16,
-        borderRadius: 24,
-        backgroundColor: '#E4E4E4',
+        height: 48,
+        width: 46,
+        borderWidth: 2,
+        borderColor: colors.maroon,
+        backgroundColor: colors.cream,
         justifyContent: 'center',
-        border: '1px solid #CCCCCC',
-        boxShadow: '0px 4px 15px rgba(0, 0, 0, 0.08)',
+        alignItems: 'center',
     },
     editText: {
         fontSize: 15,
         fontWeight: 'bold',
-        color: '#7D7D7D',
+        color: colors.maroon,
         fontFamily: 'Outfit',
     },
 
     // recent people row
     recentLabel: {
-        fontSize: 22,
+        fontSize: 27,
         color: colors.maroon,
         fontFamily: 'Caveat',
         textAlign: 'left',
-        marginTop: 20,
-        marginBottom: 8,
+        fontWeight: '700',
+        fontStyle: 'italic',
+        marginTop: 23,
+        marginBottom: 4,
     },
     recentRow: {
-        gap: 16,
+        gap: 8,
+        paddingHorizontal: 0,
     },
     recentPerson: {
         alignItems: 'center',
-        width: 70,
-        gap: 6,
+        width: 76,
+        gap: 4,
+    },
+    recentAvatarWrap: {
+        width: 72,
+        height: 72,
+        borderWidth: 2,
+        borderColor: colors.maroon,
+        borderRadius: 36,
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
     },
     recentAvatar: {
-        width: 64,
-        height: 64,
+        width: 68,
+        height: 68,
         borderRadius: 32,
         backgroundColor: colors.maroon,
-        borderWidth: 3,
+        borderWidth: 2,
         borderColor: colors.white,
         alignItems: 'center',
         justifyContent: 'center',
@@ -285,6 +338,17 @@ const contacts = StyleSheet.create({
         color: colors.white,
         fontFamily: 'Outfit',
     },
+    recentNotification: {
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        width: 16,
+        height: 16,
+        borderRadius: 8,
+        backgroundColor: colors.gold,
+        borderWidth: 1,
+        borderColor: colors.white,
+    },
     recentName: {
         fontSize: 12,
         color: colors.ink,
@@ -293,16 +357,34 @@ const contacts = StyleSheet.create({
 
     // chat list
     list: {
-        marginTop: 20,
-        gap: 10,
+        marginTop: 31,
+        gap: 18,
     },
     row: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
-        padding: 12,
-        borderRadius: 20,
+        minHeight: 80,
+        paddingTop: 12,
+        paddingRight: 12,
+        paddingBottom: 12,
+        paddingLeft: 18,
+        borderRadius: 0,
         backgroundColor: colors.white,
+        borderLeftWidth: 5,
+        borderLeftColor: colors.blush,
+        shadowColor: colors.ink,
+        shadowOpacity: 0.14,
+        shadowRadius: 5,
+        shadowOffset: {width: 1, height: 3},
+        elevation: 3,
+        position: 'relative',
+    },
+    paperclip: {
+        position: 'absolute',
+        left: -13,
+        top: -13,
+        zIndex: 2,
     },
     rowAvatar: {
         width: 48,
@@ -320,7 +402,8 @@ const contacts = StyleSheet.create({
     },
     rowMiddle: {
         flex: 1, // take the space between avatar and time
-        gap: 1,
+        minWidth: 0,
+        gap: 2,
     },
     rowTop: {
         flexDirection: 'row',
@@ -328,10 +411,11 @@ const contacts = StyleSheet.create({
         gap: 6,
     },
     rowName: {
-        fontSize: 15,
-        fontWeight: '500',
+        fontSize: 16,
+        fontWeight: '700',
         color: colors.ink,
         fontFamily: 'Outfit',
+        flexShrink: 1,
     },
     bold: {
         fontWeight: '700',
@@ -350,7 +434,7 @@ const contacts = StyleSheet.create({
     },
     rowMessage: {
         fontSize: 13,
-        color: colors.muted,
+        color: colors.ink,
         fontFamily: 'Outfit',
         textAlign: 'left',
     },
@@ -360,16 +444,19 @@ const contacts = StyleSheet.create({
     },
     rowTime: {
         fontSize: 12,
-        color: colors.muted,
+        color: colors.ink,
         fontFamily: 'Outfit',
         alignSelf: 'flex-start',
+        marginTop: 2,
+        minWidth: 20,
+        textAlign: 'right',
     },
     endNote: {
-        fontSize: 20,
+        fontSize: 21,
         color: colors.muted,
         fontFamily: 'Caveat',
         textAlign: 'center',
-        marginTop: 18,
+        marginTop: 63,
     },
 });
 
