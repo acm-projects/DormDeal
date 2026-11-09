@@ -757,6 +757,7 @@ const home = StyleSheet.create({
         width: '100%',
         height: 468,
         alignSelf: 'center',
+        marginTop: 15,
     },
     noRecommendations: {
         position: 'absolute',

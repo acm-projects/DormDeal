@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router'
-import { ActivityIndicator, Alert, Animated, Dimensions, Image, LayoutAnimation, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, Dimensions, FlatList, Image, LayoutAnimation, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
 import { colors } from '../../root_styles';
 import { Header1 } from '../components/text_styles';
 import Text from '../components/text_styles';
@@ -29,22 +30,6 @@ import {
 } from '../../../lib/recommendations';
 import { getMarketplaceListings } from '../../../lib/api/listings';
 import { getFavoriteListingIds, setListingFavorite } from '../../../lib/api/favorites';
-
-const Base_Filter_Button = ({text = "", enabled = false, onPress}) => {
-    return (
-        <Button
-            style={[styles.filter_button, enabled && styles.enabled_filter_button]}
-            onPress={onPress}
-        >
-            <Text
-                style={[styles.filter_button_text, enabled && styles.enabled_filter_button_text]}
-                selectable={false}
-            >
-                {text}
-            </Text>
-        </Button>
-    );
-}
 
 const Filter_Option = ({
     backgroundColor = colors.blush,
@@ -362,12 +347,17 @@ const Sort_Panel = ({onClose, sortConfig, onApply, onReset}) => {
 
 const Listing_Card = (props) => {
     const router = useRouter();
+    const rotation = `${((props.id * 37) % 401 - 200) / 100}deg`;
 
     return (
-        <Pressable style={styles.card} onPress={() => router.push(`/Store/Listing/Marketplace/live-${props.id}`)}>
+        <View style={[styles.card_wrapper, {transform: [{rotate: rotation}]}]}>
+            <View style={styles.card_pin} />
+            <Pressable style={styles.card} onPress={() => router.push(`/Store/Listing/Marketplace/live-${props.id}`)}>
             <View style={styles.cardPhoto}>
-                {props.imageUrl && (
+                {props.imageUrl ? (
                     <Image source={{uri: props.imageUrl}} style={styles.cardPhotoImage} resizeMode="cover" />
+                ) : (
+                    <Text style={styles.photo_placeholder}>[photo]</Text>
                 )}
                 <View style={[
                     styles.cardPhotoHeader,
@@ -376,31 +366,31 @@ const Listing_Card = (props) => {
                     {props.status && (
                         <Text style={styles.statusLabel}>{props.status}</Text>
                     )}
-                    <Button
-                        style={styles.favoriteButton}
-                        disabled={props.favoriteBusy}
-                        onPress={(event) => {
-                            event.stopPropagation();
-                            props.onToggleFavorite();
-                        }}
-                        accessibilityLabel={props.isFavorite ? 'Remove listing from favorites' : 'Add listing to favorites'}
-                    >
-                        <Ionicons
-                            name={props.isFavorite ? 'heart' : 'heart-outline'}
-                            size={16}
-                            color={props.isFavorite ? colors.maroon : colors.ink}
-                        />
-                    </Button>
                 </View>
+                <Button
+                    style={styles.favoriteButton}
+                    disabled={props.favoriteBusy}
+                    onPress={(event) => {
+                        event.stopPropagation();
+                        props.onToggleFavorite();
+                    }}
+                    accessibilityLabel={props.isFavorite ? 'Remove listing from favorites' : 'Add listing to favorites'}
+                >
+                    <Ionicons
+                        name={props.isFavorite ? 'heart' : 'heart-outline'}
+                        size={16}
+                        color={props.isFavorite ? colors.maroon : colors.ink}
+                    />
+                </Button>
             </View>
             <View style={styles.cardInfo}>
                 <View style={styles.cardLeft}>
-                    <Text style={styles.cardTitle} numberOfLines={1}>{props.title}</Text>
+                    <Text style={styles.cardTitle} numberOfLines={2}>{props.title}</Text>
                     <View style={styles.sellerRow}>
                         <View style={styles.sellerDot}>
                             <Text style={styles.sellerInitials}>{props.initials}</Text>
                         </View>
-                        <Text style={styles.sellerName}>{props.seller}</Text>
+                        <Text style={styles.sellerName} numberOfLines={1} ellipsizeMode="tail">{props.seller}</Text>
                     </View>
                 </View>
                 <View style={styles.cardRight}>
@@ -409,26 +399,10 @@ const Listing_Card = (props) => {
                 </View>
             </View>
             <Text style={styles.cardCategory}>{props.category}</Text>
-        </Pressable>
+            </Pressable>
+        </View>
     );
 };
-
-const Row = ({children}) => {
-    return (
-        <View style={styles.marketplace_listing_row}>
-            { children }
-        </View>
-    );
-}
-
-const End_Row = () => {
-    return (
-        <View style={{
-            height: 72,
-        }}>
-        </View>
-    )
-}
 
 const Store = () => {
     const [enabledFilters, setEnabledFilters] = useState({
@@ -452,28 +426,11 @@ const Store = () => {
     const [loadingListings, setLoadingListings] = useState(true);
     const [listingError, setListingError] = useState(null);
     const [current_tab, set_new_tab] = useState("marketplace");
-    const tabHeightAnimation = useState(new Animated.Value(0))[0];
     const [searchQuery, setSearchQuery] = useState('');
     const [searchFocused, setSearchFocused] = useState(false);
     const [favoriteListingIds, setFavoriteListingIds] = useState(new Set());
     const [favoriteBusyIds, setFavoriteBusyIds] = useState(new Set());
     const [sortConfig, setSortConfig] = useState({field: 'Date Published', direction: 'Descending'});
-
-    useEffect(() => {
-        Animated.timing(tabHeightAnimation, {
-            toValue: current_tab === 'services' ? 1 : 0,
-            duration: 180,
-            useNativeDriver: false,
-        }).start();
-    }, [current_tab, tabHeightAnimation]);
-
-    useEffect(() => {
-        Animated.timing(tabHeightAnimation, {
-            toValue: current_tab === 'services' ? 1 : 0,
-            duration: 180,
-            useNativeDriver: false,
-        }).start();
-    }, [current_tab, tabHeightAnimation]);
 
     const categoryFilters = ['Furniture', 'Electronics', 'Textbooks', 'Clothing'];
     const selectedCategories = categoryFilters.filter((category) => enabledFilters[category]);
@@ -651,36 +608,48 @@ const Store = () => {
 
     return (
         <Base>
-            <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 30}}>
-                <Header1 style={{flex: 1,marginBottom: 0}}>catalog</Header1>
-                <Button style={styles.shopping_Cart} onPress={() => router.push('/Store/Shopping Cart')}>
-                    <Image source={Shopping_Cart_Image} style={styles.shopping_Cart_Image} resizeMode="contain" />
-                </Button>
+            <View style={styles.board_background} pointerEvents="none">
+                <Svg width="100%" height="100%">
+                    <Defs>
+                        <Pattern id="board-dots" x="0" y="0" width="16" height="16" patternUnits="userSpaceOnUse">
+                            <Circle cx="8" cy="8" r="1.5" fill="#a9865d" opacity="0.7" />
+                        </Pattern>
+                    </Defs>
+                    <Rect width="100%" height="100%" fill="#c7a77d" />
+                    <Rect width="100%" height="100%" fill="url(#board-dots)" />
+                </Svg>
             </View>
-            <View style={styles.listing_area}>
-                <View style={styles.search_overlay}>
-                    <View style={{marginLeft: 22, marginTop: 10, marginBottom: -10, height: 40, flexDirection: 'row', alignItems: 'flex-end', gap: 5}}>
-                        <Animated.View style={{height: tabHeightAnimation.interpolate({inputRange: [0, 1], outputRange: [50, 40]})}}>
-                            <Button
-                                style={{height: '100%', width: 'auto', paddingHorizontal: 10, paddingTop: 3, paddingBottom: 10, borderRadius: 10, boxShadow: '', backgroundColor: colors.maroonLight, justifyContent: 'flex-start'}}
-                                onPress={() => set_new_tab('marketplace')}
-                                accessibilityState={{selected: current_tab === 'marketplace'}}
-                            >
-                                <Text selectable={false} style={{color: colors.white}}>Marketplace</Text>
-                            </Button>
-                        </Animated.View>
-                        <Animated.View style={{height: tabHeightAnimation.interpolate({inputRange: [0, 1], outputRange: [40, 50]})}}>
-                            <Button
-                                style={{height: '100%', width: 'auto', paddingHorizontal: 10, paddingTop: 3, paddingBottom: 10, borderRadius: 10, boxShadow: '', backgroundColor: colors.maroonDark, justifyContent: 'flex-start'}}
-                                onPress={() => set_new_tab('services')}
-                                accessibilityState={{selected: current_tab === 'services'}}
-                            >
-                                <Text selectable={false} style={{color: colors.white}}>Services</Text>
-                            </Button>
-                        </Animated.View>
-                    </View>
+            <View style={styles.catalog_panel}>
+                <View style={styles.catalog_pin} />
+                <View style={styles.catalog_pin_secondary} />
+                <View style={styles.catalog_title_row}>
+                    <Header1 style={styles.catalog_title}>catalog</Header1>
+                    <Text style={styles.new_posts}>24 new posts today</Text>
+                    <Button style={styles.shopping_Cart} onPress={() => router.push('/Store/Shopping Cart')} accessibilityLabel="Open shopping cart">
+                        <Image source={Shopping_Cart_Image} style={styles.shopping_Cart_Image} resizeMode="contain" />
+                    </Button>
+                </View>
+                <View style={styles.catalog_tabs}>
+                    <Button
+                        style={[styles.catalog_tab, styles.catalog_tab_marketplace, current_tab === 'marketplace' && styles.catalog_tab_active]}
+                        onPress={() => set_new_tab('marketplace')}
+                        accessibilityState={{selected: current_tab === 'marketplace'}}
+                    >
+                        <Text style={[styles.catalog_tab_text, current_tab === 'marketplace' && styles.catalog_tab_text_active]}>MARKETPLACE</Text>
+                    </Button>
+                    <Button
+                        style={[styles.catalog_tab, styles.catalog_tab_services, current_tab === 'services' && styles.catalog_tab_active]}
+                        onPress={() => set_new_tab('services')}
+                        accessibilityState={{selected: current_tab === 'services'}}
+                    >
+                        <Text style={[styles.catalog_tab_text, current_tab === 'services' && styles.catalog_tab_text_active]}>SERVICES</Text>
+                    </Button>
+                </View>
+                <View style={styles.catalog_search_row}>
                     <Search_Bar
-                        placeholder="What are you looking for?"
+                        style={styles.catalog_search}
+                        inputStyle={styles.catalog_search_input}
+                        placeholder="Search the b..."
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                         onFocus={() => setSearchFocused(true)}
@@ -689,112 +658,93 @@ const Store = () => {
                         returnKeyType="search"
                         accessibilityLabel="Search marketplace listings"
                     />
-                    {searchSuggestions.length > 0 && (
-                        <View style={styles.search_suggestions}>
-                            {searchSuggestions.map((listing, index) => (
-                                <Pressable
-                                    key={listing.listing_id}
-                                    style={[
-                                        styles.search_suggestion,
-                                        index < searchSuggestions.length - 1 && styles.search_suggestion_border,
-                                    ]}
-                                    onPressIn={() => router.push(`/Store/Listing/Marketplace/live-${listing.listing_id}`)}
-                                    accessibilityLabel={`Open ${listing.title}`}
-                                >
-                                    <Ionicons name="search" size={17} color={colors.muted} />
-                                    <View style={styles.search_suggestion_text}>
-                                        <Text style={styles.search_suggestion_title} numberOfLines={1}>{listing.title}</Text>
-                                        <Text style={styles.search_suggestion_category} numberOfLines={1}>
-                                            {formatCategory(listing.category)} · {formatListingPrice(listing.price)}
-                                        </Text>
-                                    </View>
-                                </Pressable>
-                            ))}
-                        </View>
-                    )}
+                    <Button
+                        style={[styles.catalog_icon_button, enabledFilters.filter && styles.catalog_icon_button_active]}
+                        onPress={() => openPanel('filter')}
+                        accessibilityLabel="Open filter options"
+                    >
+                        <Image source={Filter_Image} style={[styles.catalog_filter_icon, styles.catalog_filter_icon_tint]} />
+                    </Button>
+                    <Button
+                        style={[styles.catalog_icon_button, enabledFilters.sort && styles.catalog_icon_button_active]}
+                        onPress={() => openPanel('sort')}
+                        accessibilityLabel="Open sort options"
+                    >
+                        <Image source={Sort_Image} style={[styles.catalog_filter_icon, styles.catalog_filter_icon_tint]} />
+                    </Button>
                 </View>
-                <ScrollView contentContainerStyle={styles.marketplace_listing_container} style={{marginTop: 48}} showsVerticalScrollIndicator={false}>
-                    <ScrollView horizontal contentContainerStyle={styles.filter_container} showsHorizontalScrollIndicator={false}>
-                        <Button
-                            style={[[styles.filter_button,{backgroundColor: "#D4D4D4", border: '1px solid #c0c0c0',}], enabledFilters.filter && styles.enabled_filter_button]}
-                            onPress={() => openPanel('filter')}
-                            accessibilityLabel="Open filter options"
-                        >
-                            <Image source={Filter_Image}/>
-                        </Button>
-                        <Button
-                            style={[[styles.filter_button,{backgroundColor: "#D4D4D4", border: '1px solid #c0c0c0',}], enabledFilters.sort && styles.enabled_filter_button]}
-                            onPress={() => openPanel('sort')}
-                            accessibilityLabel="Open sort options"
-                        >
-                            <Image source={Sort_Image}/>
-                        </Button>
-                        <Base_Filter_Button
-                            text="Under $25"
-                            enabled={enabledFilters['Under $25']}
-                            onPress={() => setEnabledFilters((current) => ({ ...current, 'Under $25': !current['Under $25'] }))}
-                        />
-                        <Base_Filter_Button
-                            text="Favorites"
-                            enabled={enabledFilters.Favorites}
-                            onPress={() => setEnabledFilters((current) => ({ ...current, Favorites: !current.Favorites }))}
-                        />
-                        <Base_Filter_Button
-                            text="Convenience"
-                            enabled={enabledFilters.Convenience}
-                            onPress={() => setEnabledFilters((current) => ({ ...current, Convenience: !current.Convenience }))}
-                        />
-                        <Base_Filter_Button
-                            text="Distance"
-                            enabled={enabledFilters.Distance}
-                            onPress={() => setEnabledFilters((current) => ({ ...current, Distance: !current.Distance }))}
-                        />
-                    </ScrollView>
-                    {loadingListings ? (
-                        <View style={styles.loadingListings}>
-                            <ActivityIndicator color={colors.maroon} />
-                        </View>
-                    ) : listingError ? (
-                        <Text style={styles.listingMessage}>{listingError}</Text>
-                    ) : visibleListings.length === 0 ? (
-                        <Text style={styles.listingMessage}>
-                            {normalizedQuery
-                                ? `No listings match “${searchQuery.trim()}”.`
-                                : enabledFilters.Favorites
-                                    ? 'You have no favorites matching these filters.'
-                                    : 'No active listings match these filters.'}
-                        </Text>
-                    ) : (
-                        Array.from({ length: Math.ceil(visibleListings.length / 2) }, (_, rowIndex) => (
-                            <Row key={rowIndex}>
-                                {visibleListings.slice(rowIndex * 2, rowIndex * 2 + 2).map((listing) => {
-                                    const sellerName = formatSellerName(listing.seller_name);
-                                    const sellerWords = sellerName.split(/\s+/);
-                                    const sellerInitials = sellerWords.slice(0, 2)
-                                        .map((word) => word[0]?.toUpperCase())
-                                        .join('') || '?';
-
-                                    return (
-                                        <Listing_Card
-                                            key={listing.listing_id}
-                                            id={listing.listing_id}
-                                            title={listing.title}
-                                            seller={sellerName}
-                                            initials={sellerInitials}
-                                            price={formatListingPrice(listing.price)}
-                                            category={formatCategory(listing.category)}
-                                            imageUrl={listing.image_url}
-                                            isFavorite={favoriteListingIds.has(listing.listing_id)}
-                                            favoriteBusy={favoriteBusyIds.has(listing.listing_id)}
-                                            onToggleFavorite={() => toggleFavorite(listing.listing_id)}
-                                        />
-                                    );
-                                })}
-                            </Row>
-                        ))
+            </View>
+            <View style={styles.listing_area}>
+                {searchSuggestions.length > 0 && (
+                    <View style={styles.search_suggestions}>
+                        {searchSuggestions.map((listing, index) => (
+                            <Pressable
+                                key={listing.listing_id}
+                                style={[styles.search_suggestion, index < searchSuggestions.length - 1 && styles.search_suggestion_border]}
+                                onPressIn={() => router.push(`/Store/Listing/Marketplace/live-${listing.listing_id}`)}
+                                accessibilityLabel={`Open ${listing.title}`}
+                            >
+                                <Ionicons name="search" size={17} color={colors.muted} />
+                                <View style={styles.search_suggestion_text}>
+                                    <Text style={styles.search_suggestion_title} numberOfLines={1}>{listing.title}</Text>
+                                    <Text style={styles.search_suggestion_category} numberOfLines={1}>
+                                        {formatCategory(listing.category)} · {formatListingPrice(listing.price)}
+                                    </Text>
+                                </View>
+                            </Pressable>
+                        ))}
+                    </View>
+                )}
+                <FlatList
+                    style={styles.listing_flat_list}
+                    contentContainerStyle={styles.marketplace_listing_container}
+                    columnWrapperStyle={styles.marketplace_listing_row}
+                    data={visibleListings}
+                    numColumns={2}
+                    keyExtractor={(listing) => String(listing.listing_id)}
+                    showsVerticalScrollIndicator={false}
+                    removeClippedSubviews={false}
+                    ListHeaderComponent={null}
+                    ListEmptyComponent={(
+                        loadingListings ? (
+                            <View style={styles.loadingListings}>
+                                <ActivityIndicator color={colors.maroon} />
+                            </View>
+                        ) : listingError ? (
+                            <Text style={styles.listingMessage}>{listingError}</Text>
+                        ) : (
+                            <Text style={styles.listingMessage}>
+                                {normalizedQuery
+                                    ? `No listings match “${searchQuery.trim()}”.`
+                                    : enabledFilters.Favorites
+                                        ? 'You have no favorites matching these filters.'
+                                        : 'No active listings match these filters.'}
+                            </Text>
+                        )
                     )}
-                    <End_Row/>
-                </ScrollView>
+                    renderItem={({item: listing}) => {
+                        const sellerName = formatSellerName(listing.seller_name);
+                        const sellerWords = sellerName.split(/\s+/);
+                        const sellerInitials = sellerWords.slice(0, 2)
+                            .map((word) => word[0]?.toUpperCase())
+                            .join('') || '?';
+
+                        return (
+                            <Listing_Card
+                                id={listing.listing_id}
+                                title={listing.title}
+                                seller={sellerName}
+                                initials={sellerInitials}
+                                price={formatListingPrice(listing.price)}
+                                category={formatCategory(listing.category)}
+                                imageUrl={listing.image_url}
+                                isFavorite={favoriteListingIds.has(listing.listing_id)}
+                                favoriteBusy={favoriteBusyIds.has(listing.listing_id)}
+                                onToggleFavorite={() => toggleFavorite(listing.listing_id)}
+                            />
+                        );
+                    }}
+                />
             </View>
             {activePanel && (
                 <View style={styles.panel_layer}>
@@ -847,8 +797,155 @@ const Store = () => {
 export default Store
 
 const styles = StyleSheet.create({
+    board_background: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: '#c7a77d',
+    },
+    catalog_panel: {
+        position: 'relative',
+        backgroundColor: colors.white,
+        padding: 14,
+        marginBottom: 14,
+        transform: [{rotate: '-0.77deg'}],
+        shadowColor: colors.ink,
+        shadowOpacity: 0.18,
+        shadowRadius: 8,
+        shadowOffset: {width: 3, height: 5},
+        elevation: 5,
+    },
+    catalog_pin: {
+        position: 'absolute',
+        top: -7,
+        left: '22%',
+        width: 14,
+        height: 14,
+        marginLeft: -7,
+        borderRadius: 7,
+        backgroundColor: colors.maroon,
+        shadowColor: colors.ink,
+        shadowOpacity: 0.35,
+        shadowRadius: 2,
+        shadowOffset: {width: 1, height: 2},
+        elevation: 3,
+        zIndex: 2,
+    },
+    catalog_pin_secondary: {
+        position: 'absolute',
+        top: -7,
+        right: '22%',
+        width: 14,
+        height: 14,
+        borderRadius: 7,
+        backgroundColor: colors.maroon,
+        shadowColor: colors.ink,
+        shadowOpacity: 0.35,
+        shadowRadius: 2,
+        shadowOffset: {width: 1, height: 2},
+        elevation: 3,
+        zIndex: 2,
+        transform: [{rotate: '-12deg'}],
+    },
+    catalog_title_row: {
+        minHeight: 52,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    catalog_title: {
+        flexShrink: 1,
+        marginBottom: 0,
+        fontFamily: 'Outfit',
+        fontSize: 40,
+        lineHeight: 44,
+        color: colors.maroon,
+    },
+    new_posts: {
+        flex: 1,
+        marginHorizontal: 10,
+        color: colors.maroon,
+        fontFamily: 'Caveat',
+        fontSize: 18,
+        fontWeight: '700',
+        textAlign: 'right',
+    },
+    catalog_tabs: {
+        flexDirection: 'row',
+        marginTop: 8,
+        marginBottom: 10,
+        gap: 6,
+    },
+    catalog_tab: {
+        flex: 1,
+        height: 44,
+        borderRadius: 0,
+        borderWidth: 2,
+        borderColor: colors.maroon,
+        backgroundColor: colors.white,
+    },
+    catalog_tab_marketplace: {
+        borderStyle: 'dashed',
+    },
+    catalog_tab_services: {
+        borderStyle: 'dashed',
+    },
+    catalog_tab_active: {
+        backgroundColor: colors.maroon,
+        borderStyle: 'solid',
+    },
+    catalog_tab_text: {
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontSize: 14,
+        fontWeight: '800',
+        letterSpacing: 0.5,
+    },
+    catalog_tab_text_active: {
+        color: colors.white,
+    },
+    catalog_search_row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    catalog_search: {
+        flex: 1,
+        height: 45,
+        borderWidth: 2,
+        borderColor: colors.maroon,
+        borderStyle: 'solid',
+        borderRadius: 0,
+        backgroundColor: colors.white,
+        boxShadow: '',
+    },
+    catalog_search_input: {
+        fontFamily: 'Outfit',
+        fontWeight: '400',
+        color: colors.ink,
+    },
+    catalog_icon_button: {
+        width: 45,
+        height: 45,
+        borderRadius: 0,
+        borderWidth: 2,
+        borderColor: colors.maroon,
+        backgroundColor: 'transparent',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    catalog_icon_button_active: {
+        backgroundColor: colors.goldLight,
+    },
+    catalog_filter_icon: {
+        width: 23,
+        height: 23,
+    },
+    catalog_filter_icon_tint: {
+        tintColor: colors.maroon,
+    },
     listing_area: {
         flex: 1,
+        overflow: 'visible',
+    },
+    listing_flat_list: {
         overflow: 'visible',
     },
     search_overlay: {
@@ -964,8 +1061,11 @@ const styles = StyleSheet.create({
     },
 
     marketplace_listing_container: {
-        paddingTop: 43,
-        gap: 15,
+        paddingTop: 4,
+        paddingHorizontal: 8,
+        paddingBottom: 130,
+        gap: 22,
+        overflow: 'visible',
     },
     marketplace_listing_row: {
         flexDirection: 'row',
@@ -986,7 +1086,8 @@ const styles = StyleSheet.create({
     },
     panel_layer: {
         ...StyleSheet.absoluteFillObject,
-        zIndex: 3,
+        zIndex: 200,
+        elevation: 30,
         flexDirection: 'row',
     },
     panel_backdrop: {
@@ -1008,6 +1109,7 @@ const styles = StyleSheet.create({
         top: 0,
         right: 0,
         bottom: 0,
+        zIndex: 201,
         width: '75%',
         backgroundColor: colors.white,
         padding: 24,
@@ -1132,13 +1234,38 @@ const styles = StyleSheet.create({
     card: {
         flex: 1,
         backgroundColor: colors.white,
-        borderRadius: 28,
-        padding: 10,
+        borderRadius: 0,
+        padding: 8,
+        shadowColor: colors.ink,
+        shadowOpacity: 0.24,
+        shadowRadius: 7,
+        shadowOffset: {width: 2, height: 4},
         elevation: 4,
+    },
+    card_wrapper: {
+        flex: 1,
+        position: 'relative',
+        paddingTop: 9,
+    },
+    card_pin: {
+        position: 'absolute',
+        top: 1,
+        left: '50%',
+        width: 14,
+        height: 14,
+        marginLeft: -7,
+        borderRadius: 7,
+        zIndex: 2,
+        backgroundColor: colors.maroon,
+        shadowColor: colors.ink,
+        shadowOpacity: 0.35,
+        shadowRadius: 2,
+        shadowOffset: {width: 1, height: 2},
+        elevation: 3,
     },
     cardPhoto: {
         height: 150,
-        borderRadius: 22,
+        borderRadius: 0,
         backgroundColor: colors.maroon,
         overflow: 'hidden',
         position: 'relative',
@@ -1155,7 +1282,17 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
     },
     cardPhotoHeaderWithoutCondition: {
-        justifyContent: 'flex-end',
+        justifyContent: 'flex-start',
+    },
+    photo_placeholder: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: colors.white,
+        fontFamily: 'Caveat',
+        fontSize: 20,
+        textAlign: 'center',
+        textAlignVertical: 'center',
     },
     statusLabel: {
         height: 27,
@@ -1166,37 +1303,45 @@ const styles = StyleSheet.create({
         fontFamily: 'Outfit',
         fontSize: 12,
         fontWeight: '600',
-        borderRadius: 14,
+        borderRadius: 2,
     },
     favoriteButton: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
         width: 27,
         height: 27,
         padding: 0,
         backgroundColor: colors.white,
+        borderRadius: 0,
     },
     cardInfo: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-end',
+        position: 'relative',
+        minHeight: 76,
         paddingHorizontal: 4,
         paddingTop: 16,
-        paddingBottom: 10,
+        paddingBottom: 8,
     },
     cardLeft: {
-        flex: 1,
+        width: '100%',
         gap: 6,
     },
     cardTitle: {
         textAlign: 'left',
-        fontSize: 19,
+        paddingRight: 72,
+        fontSize: 18,
         fontWeight: '600',
         color: colors.ink,
-        fontFamily: 'Outfit',
+        fontFamily: 'Caveat',
+        lineHeight: 20,
     },
     sellerRow: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'flex-start',
         gap: 6,
+        width: '100%',
+        minHeight: 22,
     },
     sellerDot: {
         width: 22,
@@ -1213,12 +1358,21 @@ const styles = StyleSheet.create({
         fontFamily: 'Outfit',
     },
     sellerName: {
+        flex: 1,
+        minWidth: 0,
+        textAlign: 'left',
         fontSize: 13,
         color: colors.muted,
         fontFamily: 'Outfit',
     },
     cardRight: {
+        position: 'absolute',
+        top: 12,
+        right: 4,
         alignItems: 'flex-end',
+        flexShrink: 0,
+        width: 68,
+        minWidth: 68,
     },
     priceLabel: {
         fontSize: 12,
@@ -1226,16 +1380,20 @@ const styles = StyleSheet.create({
         fontFamily: 'Outfit',
     },
     price: {
-        fontSize: 24,
+        fontSize: 21,
         fontWeight: '700',
         color: colors.maroon,
         fontFamily: 'Outfit',
     },
     cardCategory: {
+        minHeight: 18,
+        marginTop: 4,
         color: colors.muted,
         fontFamily: 'Outfit',
         fontSize: 11,
+        lineHeight: 14,
         paddingBottom: 4,
         paddingHorizontal: 4,
+        textAlign: 'center',
     },
 });
