@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Text, View, ImageBackground, StyleSheet, ScrollView, Pressable, Animated, PanResponder, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Path } from 'react-native-svg';
 import { colors } from '../../root_styles';
 import TabBar from '../components/tab_bar';
 import Calendar from '../components/calendar';
@@ -43,7 +44,9 @@ type RecCardProps = {
 const RecCard = (props: RecCardProps) => {
     return (
         <View style={home.card}>
-            <View style={home.cardPhoto} />
+            <View style={home.cardPhoto}>
+                <Text style={home.photoPlaceholder}>[item photo]</Text>
+            </View>
             <View style={home.categoryBadge}>
                 <Text style={home.categoryBadgeText}>{props.category}</Text>
             </View>
@@ -85,53 +88,150 @@ const fallbackListings: FeedListing[] = items.map((item) => ({
     isLive: false,
 }));
 
+function getVisualDeck(listings: FeedListing[]) {
+    if (listings.length < 3) return listings;
+    return [listings[0], listings[1], listings[2], ...listings.slice(3)];
+}
+
+function getTapeRotation(id: string) {
+    let hash = 0;
+    for (const character of id) {
+        hash = (hash * 31 + character.charCodeAt(0)) | 0;
+    }
+    return Math.abs(hash) % 2 === 0 ? '5deg' : '-7deg';
+}
+
 const CardStack = ({ listings }: { listings: FeedListing[] }) => {
-    const [deck, setDeck] = useState(listings);
-    const deckRef = useRef(listings);
+    const [deck, setDeck] = useState(() => getVisualDeck(listings));
     const router = useRouter();
-    const position = useRef(new Animated.ValueXY()).current; // where the top card is being dragged
+    const deckRef = useRef(getVisualDeck(listings));
+    const frontPosition = useRef(new Animated.ValueXY()).current;
+    const rearLeftPosition = useRef(new Animated.Value(-34)).current;
+    const rearRightPosition = useRef(new Animated.Value(34)).current;
+    const rearLeftScale = useRef(new Animated.Value(0.96)).current;
+    const rearRightScale = useRef(new Animated.Value(0.92)).current;
+    const rearLeftRotation = useRef(new Animated.Value(-5)).current;
+    const rearRightRotation = useRef(new Animated.Value(5)).current;
+    const incomingOpacity = useRef(new Animated.Value(0)).current;
+    const noRecommendationsOpacity = useRef(new Animated.Value(0)).current;
+    const transitionRunning = useRef(false);
+
+    const advance = () => {
+        if (transitionRunning.current) return;
+        const current = deckRef.current;
+        const dismissed = current[0];
+        if (!dismissed) return;
+        transitionRunning.current = true;
+        if (dismissed.isLive) {
+            recordListingInteraction(dismissed.liveListingId!, 'dismiss').catch(() => undefined);
+        }
+
+        Animated.parallel([
+            Animated.timing(frontPosition, {
+                toValue: { x: -420, y: 0 },
+                duration: 280,
+                useNativeDriver: false,
+            }),
+            Animated.timing(rearLeftPosition, {
+                toValue: 0,
+                duration: 280,
+                useNativeDriver: false,
+            }),
+            Animated.timing(rearLeftScale, {
+                toValue: 1,
+                duration: 280,
+                useNativeDriver: false,
+            }),
+            Animated.timing(rearLeftRotation, {
+                toValue: 0,
+                duration: 280,
+                useNativeDriver: false,
+            }),
+            Animated.timing(rearRightPosition, {
+                toValue: -34,
+                duration: 280,
+                useNativeDriver: false,
+            }),
+            Animated.timing(rearRightScale, {
+                toValue: 0.96,
+                duration: 280,
+                useNativeDriver: false,
+            }),
+            Animated.timing(rearRightRotation, {
+                toValue: -5,
+                duration: 280,
+                useNativeDriver: false,
+            }),
+            Animated.timing(incomingOpacity, {
+                toValue: 1,
+                duration: 280,
+                useNativeDriver: false,
+            }),
+        ]).start(() => {
+            const next = [current[1], current[2], current[3], ...current.slice(4)];
+            deckRef.current = next;
+            setDeck(next);
+            frontPosition.setValue({ x: 0, y: 0 });
+            rearLeftPosition.setValue(-34);
+            rearRightPosition.setValue(34);
+            rearLeftScale.setValue(0.96);
+            rearRightScale.setValue(0.92);
+            rearLeftRotation.setValue(-5);
+            rearRightRotation.setValue(5);
+            incomingOpacity.setValue(0);
+            transitionRunning.current = false;
+        });
+    };
 
     useEffect(() => {
-        setDeck(listings);
-        deckRef.current = listings;
-        position.setValue({ x: 0, y: 0 });
-    }, [listings, position]);
+        const nextDeck = getVisualDeck(listings);
+        deckRef.current = nextDeck;
+        setDeck(nextDeck);
+        frontPosition.setValue({ x: 0, y: 0 });
+        rearLeftPosition.setValue(-34);
+        rearRightPosition.setValue(34);
+        rearLeftScale.setValue(0.96);
+        rearRightScale.setValue(0.92);
+        rearLeftRotation.setValue(-5);
+        rearRightRotation.setValue(5);
+        incomingOpacity.setValue(0);
+        transitionRunning.current = false;
+    }, [listings, frontPosition, rearLeftPosition, rearRightPosition, rearLeftScale, rearRightScale, rearLeftRotation, rearRightRotation, incomingOpacity]);
+
+    useEffect(() => {
+        noRecommendationsOpacity.setValue(0);
+        if (!deck[0]) {
+            Animated.timing(noRecommendationsOpacity, {
+                toValue: 1,
+                duration: 450,
+                useNativeDriver: false,
+            }).start();
+        }
+    }, [deck, noRecommendationsOpacity]);
+
+    const advanceRef = useRef(advance);
+    advanceRef.current = advance;
 
     const swipe = useRef(
         PanResponder.create({
             // check before the card's Pressable does, only grab if moving sideways
-            onMoveShouldSetPanResponderCapture: (_, g) => Math.abs(g.dx) > 8,
+            onMoveShouldSetPanResponderCapture: (_, g) => !transitionRunning.current && Math.abs(g.dx) > 8,
             onPanResponderTerminationRequest: () => false, // don't let the page scroll steal it
 
             // card follows the finger
             onPanResponderMove: Animated.event(
-                [null, { dx: position.x, dy: position.y }],
+                [null, { dx: frontPosition.x, dy: frontPosition.y }],
                 { useNativeDriver: false }
             ),
 
             // finger lifted
             onPanResponderRelease: (_, g) => {
+                if (transitionRunning.current) return;
                 if (Math.abs(g.dx) > 100) {
-                    const dismissed = deckRef.current[0];
-                    if (dismissed?.isLive) {
-                        recordListingInteraction(dismissed.liveListingId!, 'dismiss').catch(() => undefined);
-                    }
-                    // flung far enough: fly off screen, then move to back
-                    Animated.timing(position, {
-                        toValue: { x: g.dx > 0 ? 500 : -500, y: g.dy },
-                        duration: 200,
-                        useNativeDriver: false,
-                    }).start(() => {
-                        setDeck((current) => {
-                            const next = [...current.slice(1), current[0]];
-                            deckRef.current = next;
-                            return next;
-                        });
-                        position.setValue({ x: 0, y: 0 }); // reset for the next card
-                    });
+                    advanceRef.current();
                 } else {
                     // not far enough: spring back to the middle
-                    Animated.spring(position, {
+                    Animated.spring(frontPosition, {
                         toValue: { x: 0, y: 0 },
                         useNativeDriver: false,
                     }).start();
@@ -141,15 +241,15 @@ const CardStack = ({ listings }: { listings: FeedListing[] }) => {
     ).current;
 
     // tilt the card as it's dragged, like flicking a real card
-    const tilt = position.x.interpolate({
+    const tilt = frontPosition.x.interpolate({
         inputRange: [-200, 0, 200],
         outputRange: ['-12deg', '0deg', '12deg'],
     });
 
     return (
         <View style={home.stack}>
-            {deck.map((item, index) => {
-                if (index > 2) return null; // only show the top 3
+            {deck.slice(0, 4).map((item, depth) => {
+                if (!item) return null;
 
                 const card = (
                     <RecCard
@@ -162,8 +262,15 @@ const CardStack = ({ listings }: { listings: FeedListing[] }) => {
                     />
                 );
 
+                const layer = (
+                    <>
+                        <View style={[home.tape, { transform: [{ rotate: getTapeRotation(item.id) }] }]} />
+                        {card}
+                    </>
+                );
+
                 // top card: draggable + tappable
-                if (index === 0) {
+                if (depth === 0) {
                     return (
                         <Animated.View
                             key={item.id}
@@ -171,41 +278,77 @@ const CardStack = ({ listings }: { listings: FeedListing[] }) => {
                             style={[
                                 home.stackSlot,
                                 {
-                                    zIndex: deck.length,
+                                    zIndex: 3,
                                     transform: [
-                                        { translateX: position.x },
-                                        { translateY: position.y },
+                                        { translateX: frontPosition.x },
+                                        { translateY: frontPosition.y },
                                         { rotate: tilt },
                                     ],
                                 },
                             ]}
                         >
                             <Pressable onPress={() => router.push(`/Store/Listing/Marketplace/${item.id}`)}>
-                                {card}
+                                {layer}
                             </Pressable>
                         </Animated.View>
                     );
                 }
 
-                // cards behind: just sit there peeking out
+                if (depth === 3) {
+                    return (
+                        <Animated.View
+                            key={item.id}
+                            style={[
+                                home.stackSlot,
+                                {
+                                    zIndex: 0,
+                                    opacity: incomingOpacity,
+                                    transform: [
+                                        { translateX: 34 },
+                                        { scale: 0.92 },
+                                        { rotate: '5deg' },
+                                    ],
+                                },
+                            ]}
+                        >
+                            {layer}
+                        </Animated.View>
+                    );
+                }
+
                 return (
-                    <View
+                    <Animated.View
                         key={item.id}
                         style={[
                             home.stackSlot,
                             {
-                                zIndex: deck.length - index,
+                                zIndex: depth === 1 ? 2 : 1,
                                 transform: [
-                                    { translateX: index * 35 },     // peek out to the right
-                                    { scale: 1 - index * 0.04 },    // a bit smaller further back
+                                    { translateX: depth === 1 ? rearLeftPosition : rearRightPosition },
+                                    { scale: depth === 1 ? rearLeftScale : rearRightScale },
+                                    { rotate: (depth === 1 ? rearLeftRotation : rearRightRotation).interpolate({
+                                        inputRange: [-5, 5],
+                                        outputRange: ['-5deg', '5deg'],
+                                    }) },
                                 ],
                             },
                         ]}
                     >
-                        {card}
-                    </View>
+                        {layer}
+                    </Animated.View>
                 );
             })}
+            {!deck[0] && (
+                <Animated.Text style={[home.noRecommendations, { opacity: noRecommendationsOpacity }]}>
+                    No more recommended listings... :(
+                </Animated.Text>
+            )}
+            <View style={home.stackControls}>
+                <Text style={home.swipeHint}>swipe left <Ionicons name="arrow-back" size={22} color={colors.maroon} /></Text>
+                <Pressable style={home.nextButton} onPress={advance} accessibilityLabel="Show next recommendation">
+                    <Ionicons name="arrow-forward" size={25} color={colors.maroon} />
+                </Pressable>
+            </View>
         </View>
     );
 };
@@ -270,7 +413,7 @@ const Home = () => {
     }, []);
 
     return (
-        <ImageBackground source={PaperBg} style={home.screen}>
+        <ImageBackground source={PaperBg} style={home.screen} resizeMode="cover">
             <ScrollView contentContainerStyle={home.content}>
 
                 {/* greeting on the left, avatar on the right */}
@@ -295,9 +438,22 @@ const Home = () => {
                     </View>
                 </View>
 
-                <View style={home.sectionRow}>
-                    <Text style={home.sectionTitle}>Recommended</Text>
-                    <Text style={home.sectionNote}>just for you!</Text>
+                <View style={home.recommendationHeading}>
+                    <View style={home.sectionRow}>
+                        <View style={home.recommendedTitle}>
+                            <Text style={home.sectionTitle}>Recommended</Text>
+                            <Svg width={126} height={8} viewBox="0 0 126 8" style={home.squiggle}>
+                                <Path
+                                    d="M1 4 C13 1, 22 7, 35 4 S57 1, 70 4 S92 7, 105 4 S118 2, 125 4"
+                                    stroke={colors.maroon}
+                                    strokeWidth={2.5}
+                                    strokeLinecap="round"
+                                    fill="none"
+                                />
+                            </Svg>
+                        </View>
+                        <Text style={home.sectionNote}>just for you!</Text>
+                    </View>
                     <Pressable style={home.seeAll} onPress={() => router.push('/Store')}>
                         <Text style={home.seeAllText}>See all</Text>
                     </Pressable>
@@ -311,8 +467,6 @@ const Home = () => {
                     <CardStack listings={listings} />
                 )}
                 {recError ? <Text style={home.recommendationError}>{recError}</Text> : null}
-                <Text style={home.swipeHint}>swipe for more →</Text>
-
                 <View style={home.sectionRow}>
                     <Text style={home.sectionTitle}>Upcoming pickups</Text>
 
@@ -380,14 +534,15 @@ const home = StyleSheet.create({
         backgroundColor: colors.cream,
     },
     content: {
-        paddingTop: 70,
-        paddingHorizontal: 24,
+        paddingTop: 48,
+        paddingHorizontal: 18,
         paddingBottom: 130, // room so the tab bar doesn't cover the last card
     },
     headerRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        minHeight: 86,
     },
     profileActions: {
         flexDirection: 'row',
@@ -398,18 +553,18 @@ const home = StyleSheet.create({
         gap: 2,
     },
     hello: {
-        fontSize: 32,
+        fontSize: 30,
         color: colors.maroon,
         fontFamily: 'Caveat',
     },
     name: {
-        fontSize: 40,
-        fontWeight: '700',
+        fontSize: 46,
+        fontWeight: '800',
         color: colors.ink,
         fontFamily: 'Outfit',
     },
     subtitle: {
-        fontSize: 15,
+        fontSize: 14,
         color: colors.muted,
         fontFamily: 'Outfit',
         marginTop: 4,
@@ -441,27 +596,42 @@ const home = StyleSheet.create({
     },
 
     // section title rows
+    recommendationHeading: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+        marginTop: 28,
+        marginBottom: 2,
+    },
     sectionRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
-        marginTop: 36,
+        marginTop: 0,
         marginBottom: 14,
     },
     sectionTitle: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: '700',
         color: colors.ink,
         fontFamily: 'Outfit',
     },
+    recommendedTitle: {
+        position: 'relative',
+    },
+    squiggle: {
+        position: 'absolute',
+        left: 0,
+        bottom: -7,
+    },
     sectionNote: {
-        fontSize: 22,
+        fontSize: 20,
         color: colors.maroon,
         fontFamily: 'Caveat',
         transform: [{ rotate: '-4deg' }], // little tilt like handwriting
     },
     seeAll: {
-        marginLeft: 'auto', // pushes it to the far right
+        marginBottom: 14,
     },
     seeAllText: {
         fontSize: 15,
@@ -474,35 +644,43 @@ const home = StyleSheet.create({
     card: {
         width: 250,
         backgroundColor: colors.white,
-        borderRadius: 30,
-        padding: 14, // thick white border, polaroid style
+        borderRadius: 8,
+        padding: 12,
         boxShadow: [{
             offsetX: 0,
-            offsetY: 0,
-            blurRadius: 10,
-            color: 'rgba(0,0,0,0.25)',
+            offsetY: 5,
+            blurRadius: 12,
+            color: 'rgba(31,20,20,0.22)',
         }],
     },
     cardPhoto: {
-        height: 260,
-        borderRadius: 22,
-        backgroundColor: colors.maroon, // placeholder until real photos
+        height: 250,
+        borderRadius: 4,
+        backgroundColor: colors.maroon,
+        alignItems: 'center',
+        justifyContent: 'center',
         boxShadow: [{
             offsetX: 0,
             offsetY: 0,
-            blurRadius: 4,
-            color: 'rgba(0,0,0,1)',
+            blurRadius: 5,
+            color: 'rgba(31,20,20,0.16)',
             inset: true,
         }],
     },
+    photoPlaceholder: {
+        color: colors.white,
+        fontFamily: 'Caveat',
+        fontSize: 19,
+        fontStyle: 'italic',
+    },
     categoryBadge: {
         position: 'absolute',
-        top: 24,
-        left: 24,
-        borderRadius: 14,
+        top: 22,
+        left: 22,
+        borderRadius: 4,
         paddingHorizontal: 10,
         paddingVertical: 5,
-        backgroundColor: colors.white,
+        backgroundColor: colors.goldLight,
     },
     categoryBadgeText: {
         color: colors.maroon,
@@ -515,8 +693,8 @@ const home = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'flex-end',
         paddingHorizontal: 4,
-        paddingTop: 16,
-        paddingBottom: 10,
+        paddingTop: 14,
+        paddingBottom: 8,
     },
     cardLeft: {
         flex: 1,
@@ -526,7 +704,8 @@ const home = StyleSheet.create({
         fontSize: 19,
         fontWeight: '600',
         color: colors.ink,
-        fontFamily: 'Outfit',
+        fontFamily: 'Caveat',
+        flexShrink: 1,
     },
     sellerRow: {
         flexDirection: 'row',
@@ -554,6 +733,7 @@ const home = StyleSheet.create({
     },
     cardRight: {
         alignItems: 'flex-end',
+        minWidth: 48,
     },
     reason: {
         color: colors.muted,
@@ -568,20 +748,63 @@ const home = StyleSheet.create({
         fontFamily: 'Outfit',
     },
     price: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: '700',
         color: colors.maroon,
         fontFamily: 'Outfit',
     },
     stack: {
-        width: 250 + 44, // card width + room for the peeking cards
-        height: 390,
+        width: '100%',
+        height: 468,
         alignSelf: 'center',
+    },
+    noRecommendations: {
+        position: 'absolute',
+        top: 190,
+        left: 0,
+        right: 0,
+        color: colors.maroon,
+        fontFamily: 'Caveat',
+        fontSize: 24,
+        textAlign: 'center',
     },
     stackSlot: {
         position: 'absolute',
         top: 0,
+        left: '50%',
+        marginLeft: -125,
+    },
+    tape: {
+        position: 'absolute',
+        top: -12,
+        left: 112,
+        width: 62,
+        height: 24,
+        backgroundColor: colors.gold,
+        opacity: 0.72,
+        zIndex: 2,
+    },
+    nextButton: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        borderWidth: 2,
+        borderColor: colors.maroon,
+        backgroundColor: colors.white,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginLeft: 15,
+    },
+    stackControls: {
+        position: 'absolute',
         left: 0,
+        right: 0,
+        bottom: 24,
+        flexDirection: 'row',
+        alignItems: 'center',
+        zIndex: 10,
+        marginTop: 15,
+        paddingHorizontal: 26,
     },
 
     // buy / sell switch
@@ -589,8 +812,10 @@ const home = StyleSheet.create({
         flexDirection: 'row',
         marginLeft: 'auto', // push to the right
         backgroundColor: colors.white,
-        borderRadius: 20,
+        borderRadius: 18,
         padding: 4,
+        borderWidth: 1,
+        borderColor: colors.blush,
     },
     toggleOption: {
         paddingHorizontal: 14,
@@ -601,7 +826,7 @@ const home = StyleSheet.create({
         backgroundColor: colors.maroon,
     },
     toggleText: {
-        fontSize: 20,
+        fontSize: 18,
         fontFamily: 'Caveat',
         color: colors.ink,
     },
@@ -618,14 +843,14 @@ const home = StyleSheet.create({
         alignItems: 'center',
         gap: 14,
         backgroundColor: colors.white,
-        borderRadius: 24,
+        borderRadius: 18,
         padding: 12,
         paddingRight: 16,
     },
     dateBox: {
-        width: 64,
-        height: 64,
-        borderRadius: 18,
+        width: 58,
+        height: 58,
+        borderRadius: 14,
         backgroundColor: colors.blush,
         alignItems: 'center',
         justifyContent: 'center',
@@ -671,11 +896,11 @@ const home = StyleSheet.create({
         paddingVertical: 12,
     },
     swipeHint: {
-        fontSize: 20,
+        fontSize: 19,
         fontFamily: 'Caveat',
-        color: colors.muted,
-        textAlign: 'center',
-        marginTop: 4,
+        color: colors.maroon,
+        textAlign: 'left',
+        flex: 1,
     },
     preferencePanel: {
         backgroundColor: colors.white,
