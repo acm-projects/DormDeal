@@ -8,7 +8,7 @@ type TabName = 'home' | 'catalog' | 'post' | 'inbox' | 'profile';
 // each tab: its name, icon when off, icon when on, and where it goes
 const tabs = [
     { name: 'home', icon: 'home-outline', iconActive: 'home', href: '/home' },
-    { name: 'catalog', icon: 'bag-outline', iconActive: 'bag', href: '/Store' },
+    { name: 'catalog', icon: 'bag-outline', iconActive: 'bag', href: '/Shop' },
     { name: 'post', icon: 'add', iconActive: 'add', href: '/Listings' },
     { name: 'inbox', icon: 'mail-outline', iconActive: 'mail', href: '/Contacts' },
     { name: 'profile', icon: 'person-circle-outline', iconActive: 'person-circle', href: '/Profile/1' },

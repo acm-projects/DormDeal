@@ -451,29 +451,11 @@ const Store = () => {
     const [listings, setListings] = useState([]);
     const [loadingListings, setLoadingListings] = useState(true);
     const [listingError, setListingError] = useState(null);
-    const [current_tab, set_new_tab] = useState("marketplace");
-    const tabHeightAnimation = useState(new Animated.Value(0))[0];
     const [searchQuery, setSearchQuery] = useState('');
     const [searchFocused, setSearchFocused] = useState(false);
     const [favoriteListingIds, setFavoriteListingIds] = useState(new Set());
     const [favoriteBusyIds, setFavoriteBusyIds] = useState(new Set());
     const [sortConfig, setSortConfig] = useState({field: 'Date Published', direction: 'Descending'});
-
-    useEffect(() => {
-        Animated.timing(tabHeightAnimation, {
-            toValue: current_tab === 'services' ? 1 : 0,
-            duration: 180,
-            useNativeDriver: false,
-        }).start();
-    }, [current_tab, tabHeightAnimation]);
-
-    useEffect(() => {
-        Animated.timing(tabHeightAnimation, {
-            toValue: current_tab === 'services' ? 1 : 0,
-            duration: 180,
-            useNativeDriver: false,
-        }).start();
-    }, [current_tab, tabHeightAnimation]);
 
     const categoryFilters = ['Furniture', 'Electronics', 'Textbooks', 'Clothing'];
     const selectedCategories = categoryFilters.filter((category) => enabledFilters[category]);
@@ -651,34 +633,20 @@ const Store = () => {
 
     return (
         <Base>
-            <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 30}}>
-                <Header1 style={{flex: 1,marginBottom: 0}}>catalog</Header1>
+            <View style={styles.shop_pill_row}>
+                <Pressable style={styles.shop_pill} onPress={() => router.push('/Shop')} accessibilityLabel="Back to shop">
+                    <Ionicons name="chevron-back" size={16} color={colors.white} />
+                    <Text selectable={false} style={styles.shop_pill_text}>Shop</Text>
+                </Pressable>
+            </View>
+            <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 16}}>
+                <Header1 style={{flex: 1,marginBottom: 0}}>marketplace</Header1>
                 <Button style={styles.shopping_Cart} onPress={() => router.push('/Store/Shopping Cart')}>
                     <Image source={Shopping_Cart_Image} style={styles.shopping_Cart_Image} resizeMode="contain" />
                 </Button>
             </View>
             <View style={styles.listing_area}>
                 <View style={styles.search_overlay}>
-                    <View style={{marginLeft: 22, marginTop: 10, marginBottom: -10, height: 40, flexDirection: 'row', alignItems: 'flex-end', gap: 5}}>
-                        <Animated.View style={{height: tabHeightAnimation.interpolate({inputRange: [0, 1], outputRange: [50, 40]})}}>
-                            <Button
-                                style={{height: '100%', width: 'auto', paddingHorizontal: 10, paddingTop: 3, paddingBottom: 10, borderRadius: 10, boxShadow: '', backgroundColor: colors.maroonLight, justifyContent: 'flex-start'}}
-                                onPress={() => set_new_tab('marketplace')}
-                                accessibilityState={{selected: current_tab === 'marketplace'}}
-                            >
-                                <Text selectable={false} style={{color: colors.white}}>Marketplace</Text>
-                            </Button>
-                        </Animated.View>
-                        <Animated.View style={{height: tabHeightAnimation.interpolate({inputRange: [0, 1], outputRange: [40, 50]})}}>
-                            <Button
-                                style={{height: '100%', width: 'auto', paddingHorizontal: 10, paddingTop: 3, paddingBottom: 10, borderRadius: 10, boxShadow: '', backgroundColor: colors.maroonDark, justifyContent: 'flex-start'}}
-                                onPress={() => set_new_tab('services')}
-                                accessibilityState={{selected: current_tab === 'services'}}
-                            >
-                                <Text selectable={false} style={{color: colors.white}}>Services</Text>
-                            </Button>
-                        </Animated.View>
-                    </View>
                     <Search_Bar
                         placeholder="What are you looking for?"
                         value={searchQuery}
@@ -713,7 +681,7 @@ const Store = () => {
                         </View>
                     )}
                 </View>
-                <ScrollView contentContainerStyle={styles.marketplace_listing_container} style={{marginTop: 48}} showsVerticalScrollIndicator={false}>
+                <ScrollView contentContainerStyle={styles.marketplace_listing_container} style={{marginTop: 8}} showsVerticalScrollIndicator={false}>
                     <ScrollView horizontal contentContainerStyle={styles.filter_container} showsHorizontalScrollIndicator={false}>
                         <Button
                             style={[[styles.filter_button,{backgroundColor: "#D4D4D4", border: '1px solid #c0c0c0',}], enabledFilters.filter && styles.enabled_filter_button]}
@@ -963,6 +931,24 @@ const styles = StyleSheet.create({
         color: colors.maroon,
     },
 
+    shop_pill_row: {
+        flexDirection: 'row',
+        marginBottom: 8,
+    },
+    shop_pill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 16,
+        backgroundColor: colors.maroonDark,
+    },
+    shop_pill_text: {
+        color: colors.white,
+        fontFamily: 'Outfit',
+        fontSize: 15,
+    },
     marketplace_listing_container: {
         paddingTop: 43,
         gap: 15,
