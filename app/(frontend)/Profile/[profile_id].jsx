@@ -1,310 +1,393 @@
-import { useEffect, useId, useState } from 'react';
-import { useRouter } from 'expo-router'
-import { StyleSheet, View, ScrollView, Image, Pressable } from 'react-native';
-import { ClipPath, Path, Rect, Svg } from 'react-native-svg';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Text from '../components/text_styles'
-import { Header1 } from '../components/text_styles'
-import Base from '../components/base'
-import Button from '../components/button';
-import { colors } from '../../root_styles'
+import { Animated, Easing, FlatList, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import Text from '../components/text_styles';
+import Base from '../components/base';
 import TabBar from '../components/tab_bar';
-import Profile_Picture from '../../../assets/images/whoisthis.jpg'
-import Location_Dot from '../../../assets/images/location_dot.png'
-import Triple_Dots from '../../../assets/images/triple_dots.png'
 
-const StarIcon = ({fillAmount = 1, size = 20}) => {
-    const fill = Math.min(Math.max(fillAmount, 0), 1);
-    const clipId = `starFill-${useId().replace(/:/g, '')}`;
-
-    return (
-        <Svg width={size} height={size} viewBox="0 0 24 24" accessibilityLabel={`${Math.round(fill * 100)}% of star filled`}>
-            <Path
-                d="M12 2.5l2.93 5.94 6.56.95-4.75 4.63 1.12 6.54L12 17.47l-5.86 3.09 1.12-6.54-4.75-4.63 6.56-.95L12 2.5z"
-                fill={colors.goldLight}
-            />
-            <ClipPath id={clipId}>
-                <Rect x="0" y="0" width={24 * fill} height="24" rx="2" />
-            </ClipPath>
-            <Path
-                d="M12 2.5l2.93 5.94 6.56.95-4.75 4.63 1.12 6.54L12 17.47l-5.86 3.09 1.12-6.54-4.75-4.63 6.56-.95L12 2.5z"
-                fill={colors.gold}
-                clipPath={`url(#${clipId})`}
-            />
-        </Svg>
-    );
+const colors = {
+    maroon: '#8F0000',
+    ink: '#241818',
+    muted: '#625757',
+    paper: '#FFFDFB',
+    gold: '#F3D83B',
+    palePink: '#F4DCDC',
+    paleBlue: '#DDE3EE',
+    paleGreen: '#DDE8D8',
+    paleTan: '#E8DDCB',
+    white: '#FFFFFF',
 };
 
-const Row = ({children}) => {
-    return (
-        <View style={styles.marketplace_listing_row}>
-            { children }
-        </View>
-    );
-}
-
-const End_Row = () => {
-    return (
-        <View style={{
-            height: 72,
-        }}>
-        </View>
-    )
-}
-
-const Listing_Card = (props) => {
-    const [isFavorite, setIsFavorite] = useState(false);
-    const router = useRouter();
-
-    return (
-        <Pressable style={styles.card} onPress={() => router.push(`/Store/Listing/Marketplace/live-${props.id}`)}>
-            <View style={styles.cardPhoto}>
-                <View style={[
-                    styles.cardPhotoHeader,
-                    !props.status && styles.cardPhotoHeaderWithoutCondition,
-                ]}>
-                    {props.status && (
-                        <Text style={styles.statusLabel}>{props.status}</Text>
-                    )}
-                    <Button
-                        style={styles.favoriteButton}
-                        onPress={() => setIsFavorite((favorite) => !favorite)}
-                        accessibilityLabel={isFavorite ? 'Remove listing from favorites' : 'Add listing to favorites'}
-                    >
-                        <Ionicons
-                            name={isFavorite ? 'heart' : 'heart-outline'}
-                            size={16}
-                            color={colors.ink}
-                        />
-                    </Button>
-                </View>
-            </View>
-            <View style={styles.cardInfo}>
-                <View style={styles.cardLeft}>
-                    <Text style={styles.cardTitle} numberOfLines={1}>{props.title}</Text>
-                </View>
-                <View style={styles.cardRight}>
-                    <Text style={styles.priceLabel}>Price</Text>
-                    <Text style={styles.price}>{props.price}</Text>
-                </View>
-            </View>
-            <Text style={styles.cardCategory}>{props.category}</Text>
-        </Pressable>
-    );
+const profile = {
+    initials: 'AR',
+    name: 'Alex R.',
+    yearAndMajor: 'Junior · Biology',
+    rating: '4.8',
+    reviews: '(23)',
+    location: 'Helix Hall · North Campus',
 };
+
+const listings = [
+    {title: 'Mini fridge', price: '$60', color: colors.palePink},
+    {title: 'Dorm rug', price: '$25', color: colors.paleTan},
+    {title: 'Desk lamp', price: '$15', color: colors.paleBlue},
+    {title: 'Laundry basket', price: '$10', color: colors.paleGreen},
+];
+
+const Rating = () => (
+    <View style={styles.rating} accessibilityLabel={`Rated ${profile.rating} out of 5, ${profile.reviews} reviews`}>
+        <Text style={styles.ratingNumber}>{profile.rating}</Text>
+        <View style={styles.stars}>
+            {[1, 2, 3, 4, 5].map((star) => (
+                <Ionicons key={star} name="star" size={16} color={colors.gold} />
+            ))}
+        </View>
+        <Text style={styles.reviewCount}>{profile.reviews}</Text>
+    </View>
+);
+
+const ListingCard = ({listing, onPress}) => (
+    <Pressable
+        style={styles.listingCard}
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`${listing.title}, ${listing.price}`}
+    >
+        <View style={[styles.listingImage, {backgroundColor: listing.color}]}>
+            <Text style={styles.photoPlaceholder}>[photo]</Text>
+        </View>
+        <Text style={styles.listingTitle} numberOfLines={1}>{listing.title}</Text>
+        <Text style={styles.listingPrice}>{listing.price}</Text>
+    </Pressable>
+);
 
 const Profile = () => {
-    return (
-        <Base>
-            <View style={styles.profileContent}>
-                <View style={styles.profileCard}>
-                    <View style={{flexDirection: 'row', gap: 20, alignItems: 'center'}}>
-                        <Image source={Profile_Picture} style={{borderRadius: '50%', width: 70, height: 70}} resizeMode='cover'/>
-                        <View>
-                            <Text style={{textAlign: 'left', fontWeight: '600', fontSize: 22, marginBottom: 5}}>Larry Williams</Text>
-                            <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start'}}>
-                                <StarIcon fillAmount={1} />
-                                <StarIcon fillAmount={1} />
-                                <StarIcon fillAmount={1} />
-                                <StarIcon fillAmount={0.5} />
-                                <StarIcon fillAmount={0} />
-                                <Text style={{marginLeft: 10, fontSize: 14}}>3.5</Text>
-                            </View>
-                        </View>
-                    </View>
-                    <View style={{flexDirection: 'row', marginTop: 20, alignItems: 'center'}}>
-                        <View style={{flexDirection: 'row', gap: 5, alignItems: 'center'}}>
-                            <Image source={Location_Dot} style={{height: 25, width: 25, aspectRatio: 1}} resizeMode='contain'/>
-                            <Text style={{fontSize: 15, color: '#222'}}>Andromeda Hall</Text>
-                        </View>
-                        <View style={{flex: 1, flexDirection: 'row', gap: 5, justifyContent: 'flex-end'}}>
-                            <Pressable style={{padding: 3, paddingHorizontal: 15, backgroundColor: colors.maroon, borderRadius: 22}}>
-                                <Text style={{fontSize: 15, color: colors.white}} selectable={false}>
-                                    Message
-                                </Text>
-                            </Pressable>
-                            <Pressable style={{padding: 3, paddingHorizontal: 15, backgroundColor: colors.maroonDark, borderRadius: 22, justifyContent: 'center'}}>
-                                <Image source={Triple_Dots} style={{height: 15, width: 15}} resizeMode='contain'></Image>
-                            </Pressable>
-                        </View>
-                    </View>
-                    <View style={{flexDirection: 'row', marginTop: 20}}>
-                        <View style={{alignItems: 'flex-start'}}>
-                            <Text style={{fontSize: 26, fontFamily: 'Caveat'}}>9,299</Text>
-                            <Text style={{fontSize: 12, opacity: 0.5}}>Active Listings</Text>
-                        </View>
-                        <View style={{flex:1, flexDirection: 'row', gap: 10, justifyContent: 'flex-end'}}>
-                            <View style={{alignItems: 'flex-start'}}>
-                                <Text style={{fontSize: 26, fontFamily: 'Caveat'}}>461</Text>
-                                <Text style={{fontSize: 12, opacity: 0.5}}>Following</Text>
-                            </View>
-                            <View style={{alignItems: 'flex-start'}}>
-                                <Text style={{fontSize: 26, fontFamily: 'Caveat'}}>349</Text>
-                                <Text style={{fontSize: 12, opacity: 0.5}}>Followers</Text>
-                            </View>
-                        </View>
-                    </View>
+    const router = useRouter();
+    const {height} = useWindowDimensions();
+    const [entryDirection] = useState(() => (Math.random() < 0.5 ? 1 : -1));
+    const [revealProgress] = useState(() => new Animated.Value(0));
+
+    useEffect(() => {
+        const reveal = Animated.timing(revealProgress, {
+            toValue: 1,
+            duration: 750,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+        });
+
+        reveal.start();
+        return () => {
+            reveal.stop();
+        };
+    }, [revealProgress]);
+
+    const paperRevealStyle = {
+        transform: [
+            {
+                translateY: revealProgress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [height * entryDirection, 0],
+                }),
+            },
+            {
+                rotate: revealProgress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [`${15 * entryDirection}deg`, '0deg'],
+                }),
+            },
+        ],
+    };
+
+    const listHeader = (
+        <View>
+            <Pressable
+                style={styles.moreButton}
+                accessibilityRole="button"
+                accessibilityLabel="More profile options"
+                hitSlop={10}
+            >
+                <Ionicons name="ellipsis-horizontal" size={22} color={colors.maroon} />
+            </Pressable>
+
+            <View style={styles.avatar} accessibilityLabel={`${profile.name} profile photo`}>
+                <Text style={styles.avatarText}>{profile.initials}</Text>
+            </View>
+
+            <View style={styles.nameHighlight}>
+                <Text style={styles.profileName}>{profile.name}</Text>
+            </View>
+            <Text style={styles.profileSubtitle}>{profile.yearAndMajor}</Text>
+
+            <View style={styles.ratingActions}>
+                <Rating />
+                <Pressable
+                    style={styles.messageButton}
+                    onPress={() => router.push('/Contacts')}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Message ${profile.name}`}
+                >
+                    <Ionicons name="mail-outline" size={17} color={colors.maroon} />
+                    <Text style={styles.messageText}>Message</Text>
+                </Pressable>
+            </View>
+
+            <View style={styles.metaRow}>
+                <View style={styles.metaItem}>
+                    <Ionicons name="location-outline" size={15} color={colors.maroon} />
+                    <Text style={styles.metaText}>{profile.location}</Text>
                 </View>
-                <View style={{flex: 1, alignItems: 'center', textAlign: 'center', marginTop: 20}}>
-                    <ScrollView
-                        style={styles.listingsScroll}
-                        contentContainerStyle={styles.listingsContent}
-                    >
-                        <Header1 style={{fontSize: 30, marginBottom: 15}}>Current Listings</Header1>
-                        <Row>
-                            <Listing_Card title={"Tree"} price={"$67"} status={"new"}></Listing_Card>
-                            <Listing_Card title={"see you got me"} price={"$67"}></Listing_Card>
-                        </Row>
-                        <Row>
-                            <Listing_Card title={"see you got me"} price={"$67"}></Listing_Card>
-                            <Listing_Card title={"see you got me"} price={"$67"}></Listing_Card>
-                        </Row>
-                        <Row>
-                            <Listing_Card title={"see you got me"} price={"$67"}></Listing_Card>
-                            <Listing_Card title={"see you got me"} price={"$67"}></Listing_Card>
-                        </Row>
-                        <Row>
-                            <Listing_Card title={"see you got me"} price={"$67"}></Listing_Card>
-                            <Listing_Card title={"see you got me"} price={"$67"}></Listing_Card>
-                        </Row>
-                        <Row>
-                            <Listing_Card title={"see you got me"} price={"$67"}></Listing_Card>
-                            <Listing_Card title={"see you got me"} price={"$67"}></Listing_Card>
-                        </Row>
-                        <End_Row/>
-                    </ScrollView>
+                <View style={styles.metaItem}>
+                    <Ionicons name="checkmark-circle" size={15} color={colors.maroon} />
+                    <Text style={styles.metaText}>Verified student</Text>
                 </View>
             </View>
-            <TabBar active="profile"/>
+
+            <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Selling right now</Text>
+                <Text style={styles.listingCount}>{listings.length} listings</Text>
+            </View>
+            <View style={styles.sectionRule} />
+        </View>
+    );
+
+    return (
+        <Base style={styles.base}>
+            <Animated.View
+                style={[styles.profileSheet, paperRevealStyle]}
+            >
+                <FlatList
+                    data={listings}
+                    renderItem={({item}) => (
+                        <ListingCard
+                            listing={item}
+                            onPress={() => router.push('/Store')}
+                        />
+                    )}
+                    keyExtractor={(item) => item.title}
+                    numColumns={2}
+                    columnWrapperStyle={styles.listingRow}
+                    ListHeaderComponent={listHeader}
+                    contentContainerStyle={styles.listContent}
+                    showsVerticalScrollIndicator={false}
+                    ListEmptyComponent={
+                        <Text style={styles.emptyText}>No listings available right now.</Text>
+                    }
+                />
+            </Animated.View>
+            <TabBar active="profile" />
         </Base>
     );
-}
+};
 
-export default Profile
+export default Profile;
 
 const styles = StyleSheet.create({
-    profileContent: {
+    base: {
+        paddingTop: 8,
+        paddingLeft: 8,
+        paddingRight: 8,
+        paddingBottom: 0,
+    },
+    profileSheet: {
         flex: 1,
+        backgroundColor: colors.paper,
+        shadowColor: colors.ink,
+        shadowOpacity: 0.16,
+        shadowRadius: 7,
+        shadowOffset: {width: 1, height: 2},
+        elevation: 3,
     },
-    profileCard: {
-        backgroundColor: colors.white,
-        borderRadius: 22,
-        padding: 15,
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 4},
-        shadowOpacity: 0.25,
-        shadowRadius: 6,
-        elevation: 8,
+    listContent: {
+        flexGrow: 1,
+        paddingTop: 28,
+        paddingHorizontal: 18,
+        paddingBottom: 105,
     },
-    card: {
-        flex: 1,
-        backgroundColor: colors.white,
-        borderRadius: 28,
-        padding: 10,
-        elevation: 4,
-    },
-    cardPhoto: {
-        height: 150,
-        borderRadius: 22,
-        backgroundColor: colors.maroon,
-        overflow: 'hidden',
-        position: 'relative',
-        padding: 10,
-    },
-    cardPhotoHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-    },
-    cardPhotoHeaderWithoutCondition: {
-        justifyContent: 'flex-end',
-    },
-    cardInfo: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        paddingHorizontal: 4,
-        paddingTop: 16,
-        paddingBottom: 10,
-    },
-    marketplace_listing_row: {
-        flexDirection: 'row',
-        width: '100%',
-        justifyContent: 'space-between',
-        gap: 15,
-    },
-    listingsScroll: {
-        width: '100%',
-    },
-    listingsContent: {
-        width: '100%',
-        gap: 15,
-        paddingTop: 20,
-    },
-    cardLeft: {
-        flex: 1,
-        gap: 6,
-    },
-    cardTitle: {
-        textAlign: 'left',
-        fontSize: 19,
-        fontWeight: '600',
-        color: colors.ink,
-        fontFamily: 'Outfit',
-    },
-    sellerRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-    },
-    sellerDot: {
-        width: 22,
-        height: 22,
-        borderRadius: 11,
-        backgroundColor: colors.blush,
+    moreButton: {
+        position: 'absolute',
+        top: 26,
+        right: 19,
+        zIndex: 2,
+        width: 35,
+        height: 35,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    sellerInitials: {
-        fontSize: 9,
-        fontWeight: '700',
+    avatar: {
+        width: 96,
+        height: 96,
+        marginTop: 30,
+        alignSelf: 'center',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 48,
+        backgroundColor: colors.maroon,
+        borderWidth: 3,
+        borderColor: colors.white,
+        shadowColor: colors.ink,
+        shadowOpacity: 0.26,
+        shadowRadius: 4,
+        shadowOffset: {width: 0, height: 2},
+        elevation: 4,
+    },
+    avatarText: {
+        color: colors.white,
+        fontFamily: 'Outfit',
+        fontSize: 32,
+        fontWeight: '800',
+    },
+    nameHighlight: {
+        alignSelf: 'center',
+        marginTop: 15,
+        paddingHorizontal: 5,
+        backgroundColor: colors.gold,
+    },
+    profileName: {
         color: colors.maroon,
         fontFamily: 'Outfit',
+        fontSize: 30,
+        lineHeight: 34,
+        fontWeight: '800',
+        textAlign: 'center',
     },
-    sellerName: {
-        fontSize: 13,
+    profileSubtitle: {
+        marginTop: 2,
         color: colors.muted,
         fontFamily: 'Outfit',
-    },
-    cardRight: {
-        alignItems: 'flex-end',
-    },
-    priceLabel: {
         fontSize: 12,
-        color: colors.muted,
-        fontFamily: 'Outfit',
+        textAlign: 'center',
     },
-    price: {
-        fontSize: 24,
-        fontWeight: '700',
+    ratingActions: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 12,
+        marginTop: 10,
+    },
+    rating: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        minHeight: 36,
+    },
+    ratingNumber: {
         color: colors.maroon,
         fontFamily: 'Outfit',
+        fontSize: 16,
+        fontWeight: '800',
     },
-    favoriteButton: {
-        width: 27,
-        height: 27,
-        padding: 0,
-        backgroundColor: colors.white,
+    stars: {
+        flexDirection: 'row',
+        marginLeft: 6,
+        gap: 1,
     },
-    statusLabel: {
-        height: 27,
-        paddingHorizontal: 12,
-        paddingVertical: 6,
+    reviewCount: {
+        marginLeft: 6,
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontSize: 10,
+    },
+    messageButton: {
+        minHeight: 36,
+        paddingHorizontal: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 7,
+        backgroundColor: colors.palePink,
+    },
+    messageText: {
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontSize: 12,
+        fontWeight: '800',
+    },
+    metaRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        columnGap: 14,
+        rowGap: 5,
+        marginTop: 10,
+    },
+    metaItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    metaText: {
+        color: colors.muted,
+        fontFamily: 'Outfit',
+        fontSize: 10,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'baseline',
+        justifyContent: 'space-between',
+        marginTop: 28,
+    },
+    sectionTitle: {
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontSize: 18,
+        fontWeight: '800',
+    },
+    listingCount: {
+        color: colors.muted,
+        fontFamily: 'Caveat',
+        fontSize: 17,
+        fontWeight: '700',
+    },
+    sectionRule: {
+        height: 2,
+        marginTop: 6,
+        backgroundColor: colors.maroon,
+    },
+    listingRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 12,
+        columnGap: 12,
+    },
+    listingCard: {
+        flex: 1,
+        padding: 6,
         backgroundColor: colors.white,
+        shadowColor: colors.ink,
+        shadowOpacity: 0.16,
+        shadowRadius: 4,
+        shadowOffset: {width: 1, height: 2},
+        elevation: 3,
+    },
+    listingImage: {
+        height: 94,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    photoPlaceholder: {
+        color: colors.maroon,
+        fontFamily: 'Caveat',
+        fontSize: 15,
+        fontStyle: 'italic',
+    },
+    listingTitle: {
+        marginTop: 5,
         color: colors.ink,
         fontFamily: 'Outfit',
-        fontSize: 12,
-        fontWeight: '600',
-        borderRadius: 14,
+        fontSize: 13,
+        fontWeight: '700',
+    },
+    listingPrice: {
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontSize: 15,
+        fontWeight: '800',
+    },
+    emptyText: {
+        marginTop: 24,
+        color: colors.muted,
+        fontFamily: 'Caveat',
+        fontSize: 18,
+        textAlign: 'center',
     },
 });
