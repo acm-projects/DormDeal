@@ -7,34 +7,32 @@ import { Header1 } from '../components/text_styles';
 import Base from '../components/base';
 import Search_Bar from '../components/search_bar';
 import TabBar from '../components/tab_bar';
+import PolaroidCard from '../components/polaroid_card';
 import { services, serviceRateNumber } from '../../../data/services';
 import type { Service } from '../../../data/services';
 
-// one service card, tap it to open the service page
+// one service, shown as a polaroid. tap it to open the service page
 const Service_Card = ({ service }: { service: Service }) => {
     const router = useRouter();
 
     return (
-        <Pressable style={list.card} onPress={() => router.push(`/Store/Listing/Service/${service.id}`)}>
-            <View style={list.cardTop}>
-                <View style={list.cardIcon}>
-                    <Ionicons name={service.icon as React.ComponentProps<typeof Ionicons>['name']} size={30} color={colors.maroon} />
-                </View>
-                <Text style={list.cardCategory}>{service.category}</Text>
-            </View>
-            <View style={list.cardInfo}>
-                <Text style={list.cardTitle} numberOfLines={2}>{service.title}</Text>
-                <View style={list.providerRow}>
-                    <View style={list.providerDot}>
-                        <Text style={list.providerInitials}>{service.initials}</Text>
+        <PolaroidCard
+            title={service.title}
+            seller={service.provider}
+            initials={service.initials}
+            price={service.rate}
+            priceUnit={service.rateUnit}
+            category={service.category}
+            photoColor={colors.goldLight}
+            onPress={() => router.push(`/Store/Listing/Service/${service.id}`)}
+            photo={(
+                <View style={list.servicePhoto}>
+                    <View style={list.serviceIcon}>
+                        <Ionicons name={service.icon as React.ComponentProps<typeof Ionicons>['name']} size={34} color={colors.maroon} />
                     </View>
-                    <Text style={list.providerName}>{service.provider}</Text>
                 </View>
-                <Text style={list.rate}>
-                    {service.rate}<Text style={list.rateUnit}>{service.rateUnit}</Text>
-                </Text>
-            </View>
-        </Pressable>
+            )}
+        />
     );
 };
 
@@ -153,93 +151,26 @@ const list = StyleSheet.create({
         color: colors.white,
     },
     grid: {
-        gap: 15,
+        gap: 18,
         paddingBottom: 130, // room so the tab bar doesn't cover the last card
     },
     row: {
         flexDirection: 'row',
-        gap: 15,
+        gap: 16,
     },
-    card: {
+    servicePhoto: {
         flex: 1,
-        backgroundColor: colors.white,
-        borderRadius: 28,
-        padding: 10,
-        elevation: 4,
-    },
-    cardTop: {
-        height: 120,
-        borderRadius: 22,
         backgroundColor: colors.goldLight,
-        padding: 12,
-        justifyContent: 'space-between',
-    },
-    cardIcon: {
-        width: 52,
-        height: 52,
-        borderRadius: 26,
-        backgroundColor: colors.white,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    cardCategory: {
-        alignSelf: 'flex-start',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 12,
-        overflow: 'hidden',
+    serviceIcon: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
         backgroundColor: colors.white,
-        color: colors.maroonDark,
-        fontFamily: 'Outfit',
-        fontSize: 12,
-        fontWeight: '600',
-    },
-    cardInfo: {
-        paddingHorizontal: 4,
-        paddingTop: 14,
-        paddingBottom: 8,
-        gap: 6,
-    },
-    cardTitle: {
-        fontSize: 17,
-        fontWeight: '600',
-        color: colors.ink,
-        fontFamily: 'Outfit',
-    },
-    providerRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-    },
-    providerDot: {
-        width: 22,
-        height: 22,
-        borderRadius: 11,
-        backgroundColor: colors.blush,
         alignItems: 'center',
         justifyContent: 'center',
-    },
-    providerInitials: {
-        fontSize: 9,
-        fontWeight: '700',
-        color: colors.maroon,
-        fontFamily: 'Outfit',
-    },
-    providerName: {
-        fontSize: 13,
-        color: colors.muted,
-        fontFamily: 'Outfit',
-    },
-    rate: {
-        fontSize: 22,
-        fontWeight: '700',
-        color: colors.maroon,
-        fontFamily: 'Outfit',
-    },
-    rateUnit: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: colors.muted,
     },
     empty: {
         color: colors.muted,

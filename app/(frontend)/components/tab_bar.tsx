@@ -9,7 +9,7 @@ type TabName = 'home' | 'catalog' | 'post' | 'inbox' | 'profile';
 const tabs = [
     { name: 'home', icon: 'home-outline', iconActive: 'home', href: '/home' },
     { name: 'catalog', icon: 'bag-outline', iconActive: 'bag', href: '/Shop' },
-    { name: 'post', icon: 'add', iconActive: 'add', href: '/Listings' },
+    { name: 'post', icon: 'add', iconActive: 'add', href: '/Post' },
     { name: 'inbox', icon: 'mail-outline', iconActive: 'mail', href: '/Contacts' },
     { name: 'profile', icon: 'person-circle-outline', iconActive: 'person-circle', href: '/Profile/1' },
 ] as const;

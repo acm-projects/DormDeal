@@ -9,6 +9,7 @@ import Button from '../components/button';
 import Base from '../components/base';
 import Search_Bar from '../components/search_bar';
 import TabBar from '../components/tab_bar';
+import PolaroidCard from '../components/polaroid_card';
 import Shopping_Cart_Image from '../../../assets/images/shopping_cart.png';
 import Filter_Image from '../../../assets/svgs/filter.svg';
 import Sort_Image from '../../../assets/svgs/sort.svg';
@@ -360,56 +361,37 @@ const Sort_Panel = ({onClose, sortConfig, onApply, onReset}) => {
     );
 };
 
+// one marketplace listing, shown as a polaroid
 const Listing_Card = (props) => {
     const router = useRouter();
 
     return (
-        <Pressable style={styles.card} onPress={() => router.push(`/Store/Listing/Marketplace/live-${props.id}`)}>
-            <View style={styles.cardPhoto}>
-                {props.imageUrl && (
-                    <Image source={{uri: props.imageUrl}} style={styles.cardPhotoImage} resizeMode="cover" />
-                )}
-                <View style={[
-                    styles.cardPhotoHeader,
-                    !props.status && styles.cardPhotoHeaderWithoutCondition,
-                ]}>
-                    {props.status && (
-                        <Text style={styles.statusLabel}>{props.status}</Text>
-                    )}
-                    <Button
-                        style={styles.favoriteButton}
-                        disabled={props.favoriteBusy}
-                        onPress={(event) => {
-                            event.stopPropagation();
-                            props.onToggleFavorite();
-                        }}
-                        accessibilityLabel={props.isFavorite ? 'Remove listing from favorites' : 'Add listing to favorites'}
-                    >
-                        <Ionicons
-                            name={props.isFavorite ? 'heart' : 'heart-outline'}
-                            size={16}
-                            color={props.isFavorite ? colors.maroon : colors.ink}
-                        />
-                    </Button>
-                </View>
-            </View>
-            <View style={styles.cardInfo}>
-                <View style={styles.cardLeft}>
-                    <Text style={styles.cardTitle} numberOfLines={1}>{props.title}</Text>
-                    <View style={styles.sellerRow}>
-                        <View style={styles.sellerDot}>
-                            <Text style={styles.sellerInitials}>{props.initials}</Text>
-                        </View>
-                        <Text style={styles.sellerName}>{props.seller}</Text>
-                    </View>
-                </View>
-                <View style={styles.cardRight}>
-                    <Text style={styles.priceLabel}>Price</Text>
-                    <Text style={styles.price}>{props.price}</Text>
-                </View>
-            </View>
-            <Text style={styles.cardCategory}>{props.category}</Text>
-        </Pressable>
+        <PolaroidCard
+            title={props.title}
+            seller={props.seller}
+            initials={props.initials}
+            price={props.price}
+            category={props.category}
+            imageUrl={props.imageUrl}
+            onPress={() => router.push(`/Store/Listing/Marketplace/live-${props.id}`)}
+            corner={(
+                <Button
+                    style={styles.favoriteButton}
+                    disabled={props.favoriteBusy}
+                    onPress={(event) => {
+                        event.stopPropagation();
+                        props.onToggleFavorite();
+                    }}
+                    accessibilityLabel={props.isFavorite ? 'Remove listing from favorites' : 'Add listing to favorites'}
+                >
+                    <Ionicons
+                        name={props.isFavorite ? 'heart' : 'heart-outline'}
+                        size={16}
+                        color={props.isFavorite ? colors.maroon : colors.ink}
+                    />
+                </Button>
+            )}
+        />
     );
 };
 
@@ -951,12 +933,12 @@ const styles = StyleSheet.create({
     },
     marketplace_listing_container: {
         paddingTop: 43,
-        gap: 15,
+        gap: 18,
     },
     marketplace_listing_row: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        gap: 15,
+        gap: 16,
     },
     loadingListings: {
         alignItems: 'center',
