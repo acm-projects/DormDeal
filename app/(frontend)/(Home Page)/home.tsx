@@ -8,13 +8,12 @@ import TabBar from '../components/tab_bar';
 import Calendar from '../components/calendar';
 import { items } from '../../../data/items';
 import { formatCategory, formatListingPrice, formatSellerName, getRecommendations, recordListingInteraction, RecommendedListing } from '../../../lib/recommendations';
-
 import PaperBg from '../../../assets/images/paper_bg.png';
 
 // what one pickup looks like
 type Pickup = {
     id: string;
-    itemId: string;   // which listing this pickup belongs to
+    itemId: string; // which listing this pickup belongs to
     type: 'buy' | 'sell';
     day: string;
     date: string;
@@ -24,11 +23,34 @@ type Pickup = {
 };
 
 // fake pickups for now
-const pickups: Pickup[] = [
-    { id: 'p1', itemId: '2', type: 'buy', day: 'THU', date: '15', item: 'Adjustable desk lamp', time: '5:30 PM', place: 'Helix Hall Lobby' },
-    { id: 'p2', itemId: '1', type: 'buy', day: 'SAT', date: '17', item: 'Mini fridge, 3.1 ft', time: '11:00 AM', place: 'Sciences Building' },
-    { id: 'p3', itemId: '3', type: 'sell', day: 'FRI', date: '16', item: 'Twin XL sheets', time: '2:00 PM', place: 'Student Union' },
-];
+const pickups: Pickup[] = [{
+    id: 'p1',
+    itemId: '2',
+    type: 'buy',
+    day: 'THU',
+    date: '15',
+    item: 'Adjustable desk lamp',
+    time: '5:30 PM',
+    place: 'Helix Hall Lobby'
+}, {
+    id: 'p2',
+    itemId: '1',
+    type: 'buy',
+    day: 'SAT',
+    date: '17',
+    item: 'Mini fridge, 3.1 ft',
+    time: '11:00 AM',
+    place: 'Sciences Building'
+}, {
+    id: 'p3',
+    itemId: '3',
+    type: 'sell',
+    day: 'FRI',
+    date: '16',
+    item: 'Twin XL sheets',
+    time: '2:00 PM',
+    place: 'Student Union'
+}];
 
 // what a card needs
 type RecCardProps = {
@@ -42,32 +64,30 @@ type RecCardProps = {
 
 // one card, reused for every item
 const RecCard = (props: RecCardProps) => {
-    return (
-        <View style={home.card}>
-            <View style={home.cardPhoto}>
-                <Text style={home.photoPlaceholder}>[item photo]</Text>
-            </View>
-            <View style={home.categoryBadge}>
-                <Text style={home.categoryBadgeText}>{props.category}</Text>
-            </View>
-            <View style={home.cardInfo}>
-                <View style={home.cardLeft}>
-                    <Text style={home.cardTitle} numberOfLines={1}>{props.title}</Text>
-                    <View style={home.sellerRow}>
-                        <View style={home.sellerDot}>
-                            <Text style={home.sellerInitials}>{props.initials}</Text>
+    return <View style={home.card}>
+                        <View style={home.cardPhoto}>
+                                <Text selectable={false} style={home.photoPlaceholder}>[item photo]</Text>
                         </View>
-                        <Text style={home.sellerName}>{props.seller}</Text>
-                    </View>
-                </View>
-                <View style={home.cardRight}>
-                    <Text style={home.priceLabel}>Price</Text>
-                    <Text style={home.price}>{props.price}</Text>
-                </View>
-            </View>
-            {props.reason ? <Text style={home.reason}>{props.reason}</Text> : null}
-        </View>
-    );
+                        <View style={home.categoryBadge}>
+                                <Text selectable={false} style={home.categoryBadgeText}>{props.category}</Text>
+                        </View>
+                        <View style={home.cardInfo}>
+                                <View style={home.cardLeft}>
+                                        <Text selectable={false} style={home.cardTitle} numberOfLines={1}>{props.title}</Text>
+                                        <View style={home.sellerRow}>
+                                                <View style={home.sellerDot}>
+                                                        <Text selectable={false} style={home.sellerInitials}>{props.initials}</Text>
+                                                </View>
+                                                <Text selectable={false} style={home.sellerName}>{props.seller}</Text>
+                                        </View>
+                                </View>
+                                <View style={home.cardRight}>
+                                        <Text selectable={false} style={home.priceLabel}>Price</Text>
+                                        <Text selectable={false} style={home.price}>{props.price}</Text>
+                                </View>
+                        </View>
+                        {props.reason ? <Text selectable={false} style={home.reason}>{props.reason}</Text> : null}
+                </View>;
 };
 
 // the deck: tap top card to open it, swipe it to send it to the back
@@ -82,30 +102,35 @@ type FeedListing = {
     isLive: boolean;
     liveListingId?: number;
 };
-
-const fallbackListings: FeedListing[] = items.map((item) => ({
+const fallbackListings: FeedListing[] = items.map(item => ({
     ...item,
-    isLive: false,
+    isLive: false
 }));
-
 function getVisualDeck(listings: FeedListing[]) {
     if (listings.length < 3) return listings;
     return [listings[0], listings[1], listings[2], ...listings.slice(3)];
 }
-
 function getTapeRotation(id: string) {
     let hash = 0;
     for (const character of id) {
-        hash = (hash * 31 + character.charCodeAt(0)) | 0;
+        hash = hash * 31 + character.charCodeAt(0) | 0;
     }
     return Math.abs(hash) % 2 === 0 ? '5deg' : '-7deg';
 }
-
-const CardStack = ({ listings }: { listings: FeedListing[] }) => {
+const CardStack = ({
+    listings
+}: {
+    listings: FeedListing[];
+}) => {
     const [deck, setDeck] = useState(() => getVisualDeck(listings));
+    const [undoing, setUndoing] = useState(false);
+    const [undoOutgoing, setUndoOutgoing] = useState<FeedListing | null>(null);
     const router = useRouter();
     const deckRef = useRef(getVisualDeck(listings));
+    const dismissedHistory = useRef<FeedListing[]>([]);
     const frontPosition = useRef(new Animated.ValueXY()).current;
+    const undoProgress = useRef(new Animated.Value(1)).current;
+    const undoOutgoingOpacity = useRef(new Animated.Value(1)).current;
     const rearLeftPosition = useRef(new Animated.Value(-34)).current;
     const rearRightPosition = useRef(new Animated.Value(34)).current;
     const rearLeftScale = useRef(new Animated.Value(0.96)).current;
@@ -115,63 +140,59 @@ const CardStack = ({ listings }: { listings: FeedListing[] }) => {
     const incomingOpacity = useRef(new Animated.Value(0)).current;
     const noRecommendationsOpacity = useRef(new Animated.Value(0)).current;
     const transitionRunning = useRef(false);
-
     const advance = () => {
         if (transitionRunning.current) return;
         const current = deckRef.current;
         const dismissed = current[0];
         if (!dismissed) return;
+        dismissedHistory.current.push(dismissed);
         transitionRunning.current = true;
         if (dismissed.isLive) {
             recordListingInteraction(dismissed.liveListingId!, 'dismiss').catch(() => undefined);
         }
-
-        Animated.parallel([
-            Animated.timing(frontPosition, {
-                toValue: { x: -420, y: 0 },
-                duration: 280,
-                useNativeDriver: false,
-            }),
-            Animated.timing(rearLeftPosition, {
-                toValue: 0,
-                duration: 280,
-                useNativeDriver: false,
-            }),
-            Animated.timing(rearLeftScale, {
-                toValue: 1,
-                duration: 280,
-                useNativeDriver: false,
-            }),
-            Animated.timing(rearLeftRotation, {
-                toValue: 0,
-                duration: 280,
-                useNativeDriver: false,
-            }),
-            Animated.timing(rearRightPosition, {
-                toValue: -34,
-                duration: 280,
-                useNativeDriver: false,
-            }),
-            Animated.timing(rearRightScale, {
-                toValue: 0.96,
-                duration: 280,
-                useNativeDriver: false,
-            }),
-            Animated.timing(rearRightRotation, {
-                toValue: -5,
-                duration: 280,
-                useNativeDriver: false,
-            }),
-            Animated.timing(incomingOpacity, {
-                toValue: 1,
-                duration: 280,
-                useNativeDriver: false,
-            }),
-        ]).start(() => {
+        Animated.parallel([Animated.timing(frontPosition, {
+            toValue: {
+                x: -420,
+                y: 0
+            },
+            duration: 280,
+            useNativeDriver: false
+        }), Animated.timing(rearLeftPosition, {
+            toValue: 0,
+            duration: 280,
+            useNativeDriver: false
+        }), Animated.timing(rearLeftScale, {
+            toValue: 1,
+            duration: 280,
+            useNativeDriver: false
+        }), Animated.timing(rearLeftRotation, {
+            toValue: 0,
+            duration: 280,
+            useNativeDriver: false
+        }), Animated.timing(rearRightPosition, {
+            toValue: -34,
+            duration: 280,
+            useNativeDriver: false
+        }), Animated.timing(rearRightScale, {
+            toValue: 0.96,
+            duration: 280,
+            useNativeDriver: false
+        }), Animated.timing(rearRightRotation, {
+            toValue: -5,
+            duration: 280,
+            useNativeDriver: false
+        }), Animated.timing(incomingOpacity, {
+            toValue: 1,
+            duration: 280,
+            useNativeDriver: false
+        })]).start(() => {
             const next = [current[1], current[2], current[3], ...current.slice(4)];
             deckRef.current = next;
             setDeck(next);
-            frontPosition.setValue({ x: 0, y: 0 });
+            frontPosition.setValue({
+                x: 0,
+                y: 0
+            });
             rearLeftPosition.setValue(-34);
             rearRightPosition.setValue(34);
             rearLeftScale.setValue(0.96);
@@ -182,12 +203,50 @@ const CardStack = ({ listings }: { listings: FeedListing[] }) => {
             transitionRunning.current = false;
         });
     };
-
+    const undo = () => {
+        if (transitionRunning.current) return;
+        const restored = dismissedHistory.current.pop();
+        if (!restored) return;
+        transitionRunning.current = true;
+        setUndoOutgoing(deckRef.current[2] ?? null);
+        undoOutgoingOpacity.setValue(1);
+        const next = [restored, ...deckRef.current];
+        deckRef.current = next;
+        frontPosition.setValue({
+            x: 0,
+            y: 0
+        });
+        undoProgress.setValue(0);
+        setUndoing(true);
+        setDeck(next);
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                Animated.parallel([Animated.timing(undoProgress, {
+                    toValue: 1,
+                    duration: 280,
+                    useNativeDriver: false
+                }), Animated.timing(undoOutgoingOpacity, {
+                    toValue: 0,
+                    duration: 280,
+                    useNativeDriver: false
+                })]).start(() => {
+                    setUndoing(false);
+                    setUndoOutgoing(null);
+                    undoOutgoingOpacity.setValue(1);
+                    transitionRunning.current = false;
+                });
+            });
+        });
+    };
     useEffect(() => {
         const nextDeck = getVisualDeck(listings);
         deckRef.current = nextDeck;
+        dismissedHistory.current = [];
         setDeck(nextDeck);
-        frontPosition.setValue({ x: 0, y: 0 });
+        frontPosition.setValue({
+            x: 0,
+            y: 0
+        });
         rearLeftPosition.setValue(-34);
         rearRightPosition.setValue(34);
         rearLeftScale.setValue(0.96);
@@ -197,323 +256,291 @@ const CardStack = ({ listings }: { listings: FeedListing[] }) => {
         incomingOpacity.setValue(0);
         transitionRunning.current = false;
     }, [listings, frontPosition, rearLeftPosition, rearRightPosition, rearLeftScale, rearRightScale, rearLeftRotation, rearRightRotation, incomingOpacity]);
-
     useEffect(() => {
         noRecommendationsOpacity.setValue(0);
         if (!deck[0]) {
             Animated.timing(noRecommendationsOpacity, {
                 toValue: 1,
                 duration: 450,
-                useNativeDriver: false,
+                useNativeDriver: false
             }).start();
         }
     }, [deck, noRecommendationsOpacity]);
-
     const advanceRef = useRef(advance);
     advanceRef.current = advance;
+    const swipe = useRef(PanResponder.create({
+        // check before the card's Pressable does, only grab if moving sideways
+        onMoveShouldSetPanResponderCapture: (_, g) => !transitionRunning.current && Math.abs(g.dx) > 8,
+        onPanResponderTerminationRequest: () => false,
+        // don't let the page scroll steal it
 
-    const swipe = useRef(
-        PanResponder.create({
-            // check before the card's Pressable does, only grab if moving sideways
-            onMoveShouldSetPanResponderCapture: (_, g) => !transitionRunning.current && Math.abs(g.dx) > 8,
-            onPanResponderTerminationRequest: () => false, // don't let the page scroll steal it
-
-            // card follows the finger
-            onPanResponderMove: Animated.event(
-                [null, { dx: frontPosition.x, dy: frontPosition.y }],
-                { useNativeDriver: false }
-            ),
-
-            // finger lifted
-            onPanResponderRelease: (_, g) => {
-                if (transitionRunning.current) return;
-                if (Math.abs(g.dx) > 100) {
-                    advanceRef.current();
-                } else {
-                    // not far enough: spring back to the middle
-                    Animated.spring(frontPosition, {
-                        toValue: { x: 0, y: 0 },
-                        useNativeDriver: false,
-                    }).start();
-                }
-            },
-        })
-    ).current;
+        // card follows the finger
+        onPanResponderMove: Animated.event([null, {
+            dx: frontPosition.x,
+            dy: frontPosition.y
+        }], {
+            useNativeDriver: false
+        }),
+        // finger lifted
+        onPanResponderRelease: (_, g) => {
+            if (transitionRunning.current) return;
+            if (Math.abs(g.dx) > 100) {
+                advanceRef.current();
+            } else {
+                // not far enough: spring back to the middle
+                Animated.spring(frontPosition, {
+                    toValue: {
+                        x: 0,
+                        y: 0
+                    },
+                    useNativeDriver: false
+                }).start();
+            }
+        }
+    })).current;
 
     // tilt the card as it's dragged, like flicking a real card
     const tilt = frontPosition.x.interpolate({
         inputRange: [-200, 0, 200],
-        outputRange: ['-12deg', '0deg', '12deg'],
+        outputRange: ['-12deg', '0deg', '12deg']
     });
+    return <View style={home.stack}>
+                        {deck.slice(0, 4).map((item, depth) => {
+            if (!item) return null;
+            const card = <RecCard title={item.title} seller={item.seller} initials={item.initials} price={item.price} category={item.category} reason={item.reason} />;
+            const layer = <>
+                                                <View style={[home.tape, {
+                    transform: [{
+                        rotate: getTapeRotation(item.id)
+                    }]
+                }]} />
+                                                {card}
+                                        </>;
 
-    return (
-        <View style={home.stack}>
-            {deck.slice(0, 4).map((item, depth) => {
-                if (!item) return null;
-
-                const card = (
-                    <RecCard
-                        title={item.title}
-                        seller={item.seller}
-                        initials={item.initials}
-                        price={item.price}
-                        category={item.category}
-                        reason={item.reason}
-                    />
-                );
-
-                const layer = (
-                    <>
-                        <View style={[home.tape, { transform: [{ rotate: getTapeRotation(item.id) }] }]} />
-                        {card}
-                    </>
-                );
-
-                // top card: draggable + tappable
-                if (depth === 0) {
-                    return (
-                        <Animated.View
-                            key={item.id}
-                            {...swipe.panHandlers}
-                            style={[
-                                home.stackSlot,
-                                {
-                                    zIndex: 3,
-                                    transform: [
-                                        { translateX: frontPosition.x },
-                                        { translateY: frontPosition.y },
-                                        { rotate: tilt },
-                                    ],
-                                },
-                            ]}
-                        >
-                            <Pressable onPress={() => router.push(`/Store/Listing/Marketplace/${item.id}`)}>
-                                {layer}
-                            </Pressable>
-                        </Animated.View>
-                    );
-                }
-
-                if (depth === 3) {
-                    return (
-                        <Animated.View
-                            key={item.id}
-                            style={[
-                                home.stackSlot,
-                                {
-                                    zIndex: 0,
-                                    opacity: incomingOpacity,
-                                    transform: [
-                                        { translateX: 34 },
-                                        { scale: 0.92 },
-                                        { rotate: '5deg' },
-                                    ],
-                                },
-                            ]}
-                        >
-                            {layer}
-                        </Animated.View>
-                    );
-                }
-
-                return (
-                    <Animated.View
-                        key={item.id}
-                        style={[
-                            home.stackSlot,
-                            {
-                                zIndex: depth === 1 ? 2 : 1,
-                                transform: [
-                                    { translateX: depth === 1 ? rearLeftPosition : rearRightPosition },
-                                    { scale: depth === 1 ? rearLeftScale : rearRightScale },
-                                    { rotate: (depth === 1 ? rearLeftRotation : rearRightRotation).interpolate({
-                                        inputRange: [-5, 5],
-                                        outputRange: ['-5deg', '5deg'],
-                                    }) },
-                                ],
-                            },
-                        ]}
-                    >
-                        {layer}
-                    </Animated.View>
-                );
-            })}
-            {!deck[0] && (
-                <Animated.Text style={[home.noRecommendations, { opacity: noRecommendationsOpacity }]}>
-                    No more recommended listings... :(
-                </Animated.Text>
-            )}
-            <View style={home.stackControls}>
-                <Text style={home.swipeHint}>swipe left <Ionicons name="arrow-back" size={22} color={colors.maroon} /></Text>
-                <Pressable style={home.nextButton} onPress={advance} accessibilityLabel="Show next recommendation">
-                    <Ionicons name="arrow-forward" size={25} color={colors.maroon} />
-                </Pressable>
-            </View>
-        </View>
-    );
+            // top card: draggable + tappable
+            if (depth === 0) {
+                return <Animated.View key={item.id} {...swipe.panHandlers} style={[home.stackSlot, {
+                    zIndex: 3,
+                    transform: [{
+                        translateX: undoing ? undoProgress.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [-420, 0]
+                        }) : frontPosition.x
+                    }, {
+                        translateY: undoing ? 0 : frontPosition.y
+                    }, {
+                        rotate: tilt
+                    }]
+                }]}>
+                                                        <Pressable onPress={() => router.push(`/Store/Listing/Marketplace/${item.id}`)}>
+                                                                {layer}
+                                                        </Pressable>
+                                                </Animated.View>;
+            }
+            if (depth === 3) {
+                return <Animated.View key={item.id} style={[home.stackSlot, {
+                    zIndex: 0,
+                    opacity: undoing ? 0 : incomingOpacity,
+                    transform: [{
+                        translateX: undoing ? undoProgress.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [-34, 34]
+                        }) : 34
+                    }, {
+                        scale: undoing ? undoProgress.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.96, 0.92]
+                        }) : 0.92
+                    }, {
+                        rotate: undoing ? undoProgress.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: ['-5deg', '5deg']
+                        }) : '5deg'
+                    }]
+                }]}>
+                                                        {layer}
+                                                </Animated.View>;
+            }
+            return <Animated.View key={item.id} style={[home.stackSlot, {
+                zIndex: depth === 1 ? 2 : 1,
+                transform: [{
+                    translateX: undoing ? undoProgress.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: depth === 1 ? [0, -34] : [-34, 34]
+                    }) : depth === 1 ? rearLeftPosition : rearRightPosition
+                }, {
+                    scale: undoing ? undoProgress.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: depth === 1 ? [1, 0.96] : [0.96, 0.92]
+                    }) : depth === 1 ? rearLeftScale : rearRightScale
+                }, {
+                    rotate: undoing ? undoProgress.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: depth === 1 ? ['0deg', '-5deg'] : ['-5deg', '5deg']
+                    }) : (depth === 1 ? rearLeftRotation : rearRightRotation).interpolate({
+                        inputRange: [-5, 5],
+                        outputRange: ['-5deg', '5deg']
+                    })
+                }]
+            }]}>
+                                                {layer}
+                                        </Animated.View>;
+        })}
+                        {undoOutgoing && <Animated.View pointerEvents="none" style={[home.stackSlot, {
+            zIndex: 1,
+            opacity: undoOutgoingOpacity,
+            transform: [{
+                translateX: 34
+            }, {
+                scale: 0.92
+            }, {
+                rotate: '5deg'
+            }]
+        }]}>
+                                        <View style={[home.tape, {
+                transform: [{
+                    rotate: getTapeRotation(undoOutgoing.id)
+                }]
+            }]} />
+                                        <RecCard title={undoOutgoing.title} seller={undoOutgoing.seller} initials={undoOutgoing.initials} price={undoOutgoing.price} category={undoOutgoing.category} reason={undoOutgoing.reason} />
+                                </Animated.View>}
+                        {!deck[0] && <Animated.Text style={[home.noRecommendations, {
+            opacity: noRecommendationsOpacity
+        }]}>
+                                        No more recommended listings... :(
+                                </Animated.Text>}
+                        <View style={home.stackControls}>
+                                <Text style={home.swipeHint}>swipe left <Ionicons name="arrow-back" size={22} color={colors.maroon} /></Text>
+                                <Pressable style={[home.nextButton, dismissedHistory.current.length === 0 && home.undoDisabled]} onPress={undo} accessibilityLabel="Undo last dismissed recommendation">
+                                        <Ionicons name="arrow-forward" size={25} color={colors.maroon} />
+                                </Pressable>
+                        </View>
+                </View>;
 };
 
 // one pickup row, tap it to open the listing
-const PickupCard = (props: { pickup: Pickup }) => {
+const PickupCard = (props: {
+    pickup: Pickup;
+}) => {
     const p = props.pickup;
     const router = useRouter();
+    return <Pressable style={home.pickupCard} onPress={() => router.push(`/Store/Listing/Marketplace/${p.itemId}`)}>
+                        <View style={home.dateBox}>
+                                <Text style={home.dateDay}>{p.day}</Text>
+                                <Text style={home.dateNum}>{p.date}</Text>
+                        </View>
 
-    return (
-        <Pressable
-            style={home.pickupCard}
-            onPress={() => router.push(`/Store/Listing/Marketplace/${p.itemId}`)}
-        >
-            <View style={home.dateBox}>
-                <Text style={home.dateDay}>{p.day}</Text>
-                <Text style={home.dateNum}>{p.date}</Text>
-            </View>
-
-            <View style={home.pickupInfo}>
-                <Text style={home.pickupItem} numberOfLines={1}>{p.item}</Text>
-                <View style={home.pickupWhere}>
-                    <Ionicons name="location-outline" size={15} color={colors.muted} />
-                    <Text style={home.pickupWhereText}>{p.time} · {p.place}</Text>
-                </View>
-            </View>
-        </Pressable>
-    );
+                        <View style={home.pickupInfo}>
+                                <Text style={home.pickupItem} numberOfLines={1}>{p.item}</Text>
+                                <View style={home.pickupWhere}>
+                                        <Ionicons name="location-outline" size={15} color={colors.muted} />
+                                        <Text style={home.pickupWhereText}>{p.time} · {p.place}</Text>
+                                </View>
+                        </View>
+                </Pressable>;
 };
-
 const Home = () => {
     const userName = 'Maya'; // swap for real name once login works
-    const initials = 'MR';   // same, comes from login later
+    const initials = 'MR'; // same, comes from login later
     const [mode, setMode] = useState<'buy' | 'sell'>('buy'); // which tab is picked
-    const shown = pickups.filter((p) => p.type === mode);   // only the matching pickups
+    const shown = pickups.filter(p => p.type === mode); // only the matching pickups
     const router = useRouter();
 
     // recommended cards: start with the demo items, swap in real ones once they load
     const [listings, setListings] = useState<FeedListing[]>(fallbackListings);
     const [loadingRecs, setLoadingRecs] = useState(true);
     const [recError, setRecError] = useState<string | null>(null);
-
     useEffect(() => {
         let cancelled = false;
-
-        getRecommendations(20)
-            .then((recs) => {
-                if (cancelled) return;
-                // nothing recommended yet (new account, no listings): keep the demo cards
-                if (recs.length > 0) setListings(recs.map(toFeedListing));
-            })
-            .catch((err) => {
-                if (cancelled) return;
-                console.warn('Could not load recommendations', err);
-                setRecError("Couldn't load your recommendations, showing examples.");
-            })
-            .finally(() => {
-                if (!cancelled) setLoadingRecs(false);
-            });
-
-        return () => { cancelled = true; };
+        getRecommendations(20).then(recs => {
+            if (cancelled) return;
+            // nothing recommended yet (new account, no listings): keep the demo cards
+            if (recs.length > 0) setListings(recs.map(toFeedListing));
+        }).catch(err => {
+            if (cancelled) return;
+            console.warn('Could not load recommendations', err);
+            setRecError("Couldn't load your recommendations, showing examples.");
+        }).finally(() => {
+            if (!cancelled) setLoadingRecs(false);
+        });
+        return () => {
+            cancelled = true;
+        };
     }, []);
+    return <ImageBackground source={PaperBg} style={home.screen} resizeMode="cover">
+                        <ScrollView contentContainerStyle={home.content}>
 
-    return (
-        <ImageBackground source={PaperBg} style={home.screen} resizeMode="cover">
-            <ScrollView contentContainerStyle={home.content}>
+                                {/* greeting on the left, avatar on the right */}
+                                <View style={home.headerRow}>
+                                        <View style={home.greeting}>
+                                                <Text style={home.hello}>Hello,</Text>
+                                                <Text style={home.name}>{userName}</Text>
+                                                <Text style={home.subtitle}>What are you looking for today?</Text>
+                                        </View>
 
-                {/* greeting on the left, avatar on the right */}
-                <View style={home.headerRow}>
-                    <View style={home.greeting}>
-                        <Text style={home.hello}>Hello,</Text>
-                        <Text style={home.name}>{userName}</Text>
-                        <Text style={home.subtitle}>What are you looking for today?</Text>
-                    </View>
+                                        <View style={home.profileActions}>
+                                                <Pressable style={home.settingsButton} onPress={() => router.push('/Settings')} accessibilityLabel="Open settings">
+                                                        <Ionicons name="settings-outline" size={20} color={colors.ink} />
+                                                </Pressable>
+                                                <View style={home.avatar}>
+                                                        <Text style={home.avatarText}>{initials}</Text>
+                                                </View>
+                                        </View>
+                                </View>
 
-                    <View style={home.profileActions}>
-                        <Pressable
-                            style={home.settingsButton}
-                            onPress={() => router.push('/Settings')}
-                            accessibilityLabel="Open settings"
-                        >
-                            <Ionicons name="settings-outline" size={20} color={colors.ink} />
-                        </Pressable>
-                        <View style={home.avatar}>
-                            <Text style={home.avatarText}>{initials}</Text>
-                        </View>
-                    </View>
-                </View>
+                                <View style={home.recommendationHeading}>
+                                        <View style={home.sectionRow}>
+                                                <View style={home.recommendedTitle}>
+                                                        <Text style={home.sectionTitle}>Recommended</Text>
+                                                        <Svg width={126} height={8} viewBox="0 0 126 8" style={home.squiggle}>
+                                                                <Path d="M1 4 C13 1, 22 7, 35 4 S57 1, 70 4 S92 7, 105 4 S118 2, 125 4" stroke={colors.maroon} strokeWidth={2.5} strokeLinecap="round" fill="none" />
+                                                        </Svg>
+                                                </View>
+                                                <Text style={home.sectionNote}>just for you!</Text>
+                                        </View>
+                                        <Pressable style={home.seeAll} onPress={() => router.push('/Store')}>
+                                                <Text style={home.seeAllText}>See all</Text>
+                                        </Pressable>
+                                </View>
 
-                <View style={home.recommendationHeading}>
-                    <View style={home.sectionRow}>
-                        <View style={home.recommendedTitle}>
-                            <Text style={home.sectionTitle}>Recommended</Text>
-                            <Svg width={126} height={8} viewBox="0 0 126 8" style={home.squiggle}>
-                                <Path
-                                    d="M1 4 C13 1, 22 7, 35 4 S57 1, 70 4 S92 7, 105 4 S118 2, 125 4"
-                                    stroke={colors.maroon}
-                                    strokeWidth={2.5}
-                                    strokeLinecap="round"
-                                    fill="none"
-                                />
-                            </Svg>
-                        </View>
-                        <Text style={home.sectionNote}>just for you!</Text>
-                    </View>
-                    <Pressable style={home.seeAll} onPress={() => router.push('/Store')}>
-                        <Text style={home.seeAllText}>See all</Text>
-                    </Pressable>
-                </View>
+                                {loadingRecs ? <View style={home.loadingRecommendations}>
+                                                <ActivityIndicator color={colors.maroon} />
+                                        </View> : <CardStack listings={listings} />}
+                                {recError ? <Text style={home.recommendationError}>{recError}</Text> : null}
+                                <View style={home.sectionRow}>
+                                        <Text style={home.sectionTitle}>Upcoming pickups</Text>
 
-                {loadingRecs ? (
-                    <View style={home.loadingRecommendations}>
-                        <ActivityIndicator color={colors.maroon} />
-                    </View>
-                ) : (
-                    <CardStack listings={listings} />
-                )}
-                {recError ? <Text style={home.recommendationError}>{recError}</Text> : null}
-                <View style={home.sectionRow}>
-                    <Text style={home.sectionTitle}>Upcoming pickups</Text>
+                                        <View style={home.toggle}>
+                                                <Pressable onPress={() => setMode('buy')} style={[home.toggleOption, mode === 'buy' && home.toggleActive]}>
+                                                        <Text style={[home.toggleText, mode === 'buy' && home.toggleTextActive]}>Buy</Text>
+                                                </Pressable>
+                                                <Pressable onPress={() => setMode('sell')} style={[home.toggleOption, mode === 'sell' && home.toggleActive]}>
+                                                        <Text style={[home.toggleText, mode === 'sell' && home.toggleTextActive]}>Sell</Text>
+                                                </Pressable>
+                                        </View>
+                                </View>
 
-                    <View style={home.toggle}>
-                        <Pressable
-                            onPress={() => setMode('buy')}
-                            style={[home.toggleOption, mode === 'buy' && home.toggleActive]}
-                        >
-                            <Text style={[home.toggleText, mode === 'buy' && home.toggleTextActive]}>Buy</Text>
-                        </Pressable>
-                        <Pressable
-                            onPress={() => setMode('sell')}
-                            style={[home.toggleOption, mode === 'sell' && home.toggleActive]}
-                        >
-                            <Text style={[home.toggleText, mode === 'sell' && home.toggleTextActive]}>Sell</Text>
-                        </Pressable>
-                    </View>
-                </View>
+                                <View style={home.pickupList}>
+                                        {shown.map(p => <PickupCard key={p.id} pickup={p} />)}
+                                        {shown.length === 0 && <Text style={home.emptyText}>No pickups yet!</Text>}
+                                </View>
 
-                <View style={home.pickupList}>
-                    {shown.map((p) => (
-                        <PickupCard key={p.id} pickup={p} />
-                    ))}
-                    {shown.length === 0 && (
-                        <Text style={home.emptyText}>No pickups yet!</Text>
-                    )}
-                </View>
+                                <View style={[home.sectionRow, home.calendarHeader]}>
+                                        <Text style={home.sectionTitle}>Your calendar</Text>
+                                        <Text style={home.sectionNote}>plan ahead!</Text>
+                                </View>
 
-                <View style={home.sectionRow}>
-                    <Text style={home.sectionTitle}>Your calendar</Text>
-                    <Text style={home.sectionNote}>plan ahead!</Text>
-                </View>
+                                <Calendar />
 
-                <Calendar />
+                        </ScrollView>
 
-            </ScrollView>
-
-            <TabBar active="home" />
-        </ImageBackground>
-    );
+                        <TabBar active="home" />
+                </ImageBackground>;
 };
-
 function toFeedListing(listing: RecommendedListing): FeedListing {
     const sellerName = formatSellerName(listing.seller_name);
     const words = sellerName.split(/\s+/);
-    const initials = words.slice(0, 2).map((word) => word[0]?.toUpperCase()).join('') || '?';
-
+    const initials = words.slice(0, 2).map(word => word[0]?.toUpperCase()).join('') || '?';
     return {
         id: `live-${listing.listing_id}`,
         title: listing.title,
@@ -523,51 +550,51 @@ function toFeedListing(listing: RecommendedListing): FeedListing {
         category: formatCategory(listing.category),
         reason: listing.recommendation_reason,
         isLive: true,
-        liveListingId: listing.listing_id,
+        liveListingId: listing.listing_id
     };
 }
-
 const home = StyleSheet.create({
     screen: {
         flex: 1,
-        width: '100%', // fill the whole width, parent was squishing us
-        backgroundColor: colors.cream,
+        width: '100%',
+        // fill the whole width, parent was squishing us
+        backgroundColor: colors.cream
     },
     content: {
         paddingTop: 48,
         paddingHorizontal: 18,
-        paddingBottom: 130, // room so the tab bar doesn't cover the last card
+        paddingBottom: 130 // room so the tab bar doesn't cover the last card
     },
     headerRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        minHeight: 86,
+        minHeight: 86
     },
     profileActions: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        gap: 8
     },
     greeting: {
-        gap: 2,
+        gap: 2
     },
     hello: {
         fontSize: 30,
         color: colors.maroon,
-        fontFamily: 'Caveat',
+        fontFamily: 'Caveat'
     },
     name: {
         fontSize: 46,
         fontWeight: '800',
         color: colors.ink,
-        fontFamily: 'Outfit',
+        fontFamily: 'Outfit'
     },
     subtitle: {
         fontSize: 14,
         color: colors.muted,
         fontFamily: 'Outfit',
-        marginTop: 4,
+        marginTop: 4
     },
     avatar: {
         width: 56,
@@ -577,13 +604,13 @@ const home = StyleSheet.create({
         borderWidth: 3,
         borderColor: colors.white,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     avatarText: {
         color: colors.white,
         fontSize: 18,
         fontWeight: '700',
-        fontFamily: 'Outfit',
+        fontFamily: 'Outfit'
     },
     settingsButton: {
         width: 30,
@@ -592,66 +619,69 @@ const home = StyleSheet.create({
         borderRadius: 28,
         backgroundColor: colors.white,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
-
     // section title rows
     recommendationHeading: {
         flexDirection: 'row',
         alignItems: 'flex-end',
         justifyContent: 'space-between',
         marginTop: 28,
-        marginBottom: 2,
+        marginBottom: 2
     },
     sectionRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
         marginTop: 0,
-        marginBottom: 14,
+        marginBottom: 14
+    },
+    calendarHeader: {
+        marginTop: 24
     },
     sectionTitle: {
         fontSize: 22,
         fontWeight: '700',
         color: colors.ink,
-        fontFamily: 'Outfit',
+        fontFamily: 'Outfit'
     },
     recommendedTitle: {
-        position: 'relative',
+        position: 'relative'
     },
     squiggle: {
         position: 'absolute',
         left: 0,
-        bottom: -7,
+        bottom: -7
     },
     sectionNote: {
         fontSize: 20,
         color: colors.maroon,
         fontFamily: 'Caveat',
-        transform: [{ rotate: '-4deg' }], // little tilt like handwriting
+        transform: [{
+            rotate: '-4deg'
+        }] // little tilt like handwriting
     },
     seeAll: {
-        marginBottom: 14,
+        marginBottom: 14
     },
     seeAllText: {
         fontSize: 15,
         fontWeight: '600',
         color: colors.maroon,
-        fontFamily: 'Outfit',
+        fontFamily: 'Outfit'
     },
-
     // polaroid cards
     card: {
         width: 250,
         backgroundColor: colors.white,
-        borderRadius: 8,
+        borderRadius: 3,
         padding: 12,
         boxShadow: [{
             offsetX: 0,
             offsetY: 5,
             blurRadius: 12,
-            color: 'rgba(31,20,20,0.22)',
-        }],
+            color: 'rgba(31,20,20,0.22)'
+        }]
     },
     cardPhoto: {
         height: 250,
@@ -664,14 +694,14 @@ const home = StyleSheet.create({
             offsetY: 0,
             blurRadius: 5,
             color: 'rgba(31,20,20,0.16)',
-            inset: true,
-        }],
+            inset: true
+        }]
     },
     photoPlaceholder: {
         color: colors.white,
         fontFamily: 'Caveat',
         fontSize: 19,
-        fontStyle: 'italic',
+        fontStyle: 'italic'
     },
     categoryBadge: {
         position: 'absolute',
@@ -680,13 +710,13 @@ const home = StyleSheet.create({
         borderRadius: 4,
         paddingHorizontal: 10,
         paddingVertical: 5,
-        backgroundColor: colors.goldLight,
+        backgroundColor: colors.goldLight
     },
     categoryBadgeText: {
         color: colors.maroon,
         fontFamily: 'Outfit',
         fontSize: 12,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     cardInfo: {
         flexDirection: 'row',
@@ -694,23 +724,23 @@ const home = StyleSheet.create({
         alignItems: 'flex-end',
         paddingHorizontal: 4,
         paddingTop: 14,
-        paddingBottom: 8,
+        paddingBottom: 8
     },
     cardLeft: {
         flex: 1,
-        gap: 6,
+        gap: 6
     },
     cardTitle: {
         fontSize: 19,
         fontWeight: '600',
         color: colors.ink,
         fontFamily: 'Caveat',
-        flexShrink: 1,
+        flexShrink: 1
     },
     sellerRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
+        gap: 6
     },
     sellerDot: {
         width: 22,
@@ -718,46 +748,46 @@ const home = StyleSheet.create({
         borderRadius: 11,
         backgroundColor: colors.blush,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     sellerInitials: {
         fontSize: 9,
         fontWeight: '700',
         color: colors.maroon,
-        fontFamily: 'Outfit',
+        fontFamily: 'Outfit'
     },
     sellerName: {
         fontSize: 13,
         color: colors.muted,
-        fontFamily: 'Outfit',
+        fontFamily: 'Outfit'
     },
     cardRight: {
         alignItems: 'flex-end',
-        minWidth: 48,
+        minWidth: 48
     },
     reason: {
         color: colors.muted,
         fontFamily: 'Outfit',
         fontSize: 12,
         paddingHorizontal: 4,
-        paddingBottom: 8,
+        paddingBottom: 8
     },
     priceLabel: {
         fontSize: 12,
         color: colors.muted,
-        fontFamily: 'Outfit',
+        fontFamily: 'Outfit'
     },
     price: {
         fontSize: 22,
         fontWeight: '700',
         color: colors.maroon,
-        fontFamily: 'Outfit',
+        fontFamily: 'Outfit'
     },
     stack: {
         width: '100%',
         height: 468,
         alignSelf: 'center',
-        marginTop: 15,
+        marginTop: 15
     },
     noRecommendations: {
         position: 'absolute',
@@ -767,13 +797,13 @@ const home = StyleSheet.create({
         color: colors.maroon,
         fontFamily: 'Caveat',
         fontSize: 24,
-        textAlign: 'center',
+        textAlign: 'center'
     },
     stackSlot: {
         position: 'absolute',
         top: 0,
         left: '50%',
-        marginLeft: -125,
+        marginLeft: -125
     },
     tape: {
         position: 'absolute',
@@ -783,7 +813,7 @@ const home = StyleSheet.create({
         height: 24,
         backgroundColor: colors.gold,
         opacity: 0.72,
-        zIndex: 2,
+        zIndex: 2
     },
     nextButton: {
         width: 48,
@@ -794,7 +824,10 @@ const home = StyleSheet.create({
         backgroundColor: colors.white,
         alignItems: 'center',
         justifyContent: 'center',
-        marginLeft: 15,
+        marginLeft: 15
+    },
+    undoDisabled: {
+        opacity: 0.35
     },
     stackControls: {
         position: 'absolute',
@@ -805,110 +838,110 @@ const home = StyleSheet.create({
         alignItems: 'center',
         zIndex: 10,
         marginTop: 15,
-        paddingHorizontal: 26,
+        paddingHorizontal: 26
     },
-
     // buy / sell switch
     toggle: {
         flexDirection: 'row',
-        marginLeft: 'auto', // push to the right
+        marginLeft: 'auto',
+        // push to the right
         backgroundColor: colors.white,
-        borderRadius: 18,
+        borderRadius: 3,
         padding: 4,
         borderWidth: 1,
-        borderColor: colors.blush,
+        borderColor: colors.blush
     },
     toggleOption: {
         paddingHorizontal: 14,
         paddingVertical: 4,
-        borderRadius: 16,
+        borderRadius: 3
     },
     toggleActive: {
-        backgroundColor: colors.maroon,
+        backgroundColor: colors.maroon
     },
     toggleText: {
         fontSize: 18,
         fontFamily: 'Caveat',
-        color: colors.ink,
+        color: colors.ink
     },
     toggleTextActive: {
-        color: colors.white,
+        color: colors.white
     },
-
     // pickup cards
     pickupList: {
-        gap: 12,
+        gap: 12
     },
     pickupCard: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 14,
         backgroundColor: colors.white,
-        borderRadius: 18,
+        borderRadius: 3,
         padding: 12,
-        paddingRight: 16,
+        paddingRight: 16
     },
     dateBox: {
         width: 58,
         height: 58,
-        borderRadius: 14,
+        borderRadius: 3,
         backgroundColor: colors.blush,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     dateDay: {
         fontSize: 12,
         fontWeight: '600',
         letterSpacing: 1,
         color: colors.maroon,
-        fontFamily: 'Outfit',
+        fontFamily: 'Outfit'
     },
     dateNum: {
         fontSize: 26,
         fontWeight: '700',
         color: colors.maroon,
-        fontFamily: 'Outfit',
+        fontFamily: 'Outfit'
     },
     pickupInfo: {
-        flex: 1, // take the middle space
-        gap: 4,
+        flex: 1,
+        // take the middle space
+        gap: 4
     },
     pickupItem: {
         fontSize: 16,
         fontWeight: '600',
         color: colors.ink,
-        fontFamily: 'Outfit',
+        fontFamily: 'Outfit'
     },
     pickupWhere: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
+        gap: 4
     },
     pickupWhereText: {
         fontSize: 13,
         color: colors.muted,
-        fontFamily: 'Outfit',
+        fontFamily: 'Outfit'
     },
     emptyText: {
         fontSize: 20,
         fontFamily: 'Caveat',
         color: colors.muted,
         textAlign: 'center',
-        paddingVertical: 12,
+        paddingVertical: 12
     },
     swipeHint: {
         fontSize: 19,
         fontFamily: 'Caveat',
         color: colors.maroon,
         textAlign: 'left',
-        flex: 1,
+        flex: 1
     },
     preferencePanel: {
         backgroundColor: colors.white,
         borderRadius: 16,
         marginBottom: 12,
         paddingHorizontal: 14,
-        paddingVertical: 10,
+        paddingVertical: 10
     },
     preferenceLabel: {
         color: colors.maroon,
@@ -916,33 +949,32 @@ const home = StyleSheet.create({
         fontSize: 11,
         fontWeight: '700',
         letterSpacing: 0.5,
-        textTransform: 'uppercase',
+        textTransform: 'uppercase'
     },
     preferenceText: {
         color: colors.ink,
         fontFamily: 'Outfit',
         fontSize: 13,
-        marginTop: 3,
+        marginTop: 3
     },
     coldStartText: {
         color: colors.muted,
         fontFamily: 'Outfit',
         fontSize: 13,
         marginBottom: 12,
-        textAlign: 'center',
+        textAlign: 'center'
     },
     loadingRecommendations: {
         alignItems: 'center',
         height: 390,
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     recommendationError: {
         color: colors.maroon,
         fontFamily: 'Outfit',
         fontSize: 12,
         marginTop: 8,
-        textAlign: 'center',
-    },
+        textAlign: 'center'
+    }
 });
-
 export default Home;

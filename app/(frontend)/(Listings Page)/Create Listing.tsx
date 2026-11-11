@@ -1,8 +1,5 @@
 import { useState } from 'react';
-import {
-    ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable,
-    ScrollView, StyleSheet, Text, TextInput, View,
-} from 'react-native';
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -11,32 +8,34 @@ import { createListing, deleteListing, uploadListingImage } from '../../../lib/a
 import { LISTING_CATEGORIES, type ListingCategory } from '../../../lib/api/types';
 import { formatCategory } from '../../../lib/recommendations';
 import Base from '../components/base';
-
 const CreateListing = () => {
     const router = useRouter();
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [price, setPrice] = useState('');
     const [category, setCategory] = useState<ListingCategory>('other');
+    const [listingKind, setListingKind] = useState<'item' | 'service'>('item');
     const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
     const [submitting, setSubmitting] = useState(false);
-
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
             allowsEditing: true,
             aspect: [4, 3],
-            quality: 0.8,
+            quality: 0.8
         });
-
         if (!result.canceled) setSelectedImage(result.assets[0]);
     };
-
     const submit = async () => {
         const numericPrice = price.trim() === '' ? Number.NaN : Number(price);
         setSubmitting(true);
         try {
-            const listing = await createListing({ title, description, price: numericPrice, category });
+            const listing = await createListing({
+                title,
+                description,
+                price: numericPrice,
+                category
+            });
             if (selectedImage) {
                 try {
                     await uploadListingImage(listing.listing_id, selectedImage);
@@ -53,101 +52,317 @@ const CreateListing = () => {
             setSubmitting(false);
         }
     };
+    return <Base style={styles.screen}><KeyboardAvoidingView style={styles.keyboard} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+                        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+                                <View style={styles.header}>
+                                        <Pressable style={styles.backButton} onPress={() => router.back()} accessibilityLabel="Go back">
+                                                <Ionicons name="chevron-back" size={22} color={colors.ink} />
+                                        </Pressable>
+                                        <View>
+                                                <Text style={styles.eyebrow}>SELL ON CAMPUS</Text>
+                                                <Text style={styles.heading}>Create a listing</Text>
+                                        </View>
+                                </View>
 
-    return (
-        <Base style={styles.screen}><KeyboardAvoidingView style={styles.keyboard} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-                <View style={styles.header}>
-                    <Pressable style={styles.backButton} onPress={() => router.back()} accessibilityLabel="Go back">
-                        <Ionicons name="chevron-back" size={22} color={colors.ink} />
-                    </Pressable>
-                    <View>
-                        <Text style={styles.eyebrow}>SELL ON CAMPUS</Text>
-                        <Text style={styles.heading}>Create a listing</Text>
-                    </View>
-                </View>
+                                <View style={styles.kindTabs}>
+                                        <Pressable onPress={() => setListingKind('item')} style={[styles.kindTab, listingKind === 'item' && styles.kindTabActive]}><Text style={[styles.kindText, listingKind === 'item' && styles.kindTextActive]}>Item</Text></Pressable>
+                                        <Pressable onPress={() => setListingKind('service')} style={[styles.kindTab, listingKind === 'service' && styles.kindTabActive]}><Text style={[styles.kindText, listingKind === 'service' && styles.kindTextActive]}>Service</Text></Pressable>
+                                </View>
 
-                <Text style={styles.label}>Title</Text>
-                <TextInput value={title} onChangeText={setTitle} placeholder="Mini fridge, 3.1 cu ft" placeholderTextColor={colors.muted} maxLength={120} style={styles.input} />
+                                <Text style={styles.label}>Title</Text>
+                                <TextInput value={title} onChangeText={setTitle} placeholder="Mini fridge, 3.1 cu ft" placeholderTextColor={colors.muted} maxLength={120} style={styles.input} />
 
-                <Text style={styles.label}>Description</Text>
-                <TextInput value={description} onChangeText={setDescription} placeholder="Condition, what is included, and pickup details" placeholderTextColor={colors.muted} maxLength={5000} multiline textAlignVertical="top" style={[styles.input, styles.description]} />
+                                <Text style={styles.label}>Description</Text>
+                                <TextInput value={description} onChangeText={setDescription} placeholder="Condition, what is included, and pickup details" placeholderTextColor={colors.muted} maxLength={5000} multiline textAlignVertical="top" style={[styles.input, styles.description]} />
 
-                <Text style={styles.label}>Photo</Text>
-                {selectedImage ? (
-                    <View style={styles.imagePreviewContainer}>
-                        <Image source={{ uri: selectedImage.uri }} style={styles.imagePreview} />
-                        <View style={styles.imageActions}>
-                            <Pressable onPress={pickImage} style={styles.imageActionButton} disabled={submitting}>
-                                <Ionicons name="image-outline" size={18} color={colors.maroon} />
-                                <Text style={styles.imageActionText}>Change photo</Text>
-                            </Pressable>
-                            <Pressable onPress={() => setSelectedImage(null)} style={styles.removeImageButton} disabled={submitting}>
-                                <Ionicons name="trash-outline" size={18} color={colors.maroon} />
-                            </Pressable>
-                        </View>
-                    </View>
-                ) : (
-                    <Pressable onPress={pickImage} style={styles.imagePickerButton} disabled={submitting}>
-                        <Ionicons name="image-outline" size={25} color={colors.maroon} />
-                        <Text style={styles.imagePickerTitle}>Add a photo</Text>
-                        <Text style={styles.imagePickerHint}>Choose one image from your library</Text>
-                    </Pressable>
-                )}
+                                <Text style={styles.label}>Photo</Text>
+                                {selectedImage ? <View style={styles.imagePreviewContainer}>
+                                                <Image source={{
+                        uri: selectedImage.uri
+                    }} style={styles.imagePreview} />
+                                                <View style={styles.imageActions}>
+                                                        <Pressable onPress={pickImage} style={styles.imageActionButton} disabled={submitting}>
+                                                                <Ionicons name="image-outline" size={18} color={colors.maroon} />
+                                                                <Text style={styles.imageActionText}>Change photo</Text>
+                                                        </Pressable>
+                                                        <Pressable onPress={() => setSelectedImage(null)} style={styles.removeImageButton} disabled={submitting}>
+                                                                <Ionicons name="trash-outline" size={18} color={colors.maroon} />
+                                                        </Pressable>
+                                                </View>
+                                        </View> : <Pressable onPress={pickImage} style={styles.imagePickerButton} disabled={submitting}>
+                                                <Ionicons name="attach-outline" size={38} color={colors.mutedLight} style={styles.paperclip} />
+                                                <View style={styles.tape} />
+                                                <Ionicons name="image-outline" size={25} color={colors.maroon} />
+                                                <Text style={styles.imagePickerTitle}>Add a photo</Text>
+                                                <Text style={styles.imagePickerHint}>Choose one image from your library</Text>
+                                        </Pressable>}
 
-                <Text style={styles.label}>Price</Text>
-                <View style={styles.priceInput}>
-                    <Text style={styles.currency}>$</Text>
-                    <TextInput value={price} onChangeText={setPrice} placeholder="0.00" placeholderTextColor={colors.muted} keyboardType="decimal-pad" style={styles.priceTextInput} />
-                </View>
+                                <Text style={styles.label}>Price</Text>
+                                <View style={styles.priceInput}>
+                                        <Text style={styles.currency}>$</Text>
+                                        <TextInput value={price} onChangeText={setPrice} placeholder="0.00" placeholderTextColor={colors.muted} keyboardType="decimal-pad" style={styles.priceTextInput} />
+                                </View>
 
-                <Text style={styles.label}>Category</Text>
-                <View style={styles.categories}>
-                    {LISTING_CATEGORIES.map((value) => (
-                        <Pressable key={value} onPress={() => setCategory(value)} style={[styles.category, category === value && styles.categorySelected]}>
-                            <Text style={[styles.categoryText, category === value && styles.categoryTextSelected]}>{formatCategory(value)}</Text>
-                        </Pressable>
-                    ))}
-                </View>
+                                <Text style={styles.label}>Category</Text>
+                                <View style={styles.categories}>
+                                        {LISTING_CATEGORIES.map(value => <Pressable key={value} onPress={() => setCategory(value)} style={[styles.category, category === value && styles.categorySelected]}>
+                                                        <Text style={[styles.categoryText, category === value && styles.categoryTextSelected]}>{formatCategory(value)}</Text>
+                                                </Pressable>)}
+                                </View>
 
-                <Pressable onPress={submit} disabled={submitting} style={[styles.publishButton, submitting && styles.disabled]}>
-                    {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.publishText}>Publish listing</Text>}
-                </Pressable>
-            </ScrollView>
-        </KeyboardAvoidingView></Base>
-    );
+                                <Pressable onPress={submit} disabled={submitting} style={[styles.publishButton, submitting && styles.disabled]}>
+                                        {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.publishText}>Publish listing</Text>}
+                                </Pressable>
+                        </ScrollView>
+                </KeyboardAvoidingView></Base>;
 };
-
 const styles = StyleSheet.create({
-    screen: { paddingHorizontal: 0 }, keyboard: { flex: 1 },
-    content: { paddingHorizontal: 28, paddingTop: 18, paddingBottom: 60 },
-    header: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 18 },
-    backButton: { width: 56, height: 56, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: .12, shadowRadius: 4, elevation: 3 },
-    eyebrow: { color: colors.maroon, fontFamily: 'Outfit', fontWeight: '700', fontSize: 13, letterSpacing: 2 },
-    heading: { color: colors.ink, fontFamily: 'Caveat', fontWeight: '700', fontSize: 42 },
-    label: { color: colors.maroon, fontFamily: 'Caveat', fontWeight: '700', fontSize: 30, marginTop: 18, marginBottom: 3 },
-    input: { minHeight: 52, backgroundColor: 'transparent', paddingHorizontal: 6, color: colors.ink, fontFamily: 'Outfit', fontSize: 18, borderBottomWidth: 2, borderColor: '#C9D8EF' },
-    description: { minHeight: 130, paddingTop: 14 },
-    imagePickerButton: { minHeight: 160, borderWidth: 2, borderStyle: 'dashed', borderColor: colors.maroon, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center', gap: 5 },
-    imagePickerTitle: { color: colors.maroon, fontFamily: 'Outfit', fontSize: 16, fontWeight: '700' },
-    imagePickerHint: { color: colors.muted, fontFamily: 'Outfit', fontSize: 13 },
-    imagePreviewContainer: { borderRadius: 16, overflow: 'hidden', backgroundColor: colors.white, borderWidth: 1, borderColor: '#E5DDDA' },
-    imagePreview: { width: '100%', aspectRatio: 4 / 3, backgroundColor: colors.blush },
-    imageActions: { minHeight: 50, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    imageActionButton: { flexDirection: 'row', alignItems: 'center', gap: 7, padding: 8 },
-    imageActionText: { color: colors.maroon, fontFamily: 'Outfit', fontSize: 14, fontWeight: '700' },
-    removeImageButton: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-    priceInput: { minHeight: 52, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 2, borderColor: '#C9D8EF' },
-    currency: { color: colors.maroon, fontFamily: 'Outfit', fontWeight: '700', fontSize: 19 },
-    priceTextInput: { flex: 1, color: colors.ink, fontFamily: 'Outfit', fontSize: 16, paddingHorizontal: 8 },
-    categories: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    category: { paddingHorizontal: 13, paddingVertical: 9, backgroundColor: colors.white, borderWidth: 2, borderColor: colors.maroon },
-    categorySelected: { backgroundColor: colors.maroon, borderColor: colors.maroon },
-    categoryText: { color: colors.ink, fontFamily: 'Outfit', fontSize: 13, fontWeight: '600' },
-    categoryTextSelected: { color: colors.white },
-    publishButton: { height: 56, backgroundColor: colors.maroon, alignItems: 'center', justifyContent: 'center', marginTop: 30 },
-    publishText: { color: colors.white, fontFamily: 'Outfit', fontSize: 17, fontWeight: '700' },
-    disabled: { opacity: 0.6 },
+    screen: {
+        paddingHorizontal: 0
+    },
+    keyboard: {
+        flex: 1
+    },
+    content: {
+        paddingHorizontal: 28,
+        paddingTop: 18,
+        paddingBottom: 60
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+        marginBottom: 18
+    },
+    backButton: {
+        width: 56,
+        height: 56,
+        borderRadius: 3,
+        backgroundColor: colors.white,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOpacity: .12,
+        shadowRadius: 4,
+        elevation: 3
+    },
+    eyebrow: {
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontWeight: '700',
+        fontSize: 13,
+        letterSpacing: 2
+    },
+    heading: {
+        color: colors.ink,
+        fontFamily: 'Outfit',
+        fontWeight: '800',
+        fontSize: 36,
+        letterSpacing: -1
+    },
+    kindTabs: {
+        flexDirection: 'row',
+        gap: 8,
+        marginBottom: 14
+    },
+    kindTab: {
+        width: 130,
+        height: 52,
+        borderRadius: 3,
+        backgroundColor: colors.white,
+        borderWidth: 1,
+        borderColor: '#E5DDDA',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    kindTabActive: {
+        backgroundColor: colors.maroon,
+        borderColor: colors.maroon
+    },
+    kindText: {
+        color: colors.ink,
+        fontFamily: 'Outfit',
+        fontWeight: '700',
+        fontSize: 18
+    },
+    kindTextActive: {
+        color: colors.white
+    },
+    label: {
+        color: colors.maroon,
+        fontFamily: 'Caveat',
+        fontWeight: '700',
+        fontSize: 30,
+        marginTop: 18,
+        marginBottom: 3
+    },
+    input: {
+        minHeight: 52,
+        borderRadius: 3,
+        backgroundColor: colors.white,
+        paddingHorizontal: 16,
+        color: colors.ink,
+        fontFamily: 'Outfit',
+        fontSize: 18,
+        borderWidth: 1,
+        borderColor: '#E5DDDA',
+        shadowColor: '#000',
+        shadowOpacity: .08,
+        shadowRadius: 3,
+        elevation: 1
+    },
+    description: {
+        minHeight: 130,
+        paddingTop: 14
+    },
+    imagePickerButton: {
+        minHeight: 160,
+        borderWidth: 2,
+        borderStyle: 'dashed',
+        borderColor: colors.maroon,
+        backgroundColor: colors.cream,
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 5,
+        position: 'relative'
+    },
+    paperclip: {
+        position: 'absolute',
+        left: 20,
+        top: -22,
+        transform: [{
+            rotate: '-22deg'
+        }]
+    },
+    tape: {
+        position: 'absolute',
+        right: 32,
+        top: -12,
+        width: 92,
+        height: 24,
+        backgroundColor: colors.goldLight,
+        opacity: .9,
+        transform: [{
+            rotate: '4deg'
+        }]
+    },
+    imagePickerTitle: {
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontSize: 16,
+        fontWeight: '700'
+    },
+    imagePickerHint: {
+        color: colors.muted,
+        fontFamily: 'Outfit',
+        fontSize: 13
+    },
+    imagePreviewContainer: {
+        borderRadius: 16,
+        overflow: 'hidden',
+        backgroundColor: colors.white,
+        borderWidth: 1,
+        borderColor: '#E5DDDA'
+    },
+    imagePreview: {
+        width: '100%',
+        aspectRatio: 4 / 3,
+        backgroundColor: colors.blush
+    },
+    imageActions: {
+        minHeight: 50,
+        paddingHorizontal: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+    },
+    imageActionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 7,
+        padding: 8
+    },
+    imageActionText: {
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontSize: 14,
+        fontWeight: '700'
+    },
+    removeImageButton: {
+        width: 40,
+        height: 40,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    priceInput: {
+        minHeight: 52,
+        borderRadius: 3,
+        backgroundColor: colors.white,
+        paddingHorizontal: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#E5DDDA',
+        shadowColor: '#000',
+        shadowOpacity: .08,
+        shadowRadius: 3,
+        elevation: 1
+    },
+    currency: {
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontWeight: '700',
+        fontSize: 19
+    },
+    priceTextInput: {
+        flex: 1,
+        color: colors.ink,
+        fontFamily: 'Outfit',
+        fontSize: 16,
+        paddingHorizontal: 8
+    },
+    categories: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8
+    },
+    category: {
+        borderRadius: 3,
+        paddingHorizontal: 13,
+        paddingVertical: 9,
+        backgroundColor: colors.white,
+        borderWidth: 1,
+        borderColor: '#E5DDDA'
+    },
+    categorySelected: {
+        backgroundColor: colors.maroon,
+        borderColor: colors.maroon
+    },
+    categoryText: {
+        color: colors.ink,
+        fontFamily: 'Outfit',
+        fontSize: 13,
+        fontWeight: '600'
+    },
+    categoryTextSelected: {
+        color: colors.white
+    },
+    publishButton: {
+        height: 56,
+        borderRadius: 3,
+        backgroundColor: colors.maroon,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 30
+    },
+    publishText: {
+        color: colors.white,
+        fontFamily: 'Outfit',
+        fontSize: 17,
+        fontWeight: '700'
+    },
+    disabled: {
+        opacity: 0.6
+    }
 });
-
 export default CreateListing;

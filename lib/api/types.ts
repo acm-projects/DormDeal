@@ -8,7 +8,7 @@ export const LISTING_CATEGORIES = [
 ] as const;
 
 export type ListingCategory = (typeof LISTING_CATEGORIES)[number];
-export type ListingStatus = 'active' | 'sold' | 'removed';
+export type ListingStatus = 'active' | 'pending' | 'sold' | 'removed';
 
 export type Listing = {
   listing_id: number;

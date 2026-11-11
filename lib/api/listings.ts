@@ -77,7 +77,7 @@ export async function getMarketplaceListings(): Promise<MarketplaceListing[]> {
   }));
 }
 
-export async function getMyListings(): Promise<Listing[]> {
+export async function getMyListings(): Promise<ListingWithImage[]> {
   const { data: authData, error: authError } = await supabase.auth.getUser();
   if (authError || !authData.user) {
     throw new ApiError('Sign in to manage your listings.', 'UNAUTHENTICATED', authError);
@@ -90,7 +90,29 @@ export async function getMyListings(): Promise<Listing[]> {
     .order('created_at', { ascending: false });
 
   if (error) throw new ApiError('Could not load your listings.', error.code, error);
-  return (data ?? []) as Listing[];
+
+  const listings = (data ?? []) as Listing[];
+  if (!listings.length) return [];
+
+  const { data: images, error: imagesError } = await supabase
+    .from('listing_images')
+    .select('image_id, listing_id, image_url')
+    .in('listing_id', listings.map((listing) => listing.listing_id))
+    .order('image_id', { ascending: true });
+
+  if (imagesError) {
+    throw new ApiError('Could not load your listing images.', imagesError.code, imagesError);
+  }
+
+  const imageByListing = new Map<number, string>();
+  for (const image of images ?? []) {
+    if (!imageByListing.has(image.listing_id)) imageByListing.set(image.listing_id, image.image_url);
+  }
+
+  return listings.map((listing) => ({
+    ...listing,
+    image_url: imageByListing.get(listing.listing_id) ?? null,
+  }));
 }
 
 export async function getListing(id: number): Promise<ListingWithImage> {

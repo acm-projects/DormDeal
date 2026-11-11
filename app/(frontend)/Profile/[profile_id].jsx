@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     avatarText: {
         color: colors.white,
         fontFamily: 'Outfit',
-        fontSize: 32,
+        fontSize: 36,
         fontWeight: '800',
     },
     nameHighlight: {
@@ -246,8 +246,8 @@ const styles = StyleSheet.create({
     profileName: {
         color: colors.maroon,
         fontFamily: 'Outfit',
-        fontSize: 30,
-        lineHeight: 34,
+        fontSize: 34,
+        lineHeight: 39,
         fontWeight: '800',
         textAlign: 'center',
     },
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
         marginTop: 2,
         color: colors.muted,
         fontFamily: 'Outfit',
-        fontSize: 12,
+        fontSize: 16,
         textAlign: 'center',
     },
     ratingActions: {
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     messageText: {
         color: colors.maroon,
         fontFamily: 'Outfit',
-        fontSize: 12,
+        fontSize: 15,
         fontWeight: '800',
     },
     metaRow: {
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     metaText: {
         color: colors.muted,
         fontFamily: 'Outfit',
-        fontSize: 10,
+        fontSize: 14,
     },
     sectionHeader: {
         flexDirection: 'row',
@@ -329,13 +329,13 @@ const styles = StyleSheet.create({
     sectionTitle: {
         color: colors.maroon,
         fontFamily: 'Outfit',
-        fontSize: 18,
+        fontSize: 22,
         fontWeight: '800',
     },
     listingCount: {
         color: colors.muted,
         fontFamily: 'Caveat',
-        fontSize: 17,
+        fontSize: 20,
         fontWeight: '700',
     },
     sectionRule: {
@@ -374,20 +374,20 @@ const styles = StyleSheet.create({
         marginTop: 5,
         color: colors.ink,
         fontFamily: 'Outfit',
-        fontSize: 13,
+        fontSize: 16,
         fontWeight: '700',
     },
     listingPrice: {
         color: colors.maroon,
         fontFamily: 'Outfit',
-        fontSize: 15,
+        fontSize: 18,
         fontWeight: '800',
     },
     emptyText: {
         marginTop: 24,
         color: colors.muted,
         fontFamily: 'Caveat',
-        fontSize: 18,
+        fontSize: 22,
         textAlign: 'center',
     },
 });
