@@ -649,7 +649,7 @@ const Store = () => {
                     <Search_Bar
                         style={styles.catalog_search}
                         inputStyle={styles.catalog_search_input}
-                        placeholder="Search the b..."
+                        placeholder="Search the board"
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                         onFocus={() => setSearchFocused(true)}
@@ -917,6 +917,9 @@ const styles = StyleSheet.create({
         boxShadow: '',
     },
     catalog_search_input: {
+        paddingLeft: 12,
+        paddingRight: 8,
+        marginRight: 0,
         fontFamily: 'Outfit',
         fontWeight: '400',
         color: colors.ink,
