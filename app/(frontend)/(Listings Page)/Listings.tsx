@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { colors } from '../../root_styles';
 import TabBar from '../components/tab_bar';
+import Base from '../components/base';
+import { BackButton, Squiggle } from '../components/design';
 import { deleteListing, getMyListings, updateListing } from '../../../lib/api/listings';
 import type { Listing } from '../../../lib/api/types';
 import { formatCategory, formatListingPrice } from '../../../lib/recommendations';
@@ -91,18 +93,22 @@ const Listings = () => {
     };
 
     return (
-        <View style={styles.screen}>
+        <Base style={styles.screen}>
             <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
                 <View style={styles.header}>
                     <View>
-                        <Text style={styles.eyebrow}>YOUR MARKETPLACE</Text>
-                        <Text style={styles.heading}>Your listings</Text>
+                        <BackButton onPress={() => router.back()} />
+                        <Text style={styles.heading}>my listings</Text>
+                        <Squiggle />
+                        <Text style={styles.count}>{listings.length} listings</Text>
                     </View>
                     <Pressable style={styles.createButton} onPress={() => router.push('/Create Listing')}>
                         <Ionicons name="add" size={22} color={colors.white} />
-                        <Text style={styles.createText}>Create</Text>
+                        <Text style={styles.createText}>New listing</Text>
                     </Pressable>
                 </View>
+
+                <View style={styles.search}><Ionicons name="search" size={25} color={colors.maroon} /><TextInput placeholder="Search my listings" placeholderTextColor={colors.muted} style={styles.searchInput} /></View>
 
                 {loading ? <ActivityIndicator style={styles.loader} color={colors.maroon} />
                     : error ? <View style={styles.messageCard}><Text style={styles.error}>{error}</Text><Pressable onPress={loadListings}><Text style={styles.retry}>Try again</Text></Pressable></View>
@@ -127,6 +133,7 @@ const Listings = () => {
                             ) : (
                                 <>
                                     <View style={styles.cardTop}>
+                                        <View style={styles.photoPlaceholder}><Text style={styles.photoText}>[photo]</Text></View>
                                         <View style={styles.cardTitleWrap}>
                                             <Text style={styles.cardTitle}>{listing.title}</Text>
                                             <Text style={styles.meta}>{formatCategory(listing.category)} · {formatListingPrice(listing.price)}</Text>
@@ -156,19 +163,20 @@ const Listings = () => {
                     ))}
             </ScrollView>
             <TabBar />
-        </View>
+        </Base>
     );
 };
 
 const styles = StyleSheet.create({
-    screen: { flex: 1, backgroundColor: colors.cream }, content: { padding: 20, paddingTop: 64, paddingBottom: 130, gap: 14 },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-    eyebrow: { color: colors.maroon, fontFamily: 'Outfit', fontWeight: '700', fontSize: 11, letterSpacing: 1.2 }, heading: { color: colors.ink, fontFamily: 'Outfit', fontWeight: '700', fontSize: 30 },
-    createButton: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.maroon, borderRadius: 22, paddingHorizontal: 14, height: 44 }, createText: { color: colors.white, fontFamily: 'Outfit', fontWeight: '700' }, loader: { marginTop: 80 },
+    screen: { paddingBottom: 0 }, content: { paddingTop: 8, paddingBottom: 130, gap: 14 },
+    header: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 8 },
+    heading: { color: colors.maroon, fontFamily: 'Outfit', fontWeight: '800', fontSize: 46, letterSpacing: -2, marginTop: 22 }, count: { color: colors.muted, fontFamily: 'Outfit', fontSize: 15, marginTop: 2 },
+    createButton: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: colors.maroon, paddingHorizontal: 16, height: 48 }, createText: { color: colors.white, fontFamily: 'Outfit', fontWeight: '700' }, loader: { marginTop: 80 },
+    search: { height: 54, backgroundColor: colors.white, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, shadowColor: '#000', shadowOpacity: .14, shadowRadius: 4, elevation: 3 }, searchInput: { flex: 1, fontFamily: 'Outfit', fontSize: 17, color: colors.ink },
     messageCard: { backgroundColor: colors.white, borderRadius: 20, padding: 24, alignItems: 'center', gap: 8 }, error: { color: colors.maroon, fontFamily: 'Outfit', textAlign: 'center' }, retry: { color: colors.maroon, fontFamily: 'Outfit', fontWeight: '700' },
     emptyTitle: { color: colors.ink, fontFamily: 'Outfit', fontWeight: '700', fontSize: 18 }, emptyText: { color: colors.muted, fontFamily: 'Outfit', textAlign: 'center' },
-    card: { backgroundColor: colors.white, borderRadius: 22, padding: 16, gap: 12 }, cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 }, cardTitleWrap: { flex: 1 }, cardTitle: { color: colors.ink, fontFamily: 'Outfit', fontWeight: '700', fontSize: 18 }, meta: { color: colors.maroon, fontFamily: 'Outfit', fontSize: 13, marginTop: 3 },
-    status: { backgroundColor: colors.sage, borderRadius: 12, paddingHorizontal: 9, paddingVertical: 4 }, statusInactive: { backgroundColor: colors.blush }, statusText: { color: colors.ink, fontFamily: 'Outfit', fontWeight: '700', fontSize: 11, textTransform: 'capitalize' }, cardDescription: { color: colors.muted, fontFamily: 'Outfit', lineHeight: 20 },
+    card: { backgroundColor: colors.white, padding: 16, gap: 12, shadowColor: '#000', shadowOpacity: .14, shadowRadius: 4, elevation: 3 }, cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 14 }, photoPlaceholder: { width: 82, height: 82, backgroundColor: colors.tileRed, alignItems: 'center', justifyContent: 'center' }, photoText: { fontFamily: 'Caveat', color: colors.rose, fontSize: 20 }, cardTitleWrap: { flex: 1 }, cardTitle: { color: colors.ink, fontFamily: 'Outfit', fontWeight: '700', fontSize: 18 }, meta: { color: colors.maroon, fontFamily: 'Outfit', fontSize: 13, marginTop: 3 },
+    status: { backgroundColor: colors.sage, paddingHorizontal: 9, paddingVertical: 4 }, statusInactive: { backgroundColor: colors.mustard }, statusText: { color: colors.white, fontFamily: 'Outfit', fontWeight: '700', fontSize: 11, textTransform: 'uppercase' }, cardDescription: { color: colors.muted, fontFamily: 'Outfit', lineHeight: 20 },
     actions: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }, iconButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.blush, alignItems: 'center', justifyContent: 'center' },
     secondaryButton: { flex: 1, height: 42, borderRadius: 21, borderWidth: 1, borderColor: colors.maroon, alignItems: 'center', justifyContent: 'center' }, secondaryText: { color: colors.maroon, fontFamily: 'Outfit', fontWeight: '700' }, primaryButton: { flex: 1, height: 42, borderRadius: 21, backgroundColor: colors.maroon, alignItems: 'center', justifyContent: 'center' }, primaryText: { color: colors.white, fontFamily: 'Outfit', fontWeight: '700' }, deleteButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.maroonLight, alignItems: 'center', justifyContent: 'center' },
     deleteConfirm: { backgroundColor: colors.blush, borderRadius: 14, padding: 12 }, deleteConfirmText: { color: colors.ink, fontFamily: 'Outfit', fontWeight: '600', textAlign: 'center' }, confirmDeleteButton: { flex: 1, height: 42, borderRadius: 21, backgroundColor: colors.maroonLight, alignItems: 'center', justifyContent: 'center' },

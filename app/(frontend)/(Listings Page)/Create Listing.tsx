@@ -55,7 +55,7 @@ const CreateListing = () => {
     };
 
     return (
-        <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <Base style={styles.screen}><KeyboardAvoidingView style={styles.keyboard} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
                 <View style={styles.header}>
                     <Pressable style={styles.backButton} onPress={() => router.back()} accessibilityLabel="Go back">
@@ -114,21 +114,21 @@ const CreateListing = () => {
                     {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.publishText}>Publish listing</Text>}
                 </Pressable>
             </ScrollView>
-        </KeyboardAvoidingView>
+        </KeyboardAvoidingView></Base>
     );
 };
 
 const styles = StyleSheet.create({
-    screen: { flex: 1, backgroundColor: colors.cream },
-    content: { padding: 20, paddingTop: 58, paddingBottom: 60 },
+    screen: { paddingHorizontal: 0 }, keyboard: { flex: 1 },
+    content: { paddingHorizontal: 28, paddingTop: 18, paddingBottom: 60 },
     header: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 18 },
-    backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
-    eyebrow: { color: colors.maroon, fontFamily: 'Outfit', fontWeight: '700', fontSize: 11, letterSpacing: 1.2 },
-    heading: { color: colors.ink, fontFamily: 'Outfit', fontWeight: '700', fontSize: 30 },
-    label: { color: colors.ink, fontFamily: 'Outfit', fontWeight: '700', fontSize: 15, marginTop: 18, marginBottom: 7 },
-    input: { minHeight: 52, borderRadius: 16, backgroundColor: colors.white, paddingHorizontal: 16, color: colors.ink, fontFamily: 'Outfit', fontSize: 16, borderWidth: 1, borderColor: '#E5DDDA' },
+    backButton: { width: 56, height: 56, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: .12, shadowRadius: 4, elevation: 3 },
+    eyebrow: { color: colors.maroon, fontFamily: 'Outfit', fontWeight: '700', fontSize: 13, letterSpacing: 2 },
+    heading: { color: colors.ink, fontFamily: 'Caveat', fontWeight: '700', fontSize: 42 },
+    label: { color: colors.maroon, fontFamily: 'Caveat', fontWeight: '700', fontSize: 30, marginTop: 18, marginBottom: 3 },
+    input: { minHeight: 52, backgroundColor: 'transparent', paddingHorizontal: 6, color: colors.ink, fontFamily: 'Outfit', fontSize: 18, borderBottomWidth: 2, borderColor: '#C9D8EF' },
     description: { minHeight: 130, paddingTop: 14 },
-    imagePickerButton: { minHeight: 130, borderRadius: 16, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.maroon, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center', gap: 5 },
+    imagePickerButton: { minHeight: 160, borderWidth: 2, borderStyle: 'dashed', borderColor: colors.maroon, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center', gap: 5 },
     imagePickerTitle: { color: colors.maroon, fontFamily: 'Outfit', fontSize: 16, fontWeight: '700' },
     imagePickerHint: { color: colors.muted, fontFamily: 'Outfit', fontSize: 13 },
     imagePreviewContainer: { borderRadius: 16, overflow: 'hidden', backgroundColor: colors.white, borderWidth: 1, borderColor: '#E5DDDA' },
@@ -137,15 +137,15 @@ const styles = StyleSheet.create({
     imageActionButton: { flexDirection: 'row', alignItems: 'center', gap: 7, padding: 8 },
     imageActionText: { color: colors.maroon, fontFamily: 'Outfit', fontSize: 14, fontWeight: '700' },
     removeImageButton: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-    priceInput: { minHeight: 52, borderRadius: 16, backgroundColor: colors.white, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#E5DDDA' },
+    priceInput: { minHeight: 52, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 2, borderColor: '#C9D8EF' },
     currency: { color: colors.maroon, fontFamily: 'Outfit', fontWeight: '700', fontSize: 19 },
     priceTextInput: { flex: 1, color: colors.ink, fontFamily: 'Outfit', fontSize: 16, paddingHorizontal: 8 },
     categories: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    category: { borderRadius: 18, paddingHorizontal: 13, paddingVertical: 9, backgroundColor: colors.white, borderWidth: 1, borderColor: '#E5DDDA' },
+    category: { paddingHorizontal: 13, paddingVertical: 9, backgroundColor: colors.white, borderWidth: 2, borderColor: colors.maroon },
     categorySelected: { backgroundColor: colors.maroon, borderColor: colors.maroon },
     categoryText: { color: colors.ink, fontFamily: 'Outfit', fontSize: 13, fontWeight: '600' },
     categoryTextSelected: { color: colors.white },
-    publishButton: { height: 56, borderRadius: 18, backgroundColor: colors.maroon, alignItems: 'center', justifyContent: 'center', marginTop: 30 },
+    publishButton: { height: 56, backgroundColor: colors.maroon, alignItems: 'center', justifyContent: 'center', marginTop: 30 },
     publishText: { color: colors.white, fontFamily: 'Outfit', fontSize: 17, fontWeight: '700' },
     disabled: { opacity: 0.6 },
 });

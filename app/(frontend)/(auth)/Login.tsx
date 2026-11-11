@@ -1,143 +1,186 @@
 import { useState } from 'react';
-import { StyleSheet, Image, Text, View, TextInput, TouchableOpacity, Platform } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Header1, ErrorText } from '../components/text_styles'
-import Base from '../components/base'
-import microsoft_logo from '../../../assets/images/microsoft.png'
-import line_bar from '../../../assets/svgs/line.svg'
-import line_bar2 from '../../../assets/svgs/line2.svg'
-import { signInWithMicrosoft, signInWithPassword } from '../../../lib/auth'
-import { supabase } from '../../../lib/supabase'
-import styles from '../../root_styles'
-
-const Login: React.FC = () => {
+import { Ionicons } from '@expo/vector-icons';
+import Base from '../components/base';
+import { BackButton } from '../components/design';
+import { colors } from '../../root_styles';
+import { signInWithMicrosoft, signInWithPassword } from '../../../lib/auth';
+import { supabase } from '../../../lib/supabase';
+import MicrosoftLogo from '../../../assets/images/microsoft.png';
+export default function Login() {
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [show, setShow] = useState(false);
     const [message, setMessage] = useState('');
-    const [info, setInfo] = useState('');
     const [loading, setLoading] = useState(false);
-
-    const handleLogin = async () => {
-        if (!email.trim() || !password) return setMessage('Enter your email and password.');
+    const login = async () => {
+        if (!email.trim() || !password) return setMessage('Use your school email, like you@school.edu');
+        setLoading(true);
+        setMessage('');
         try {
-            setLoading(true);
-            setMessage('');
-            setInfo('');
             await signInWithPassword(email.trim(), password);
             router.replace('/');
-        } catch (e: any) {
-            setMessage(e.message);
+        } catch (error) {
+            setMessage(error instanceof Error ? error.message : 'Unable to log in. Please try again.');
         } finally {
             setLoading(false);
         }
     };
-
-    const handleForgot = async () => {
-        setMessage('');
-        setInfo('');
-        if (!email.trim()) return setMessage('Enter your email first.');
-
-        const redirectTo = Platform.OS === 'web'
-            ? `${window.location.origin}/ResetPassword`
-            : undefined;
-        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
-
-        if (error) setMessage(error.message);
-        else setInfo('If an account exists for that email, a reset link is on its way.');
+    const forgot = async () => {
+        if (!email.trim()) return setMessage('Enter your school email first.');
+        const {
+            error
+        } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+            redirectTo: Platform.OS === 'web' ? `${window.location.origin}/ResetPassword` : undefined
+        });
+        setMessage(error ? error.message : 'If an account exists for that email, a reset link is on its way.');
     };
-
-    return (
-        <Base>
-            {/* actual container */}
-            <View style={[login_styles.base_row_flex_setup, {alignItems: 'center', justifyContent: 'flex-end', marginBottom: 25}]}>
-                <Header1>login</Header1>
-            </View>
-
-            <View style={[login_styles.base_row_flex_setup, {flex: 0.66, display: 'flex'}]}>
-                <View style={{flex: 1}}>
-                    <TextInput style={[login_styles.text_input]} placeholder='Email'
-                        value={email} onChangeText={setEmail}
-                        autoCapitalize='none' keyboardType='email-address'></TextInput>
-                    <Image source={line_bar} style={[login_styles.line_bar]}/>
-                    {message ? (
-                        <ErrorText style={login_styles.extra_text_guide}>{message}</ErrorText>
-                    ) : null}
-                </View>
-                <View style={{flex: 1}}>
-                    <TextInput style={[login_styles.text_input]} placeholder='Password'
-                        value={password} onChangeText={setPassword}
-                        secureTextEntry autoCapitalize='none'></TextInput>
-                    <Image source={line_bar2} style={[login_styles.line_bar]}/>
-                    <TouchableOpacity onPress={handleForgot}>
-                        <Text style={[login_styles.extra_text_guide, {color: "#B26666"}]}>Forgot your password?</Text>
-                    </TouchableOpacity>
-                    {info ? (
-                        <Text style={[login_styles.extra_text_guide, {color: "#2E7D32"}]}>{info}</Text>
-                    ) : null}
-                </View>
-            </View>
-
-            <View style={[login_styles.base_row_flex_setup, {marginTop: 25}]}>
-                <TouchableOpacity onPress={handleLogin} disabled={loading}
-                    style={[login_styles.default_button, {backgroundColor: '#800000', paddingTop: 3, paddingBottom: 3, opacity: loading ? 0.6 : 1}]}>
-                    <Text style={{color: '#FFF', fontFamily: 'Caveat', fontSize: 20, textAlign: 'center'}}>Login</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={signInWithMicrosoft} style={[login_styles.default_button, {marginTop: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingTop: 3, paddingBottom: 3}]}>
-                    <Image source={microsoft_logo} style={{marginRight: 5, width: 25, height: 25}}></Image>
-                    <Text style={{fontFamily: 'Caveat', fontSize: 20, textAlign: "center"}}>Microsoft Login</Text>
-                </TouchableOpacity>
-            </View>
-        </Base>
-    );
-};
-
-export default Login;
-
-const login_styles = StyleSheet.create({
-    header_1: {
-        fontFamily: 'Outfit',
-        fontWeight: 'bold',
-        fontSize: 48,
-        color: '#800000',
+    return <Base><KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}><View style={styles.content}><View style={styles.back}><BackButton onPress={() => router.replace('/Landing')} /></View><View style={styles.center}><Text style={styles.title}>login</Text><View style={styles.form}><Field label="Username" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" /><Text style={styles.helper}>Use your school email, like you@school.edu</Text><View style={styles.marker}><TextInput accessibilityLabel="Password" value={password} onChangeText={setPassword} secureTextEntry={!show} placeholder="Password" placeholderTextColor="#777" style={[styles.input, styles.passwordInput]} /><Pressable accessibilityLabel={show ? 'Hide password' : 'Show password'} onPress={() => setShow(!show)} style={styles.show}><Text style={styles.showText}>{show ? 'Hide' : 'Show'}</Text></Pressable></View><View style={styles.line} /><Pressable onPress={forgot} accessibilityLabel="Reset password"><Text style={styles.forgot}>Forgot Password?</Text></Pressable>{!!message && <Text style={styles.message}>{message}</Text>}<Pressable accessibilityLabel="Log in" onPress={login} disabled={loading} style={styles.primary}><Text style={styles.primaryText}>{loading ? 'Logging in...' : 'Login!'}</Text></Pressable><Pressable accessibilityLabel="Log in with Microsoft" onPress={signInWithMicrosoft} style={styles.microsoft}><Image source={MicrosoftLogo} style={styles.microsoftLogo} /><Text style={styles.microsoftText}>Microsoft Login</Text></Pressable></View></View><View style={styles.footer}><Text style={styles.footerText}>New to DormDeal? </Text><Pressable onPress={() => router.push('/SignUp')}><Text style={styles.link}>Sign up</Text></Pressable></View></View></KeyboardAvoidingView></Base>;
+}
+function Field(props: any) {
+    return <><TextInput accessibilityLabel={props.label} placeholder={props.label} placeholderTextColor="#777" style={styles.input} {...props} /><View style={styles.line} /></>;
+}
+const styles = StyleSheet.create({
+    flex: {
+        flex: 1
     },
-    default_text: {
-        fontFamily: 'Gloria Hallelujah',
-        color: "#000000",
-    },
-    line_bar: {
-        position: 'relative',
-        top: 5,
-        width: '100%',
-    },
-    text_input: {
-        fontSize: 17,
-        fontFamily: 'Outfit',
-        fontWeight: 'regular',
-        borderStyle: 'dashed',
-        textAlign: 'left',
-        height: 'auto',
-    },
-    extra_text_guide: {
-        textAlign: 'left',
-        marginTop: 5,
-        fontWeight: '600',
-    },
-    container: {
-        paddingTop: 50,
-        paddingBottom: 50,
-        height: '100%',
-        width: '100%',
-    },
-    base_row_flex_setup: {
+    content: {
         flex: 1,
-        width: '100%',
+        paddingHorizontal: 14,
+        paddingBottom: 8
     },
-    default_button: {
-        backgroundColor: '#FFF',
-        width: '100%',
-        borderRadius: 24,
-        padding: 7,
+    back: {
+        position: 'absolute',
+        top: 0,
+        left: 14,
+        zIndex: 20,
+        elevation: 20
+    },
+    center: {
+        flex: 1,
+        justifyContent: 'center'
+    },
+    title: {
         textAlign: 'center',
+        marginBottom: 42,
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontWeight: '700',
+        fontSize: 58,
+        letterSpacing: -2
     },
-})
+    form: {
+        paddingHorizontal: 16,
+        gap: 10
+    },
+    input: {
+        height: 46,
+        flex: 1,
+        minWidth: 0,
+        paddingHorizontal: 8,
+        fontFamily: 'Outfit',
+        fontSize: 20,
+        color: colors.ink
+    },
+    passwordInput: {
+        flexShrink: 1
+    },
+    line: {
+        height: 3,
+        backgroundColor: '#1A1A1A'
+    },
+    helper: {
+        fontFamily: 'Outfit',
+        color: colors.maroon,
+        fontWeight: '700',
+        fontSize: 13,
+        marginTop: -6
+    },
+    marker: {
+        height: 56,
+        width: '100%',
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(246,224,74,.75)'
+    },
+    show: {
+        width: 68,
+        minHeight: 44,
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexShrink: 0
+    },
+    showText: {
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontWeight: '700',
+        fontSize: 15
+    },
+    forgot: {
+        color: '#B04A4A',
+        fontFamily: 'Outfit',
+        fontSize: 16,
+        textDecorationLine: 'underline',
+        marginBottom: 10
+    },
+    message: {
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontWeight: '700'
+    },
+    primary: {
+        height: 52,
+        borderRadius: 999,
+        backgroundColor: colors.maroon,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 5
+    },
+    primaryText: {
+        color: colors.white,
+        fontFamily: 'Caveat',
+        fontWeight: '700',
+        fontSize: 30
+    },
+    microsoft: {
+        height: 52,
+        borderRadius: 999,
+        backgroundColor: colors.white,
+        borderColor: '#E5DDDA',
+        borderWidth: 2,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 12
+    },
+    microsoftLogo: {
+        width: 28,
+        height: 28,
+        resizeMode: 'contain'
+    },
+    microsoftText: {
+        fontFamily: 'Caveat',
+        fontSize: 28,
+        fontWeight: '700',
+        color: colors.ink
+    },
+    footer: {
+        paddingBottom: 8,
+        flexDirection: 'row',
+        justifyContent: 'center'
+    },
+    footerText: {
+        fontFamily: 'Outfit',
+        fontSize: 16,
+        color: colors.ink
+    },
+    link: {
+        fontFamily: 'Outfit',
+        fontSize: 16,
+        fontWeight: '700',
+        color: colors.maroon,
+        textDecorationLine: 'underline'
+    }
+});
