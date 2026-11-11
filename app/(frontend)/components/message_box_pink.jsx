@@ -41,6 +41,7 @@ const styles = StyleSheet.create({
         opacity: 0.75,
         color: '#242424',
         fontSize: 12,
+        marginBottom: 2,
     },
     message_img: {
         marginTop: -2,

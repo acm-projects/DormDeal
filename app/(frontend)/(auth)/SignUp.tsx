@@ -1,139 +1,173 @@
 import { useState } from 'react';
-import { StyleSheet, Text, Image, View, TextInput, TouchableOpacity } from 'react-native';
+import { Image } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import Base from '../components/base'
-import Account_Text_Input from '../components/account_text_input'
-import { Header1, ErrorText } from '../components/text_styles'
-import line_bar from '../../../assets/svgs/line.svg'
-import line_bar2 from '../../../assets/svgs/line2.svg'
-import microsoft_logo from '../../../assets/images/microsoft.png'
-import { signInWithMicrosoft, signUpWithPassword } from '../../../lib/auth'
-import styles from '../../root_styles'
-
-const SignUp: React.FC = () => {
+import Base from '../components/base';
+import { BackButton, PrimaryButton, SecondaryButton } from '../components/design';
+import { colors } from '../../root_styles';
+import { signInWithMicrosoft, signUpWithPassword } from '../../../lib/auth';
+import MicrosoftLogo from '../../../assets/images/microsoft.png';
+const SignUp = () => {
     const router = useRouter();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirm, setConfirm] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
-
-    const handleSignUp = async () => {
+    const submit = async () => {
         if (!name.trim() || !email.trim()) return setMessage('Please fill in all fields.');
         if (password.length < 8) return setMessage('Password must be at least 8 characters.');
-        if (password !== confirm) return setMessage('Passwords do not match.');
+        if (password !== confirm) return setMessage("Passwords don't match");
+        setLoading(true);
+        setMessage('');
         try {
-            setLoading(true);
-            setMessage('');
-            const data = await signUpWithPassword(name.trim(), email.trim(), password);
-            if (data.session) router.replace('/');
-            else setMessage('Check your email to confirm your account, then log in.');
-        } catch (e: any) {
-            setMessage(e.message);
+            const result = await signUpWithPassword(name.trim(), email.trim(), password);
+            if (result.session) router.replace('/');else setMessage('Check your email to confirm your account, then log in.');
+        } catch (error) {
+            setMessage(error instanceof Error ? error.message : 'Unable to sign up. Please try again.');
         } finally {
             setLoading(false);
         }
     };
-
-    return (
-        <Base>
-            {/* actual container */}
-            <View style={[login_styles.base_row_flex_setup, {alignItems: 'center', justifyContent: 'flex-end', marginBottom: 25}]}>
-                <Header1 style={{marginBottom: 0}}>sign up</Header1>
-            </View>
-
-            <View style={[login_styles.base_row_flex_setup]}>
-                <View style={{flex: 1}}>
-                    <TextInput style={[login_styles.text_input]} placeholder='Username'
-                        value={name} onChangeText={setName}></TextInput>
-                    <Image source={line_bar} style={[login_styles.line_bar]}/>
+    return <Base><KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+                <BackButton onPress={() => router.replace('/Landing')} /><Text style={styles.title}>sign up</Text>
+                <View style={styles.form}>
+                        <Field value={name} onChangeText={setName} placeholder="Username" />
+                        <Field value={email} onChangeText={setEmail} placeholder="School email" keyboardType="email-address" />
+                        <View style={styles.passwordRow}><Field value={password} onChangeText={setPassword} placeholder="Password" secureTextEntry={!showPassword} noLine /><Pressable onPress={() => setShowPassword(value => !value)} style={styles.show}><Text style={styles.showText}>{showPassword ? 'Hide' : 'Show'}</Text></Pressable></View><View style={styles.line} />
+                        <Field value={confirm} onChangeText={setConfirm} placeholder="Confirm Password" secureTextEntry={!showPassword} highlightPink />
+                        <Text style={styles.error}>{message}</Text><PrimaryButton onPress={submit} disabled={loading}>{loading ? 'Signing up...' : 'Sign Up!'}</PrimaryButton><Pressable accessibilityLabel="Sign up with Microsoft" onPress={signInWithMicrosoft} style={microsoftStyle.button}><Image source={MicrosoftLogo} style={microsoftStyle.logo} /><Text style={microsoftStyle.text}>Sign up with Microsoft</Text></Pressable>
                 </View>
-                <View style={{flex: 1}}>
-                    <TextInput style={[login_styles.text_input]} placeholder='Email'
-                        value={email} onChangeText={setEmail}
-                        autoCapitalize='none' keyboardType='email-address'></TextInput>
-                    <Image source={line_bar2} style={[login_styles.line_bar]}/>
-                </View>
-                <View style={{flex: 1}}>
-                    <TextInput style={[login_styles.text_input]} placeholder='Password'
-                        value={password} onChangeText={setPassword}
-                        secureTextEntry autoCapitalize='none'></TextInput>
-                    <Image source={line_bar2} style={[login_styles.line_bar]}/>
-                </View>
-                <View style={{flex: 1}}>
-                    <TextInput style={[login_styles.text_input]} placeholder='Confirm Password'
-                        value={confirm} onChangeText={setConfirm}
-                        secureTextEntry autoCapitalize='none'></TextInput>
-                    <Image source={line_bar2} style={[login_styles.line_bar]}/>
-                    {message ? (
-                        <Text style={[login_styles.extra_text_guide, {color: "#800000", fontWeight: 'bold'}]}>{message}</Text>
-                    ) : null}
-                </View>
-            </View>
-
-            <View style={[login_styles.base_row_flex_setup, {marginTop: 25}]}>
-                <TouchableOpacity onPress={handleSignUp} disabled={loading}
-                    style={[login_styles.default_button, {backgroundColor: '#800000', paddingTop: 3, paddingBottom: 3, opacity: loading ? 0.6 : 1}]}>
-                    <Text style={{color: '#FFF', fontSize: 22, fontFamily: 'Caveat', textAlign: 'center'}}>Sign Up</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={signInWithMicrosoft} style={[login_styles.default_button, {marginTop: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingTop: 3, paddingBottom: 3}]}>
-                    <Image source={microsoft_logo} style={{marginRight: 5, width: 25, height: 25}}></Image>
-                    <Text style={{fontFamily: 'Caveat', fontSize: 20, textAlign: "center"}}>Microsoft Sign Up</Text>
-                </TouchableOpacity>
-            </View>
-        </Base>
-    );
+                <View style={styles.footer}><Text style={styles.footerText}>Already have an account? </Text><Pressable onPress={() => router.push('/Login')}><Text style={styles.link}>Log in</Text></Pressable></View>
+        </ScrollView></KeyboardAvoidingView></Base>;
 };
-
-export default SignUp;
-
-// login_styles stays exactly as you have it
-const login_styles = StyleSheet.create({
-    header_1: {
-        fontFamily: 'Outfit',
-        fontWeight: 'bold',
-        fontSize: 48,
-        color: '#800000',
+const Field = ({
+    value,
+    onChangeText,
+    placeholder,
+    secureTextEntry,
+    keyboardType,
+    noLine,
+    highlightPink
+}: any) => <><TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor="#777" secureTextEntry={secureTextEntry} keyboardType={keyboardType} style={[styles.input, noLine && styles.passwordInput, highlightPink && styles.pink]} />{!noLine && <View style={styles.line} />}</>;
+const microsoftStyle = StyleSheet.create({
+    button: {
+        height: 52,
+        borderRadius: 999,
+        backgroundColor: colors.white,
+        borderColor: '#E5DDDA',
+        borderWidth: 2,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 12
     },
-    default_text: {
-        fontFamily: 'Gloria Hallelujah',
-        color: "#000000",
+    logo: {
+        width: 28,
+        height: 28,
+        resizeMode: 'contain'
     },
-    line_bar: {
-        position: 'relative',
-        top: 5,
-        width: '100%',
+    text: {
+        fontFamily: 'Caveat',
+        fontWeight: '700',
+        fontSize: 26,
+        color: colors.ink
+    }
+});
+const styles = StyleSheet.create({
+    flex: {
+        flex: 1
     },
-    text_input: {
-        fontSize: 17,
-        fontFamily: 'Outfit',
-        fontWeight: 'regular',
-        borderStyle: 'dashed',
-        textAlign: 'left',
-        height: 'auto',
+    content: {
+        flexGrow: 1,
+        paddingTop: 8,
+        paddingHorizontal: 14,
+        paddingBottom: 18
     },
-    extra_text_guide: {
-        textAlign: 'left',
-        fontSize: 13,
-        marginTop: 5,
-        fontWeight: '600',
-    },
-    container: {
-        paddingTop: 50,
-        paddingBottom: 50,
-        height: '100%',
-        width: '100%',
-    },
-    base_row_flex_setup: {
-        flex: 1,
-        width: '100%',
-    },
-    default_button: {
-        backgroundColor: '#FFF',
-        width: '100%',
-        borderRadius: 24,
-        padding: 7,
+    title: {
         textAlign: 'center',
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontSize: 64,
+        fontWeight: '700',
+        marginTop: 80,
+        marginBottom: 60
     },
-})
+    form: {
+        paddingHorizontal: 20,
+        gap: 12
+    },
+    input: {
+        height: 42,
+        fontFamily: 'Outfit',
+        fontSize: 20,
+        color: colors.ink,
+        paddingHorizontal: 8
+    },
+    passwordInput: {
+        width: '100%',
+        paddingRight: 82
+    },
+    line: {
+        height: 3,
+        backgroundColor: colors.ink
+    },
+    passwordRow: {
+        height: 56,
+        width: '100%',
+        position: 'relative',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(246,224,74,0.65)'
+    },
+    pink: {
+        backgroundColor: 'rgba(243,166,198,0.7)'
+    },
+    show: {
+        position: 'absolute',
+        right: 10,
+        minWidth: 58,
+        minHeight: 44,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 10
+    },
+    showText: {
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontWeight: '700'
+    },
+    error: {
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontWeight: '700',
+        minHeight: 20
+    },
+    marker: {
+        color: '#E58BB3',
+        fontSize: 40,
+        textAlign: 'right',
+        transform: [{
+            rotate: '-10deg'
+        }]
+    },
+    footer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginTop: 'auto',
+        paddingTop: 24
+    },
+    footerText: {
+        fontFamily: 'Outfit',
+        fontSize: 15
+    },
+    link: {
+        color: colors.maroon,
+        textDecorationLine: 'underline',
+        fontFamily: 'Outfit',
+        fontWeight: '700',
+        fontSize: 15
+    }
+});
+export default SignUp;

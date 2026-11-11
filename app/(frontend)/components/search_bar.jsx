@@ -10,7 +10,12 @@ const Search_Bar = ({placeholder = "", style = {}, inputStyle = null, ...inputPr
                 style={[component_root_styles.default_text, styles.search_bar_txt, inputStyle]}
                 placeholder={placeholder}
             />
-            <Pressable onPress={inputProps.onSubmitEditing} accessibilityLabel="Search">
+            <View style={styles.search_divider} />
+            <Pressable
+                onPress={inputProps.onSubmitEditing}
+                style={styles.search_button}
+                accessibilityLabel="Search"
+            >
                 <Image source={search_icon} style={styles.search_icon}/>
             </Pressable>
         </View>
@@ -21,12 +26,16 @@ export default Search_Bar;
 
 const styles = StyleSheet.create({
     search_bar_container: {
+        position: 'relative',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexDirection: 'row',
+        flexShrink: 1,
+        minWidth: 0,
         backgroundColor: '#E4E4E4',
-        border: '1px solid #CCCCCC',
+        borderWidth: 1,
+        borderColor: '#CCCCCC',
         width: '100%',
         height: 45,
         borderRadius: 24,
@@ -34,6 +43,7 @@ const styles = StyleSheet.create({
     },
     search_bar_txt: {
         flex: 1,
+        minWidth: 0,
         paddingLeft: 20,
         paddingRight: 20,
         marginRight: 15,
@@ -49,5 +59,23 @@ const styles = StyleSheet.create({
         width: 22,
         height: 22,
         marginRight: 20,
-    }
+    },
+    search_button: {
+        width: 44,
+        height: 44,
+        flexShrink: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    search_divider: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        top: '50%',
+        height: 1,
+        backgroundColor: '#808080',
+        opacity: 0.2,
+        zIndex: 2,
+        pointerEvents: 'none',
+    },
 })

@@ -1,658 +1,426 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import {
-    Animated,
-    Dimensions,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    View,
-    type StyleProp,
-    type ViewStyle,
-} from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Header1 } from '../components/text_styles'
-import Search_Bar from '../components/search_bar'
-import Back_Button from '../components/back_button'
-import Base from '../components/base'
-import Text from '../components/text_styles'
-import { colors } from '../../root_styles'
-
-type SettingsButtonProps = {
-    text: string;
-    style?: StyleProp<ViewStyle>;
-    onPress: () => void;
+import Base from '../components/base';
+import TabBar from '../components/tab_bar';
+import { BackButton, PageTitle, Squiggle } from '../components/design';
+import { colors } from '../../root_styles';
+import { supabase } from '../../../lib/supabase';
+const groups = [{
+    title: 'Marketplace & Orders',
+    rows: [['Saved Listings', 'heart'], ['Order History', 'receipt'], ['Purchase Notifications', 'notifications'], ['Payment Methods', 'card']]
+}, {
+    title: 'Selling & Store',
+    rows: [['Seller Profile', 'person'], ['Listing Defaults', 'pricetag'], ['Pickup Preferences', 'location'], ['Sales Notifications', 'notifications']]
+}, {
+    title: 'Account & Safety',
+    rows: [['Account Details', 'person'], ['Privacy & Blocked Users', 'lock-closed'], ['Help & Safety', 'shield-checkmark']]
+}] as const;
+const SavedListings = ({
+    onBack
+}: {
+    onBack: () => void;
+}) => {
+    const [notify, setNotify] = useState(true);
+    const [unavailable, setUnavailable] = useState(false);
+    const [sort, setSort] = useState(0);
+    const [sortPickerVisible, setSortPickerVisible] = useState(false);
+    const sorts = ['Recently saved', 'Price: low to high', 'Price: high to low'];
+    return <Base><ScrollView contentContainerStyle={styles.savedContent} showsVerticalScrollIndicator={false}><BackButton onPress={onBack} /><View style={styles.savedHeader}><View style={styles.highlighter} /><Text style={styles.savedTitle}>Saved Listings</Text></View><View style={styles.savedCard}>
+                <SettingRow label="Notify me when saved items change price"><Toggle value={notify} onChange={setNotify} /></SettingRow>
+                <SettingRow label="Sort saved listings by"><Pressable onPress={() => setSortPickerVisible(true)} style={styles.sort}><Text style={styles.sortText}>{sorts[sort]}</Text><Ionicons name="chevron-down" size={18} color={colors.white} /></Pressable></SettingRow>
+                <SettingRow label="Show unavailable listings"><Toggle value={unavailable} onChange={setUnavailable} /></SettingRow>
+        </View></ScrollView><OptionSheet visible={sortPickerVisible} title="Sort saved listings" options={sorts} selected={sort} onClose={() => setSortPickerVisible(false)} onSelect={index => setSort(index)} /></Base>;
 };
-
-type SettingsHolderProps = {
+const OptionSheet = ({
+    visible,
+    title,
+    options,
+    selected,
+    onClose,
+    onSelect
+}: {
+    visible: boolean;
     title: string;
-    children: ReactNode;
+    options: string[];
+    selected: number;
+    onClose: () => void;
+    onSelect: (index: number) => void;
+}) => {
+    const position = useRef(new Animated.Value(1)).current;
+    useEffect(() => {
+        if (!visible) {
+            position.setValue(1);
+            return;
+        }
+        Animated.timing(position, {
+            toValue: 0,
+            duration: 260,
+            useNativeDriver: true
+        }).start();
+    }, [position, visible]);
+    const dismiss = () => Animated.timing(position, {
+        toValue: 1,
+        duration: 260,
+        useNativeDriver: true
+    }).start(({
+        finished
+    }) => {
+        if (finished) onClose();
+    });
+    const select = (index: number) => {
+        onSelect(index);
+        dismiss();
+    };
+    return <Modal visible={visible} transparent animationType="fade" onRequestClose={dismiss}><Pressable style={styles.sheetScrim} onPress={dismiss}><Animated.View style={[styles.sortSheet, {
+                transform: [{
+                    translateY: position.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, 520]
+                    })
+                }]
+            }]}><Pressable onPress={event => event.stopPropagation()}><View style={styles.sheetHandle} /><Text style={styles.sheetTitle}>{title}</Text>{options.map((option, index) => <Pressable key={option} style={[styles.sheetOption, index > 0 && styles.sheetDivider]} onPress={() => select(index)}><Text style={styles.sheetOptionText}>{option}</Text>{selected === index && <Ionicons name="checkmark" size={22} color={colors.maroon} />}</Pressable>)}</Pressable></Animated.View></Pressable></Modal>;
 };
-
-type SettingsPageProps = {
+const DetailSettings = ({
+    title,
+    onBack
+}: {
     title: string;
     onBack: () => void;
-    children: ReactNode;
-};
-
-type SettingsInteractiveProps = {
-    setting_name: string;
-    type?: 0 | 1;
-    enabled_initial?: boolean;
-    options_list?: string[];
-};
-
-type SettingsPageTitle =
-    | 'Saved Listings'
-    | 'Order History'
-    | 'Purchase Notifications'
-    | 'Payment Methods'
-    | 'Seller Profile'
-    | 'Listing Defaults'
-    | 'Pickup Preferences'
-    | 'Sales Notifications'
-    | 'Profile Visibility'
-    | 'Blocked Users'
-    | 'Privacy Controls'
-    | 'Help & Support';
-type SettingsControl = {
-    setting_name: string;
-    type?: 0 | 1;
-    enabled_initial?: boolean;
-    options_list?: string[];
-};
-
-const settingsPageControls: Record<SettingsPageTitle, SettingsControl[]> = {
-    'Saved Listings': [
-        { setting_name: 'Notify me when saved items change price', enabled_initial: true },
-        { setting_name: 'Sort saved listings by', type: 1, options_list: ['Recently saved', 'Lowest price', 'Closest pickup'] },
-        { setting_name: 'Show unavailable listings', enabled_initial: false },
-    ],
-    'Order History': [
-        { setting_name: 'Include digital receipts', enabled_initial: true },
-        { setting_name: 'Default order filter', type: 1, options_list: ['All orders', 'Completed', 'Cancelled'] },
-        { setting_name: 'Show pickup details', enabled_initial: true },
-    ],
-    'Purchase Notifications': [
-        { setting_name: 'New order updates', enabled_initial: true },
-        { setting_name: 'Notification timing', type: 1, options_list: ['Immediately', 'Daily summary', 'Never'] },
-        { setting_name: 'Pickup reminders', enabled_initial: true },
-    ],
-    'Payment Methods': [
-        { setting_name: 'Use saved payment method', enabled_initial: true },
-        { setting_name: 'Default payment method', type: 1, options_list: ['Visa ending in 4242', 'Campus card', 'Ask every time'] },
-        { setting_name: 'Confirm purchases before paying', enabled_initial: true },
-    ],
-    'Seller Profile': [
-        { setting_name: 'Show my seller profile', enabled_initial: true },
-        { setting_name: 'Seller response time', type: 1, options_list: ['Under 1 hour', 'Same day', 'Within 2 days'] },
-        { setting_name: 'Accept buyer questions', enabled_initial: true },
-    ],
-    'Listing Defaults': [
-        { setting_name: 'Automatically renew listings', enabled_initial: false },
-        { setting_name: 'Default item condition', type: 1, options_list: ['New', 'Like new', 'Good', 'Fair'] },
-        { setting_name: 'Allow offers on new listings', enabled_initial: true },
-    ],
-    'Pickup Preferences': [
-        { setting_name: 'Use preferred pickup settings', enabled_initial: true },
-        { setting_name: 'Preferred pickup location', type: 1, options_list: ['Student Union', 'Library entrance', 'Residence hall'] },
-        { setting_name: 'Send arrival reminders', enabled_initial: true },
-    ],
-    'Sales Notifications': [
-        { setting_name: 'New sale alerts', enabled_initial: true },
-        { setting_name: 'Sales summary frequency', type: 1, options_list: ['Every sale', 'Daily', 'Weekly'] },
-        { setting_name: 'Buyer message alerts', enabled_initial: true },
-    ],
-    'Profile Visibility': [
-        { setting_name: 'Show my profile to buyers', enabled_initial: true },
-        { setting_name: 'Profile visibility', type: 1, options_list: ['Everyone on campus', 'Verified users', 'Only people I contact'] },
-        { setting_name: 'Show completed sales', enabled_initial: false },
-    ],
-    'Blocked Users': [
-        { setting_name: 'Hide blocked users from search', enabled_initial: true },
-        { setting_name: 'Block new message requests', enabled_initial: true },
-        { setting_name: 'Show blocked listing warnings', type: 1, options_list: ['Always', 'Only when viewing', 'Never'] },
-    ],
-    'Privacy Controls': [
-        { setting_name: 'Personalize recommendations', enabled_initial: true },
-        { setting_name: 'Data sharing level', type: 1, options_list: ['Essential only', 'Helpful extras', 'All improvements'] },
-        { setting_name: 'Allow usage analytics', enabled_initial: false },
-    ],
-    'Help & Support': [
-        { setting_name: 'Email support updates', enabled_initial: true },
-        { setting_name: 'Preferred support channel', type: 1, options_list: ['In-app chat', 'Email', 'Phone'] },
-        { setting_name: 'Show help tips', enabled_initial: true },
-        { setting_name: 'Contact response preference', type: 1, options_list: ['Fastest available', 'Email reply', 'Chat reply'] },
-        { setting_name: 'Show setup checklist', enabled_initial: true },
-        { setting_name: 'Default help section', type: 1, options_list: ['Getting started', 'Buying', 'Selling', 'Account'] },
-        { setting_name: 'Include screenshots in tips', enabled_initial: true },
-        { setting_name: 'Support language', type: 1, options_list: ['English', 'Spanish', 'French'] },
-        { setting_name: 'Remember expanded answers', enabled_initial: false },
-    ],
-};
-
-const Settings_Button = ({ text, style, onPress }: SettingsButtonProps) => {
-    return (
-        <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={text}
-            onPress={onPress}
-            style={settingsStyles.button_container}
-        >
-            <View style={[settingsStyles.image, style]} />
-            <Text style={settingsStyles.button_text}>{text}</Text>
-        </Pressable>
-    );
-};
-
-const Settings_Interactive = ({
-    setting_name,
-    type = 0,
-    enabled_initial = false,
-    options_list = [],
-}: SettingsInteractiveProps) => {
-    const [enabled, set_enabled] = useState(enabled_initial);
-    const [current_option, set_option] = useState(0);
-    const [options_open, set_options_open] = useState(false);
-    const toggle_progress = useRef(new Animated.Value(enabled_initial ? 1 : 0)).current;
-    const options_position = useRef(new Animated.Value(Dimensions.get('window').height)).current;
-    const screen_height = Dimensions.get('window').height;
-
-    const toggle_enabled = () => {
-        const next_enabled = !enabled;
-        set_enabled(next_enabled);
-        Animated.timing(toggle_progress, {
-            toValue: next_enabled ? 1 : 0,
-            duration: 180,
-            useNativeDriver: true,
-        }).start();
+}) => {
+    const [enabled, setEnabled] = useState(true);
+    const [secondary, setSecondary] = useState(false);
+    const details: Record<string, {
+        toggle: string;
+        secondary: string;
+        selection: string;
+        options: string[];
+    }> = {
+        'Order History': {
+            toggle: 'Include completed orders',
+            secondary: 'Show pickup reminders',
+            selection: 'Default order view',
+            options: ['Recent orders', 'Purchases', 'Sales']
+        },
+        'Purchase Notifications': {
+            toggle: 'Price drop alerts',
+            secondary: 'Pickup reminders',
+            selection: 'Notification frequency',
+            options: ['Instantly', 'Daily', 'Weekly']
+        },
+        'Payment Methods': {
+            toggle: 'Use saved payment by default',
+            secondary: 'Require confirmation',
+            selection: 'Preferred payment method',
+            options: ['Visa •6767', 'Zelle', 'Cash at pickup']
+        },
+        'Seller Profile': {
+            toggle: 'Show seller activity',
+            secondary: 'Accept new messages',
+            selection: 'Profile visibility',
+            options: ['Campus only', 'Verified students', 'Everyone']
+        },
+        'Listing Defaults': {
+            toggle: 'Save item drafts',
+            secondary: 'Use pickup reminders',
+            selection: 'Default listing type',
+            options: ['Item', 'Service', 'Wanted']
+        },
+        'Pickup Preferences': {
+            toggle: 'Offer campus pickup',
+            secondary: 'Send arrival reminders',
+            selection: 'Preferred pickup spot',
+            options: ['Library lobby', 'Student union', 'Residence hall']
+        },
+        'Sales Notifications': {
+            toggle: 'New message alerts',
+            secondary: 'Sold item alerts',
+            selection: 'Sales digest',
+            options: ['Instantly', 'Daily', 'Weekly']
+        },
+        'Account Details': {
+            toggle: 'Show school year',
+            secondary: 'Display campus affiliation',
+            selection: 'Profile audience',
+            options: ['Only me', 'Students', 'Everyone']
+        },
+        'Privacy & Blocked Users': {
+            toggle: 'Hide activity status',
+            secondary: 'Filter unknown messages',
+            selection: 'Message permissions',
+            options: ['Everyone', 'Verified students', 'Nobody']
+        },
+        'Help & Safety': {
+            toggle: 'Safety check-in reminders',
+            secondary: 'Show safety resources',
+            selection: 'Support contact method',
+            options: ['In app', 'Email', 'Phone']
+        }
     };
-
-    const open_options = () => {
-        set_options_open(true);
-        options_position.setValue(screen_height);
-        requestAnimationFrame(() => {
-            Animated.timing(options_position, {
-                toValue: 0,
-                duration: 250,
-                useNativeDriver: true,
-            }).start();
-        });
+    const config = details[title] ?? {
+        toggle: 'Enable updates',
+        secondary: 'Send me reminders',
+        selection: 'Preference',
+        options: ['Option one', 'Option two', 'Option three']
     };
-
-    const close_options = () => {
-        Animated.timing(options_position, {
-            toValue: screen_height,
-            duration: 200,
-            useNativeDriver: true,
-        }).start(() => set_options_open(false));
-    };
-
-    return (
-        <View style={settingsStyles.interactive_container}>
-            <Text style={[settingsStyles.button_text, settingsStyles.interactive_name]}>
-                {setting_name}
-            </Text>
-            {type === 0 ? (
-                <Pressable
-                    accessibilityRole="switch"
-                    accessibilityState={{ checked: enabled }}
-                    accessibilityLabel={setting_name}
-                    onPress={toggle_enabled}
-                >
-                    <Animated.View
-                        style={settingsStyles.toggle}
-                    >
-                        <Animated.View
-                            style={[
-                                settingsStyles.toggle_enabled_overlay,
-                                { opacity: toggle_progress },
-                            ]}
-                        />
-                        <Animated.View
-                            style={[
-                                settingsStyles.toggle_thumb,
-                                {
-                                    transform: [
-                                        {
-                                            translateX: toggle_progress.interpolate({
-                                                inputRange: [0, 1],
-                                                outputRange: [0, 24],
-                                            }),
-                                        },
-                                    ],
-                                },
-                            ]}
-                        />
-                    </Animated.View>
-                </Pressable>
-            ) : (
-                <View style={settingsStyles.select_container}>
-                    <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`Choose ${setting_name}`}
-                        onPress={open_options}
-                        style={settingsStyles.select_button}
-                    >
-                        <Text style={settingsStyles.select_text}>
-                            {options_list[current_option] || 'Select'}
-                        </Text>
-                        <Text style={settingsStyles.select_arrow}>v</Text>
-                    </Pressable>
-                </View>
-            )}
-            <Modal
-                visible={options_open}
-                transparent
-                animationType="none"
-                onRequestClose={close_options}
-            >
-                <View style={settingsStyles.options_overlay}>
-                    <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="Close options"
-                        onPress={close_options}
-                        style={settingsStyles.options_backdrop}
-                    />
-                    <Animated.View
-                        style={[
-                            settingsStyles.options_sheet,
-                            { transform: [{ translateY: options_position }] },
-                        ]}
-                    >
-                        <Text style={settingsStyles.options_title}>{setting_name}</Text>
-                        {options_list.map((option, index) => (
-                            <Pressable
-                                key={option}
-                                onPress={() => {
-                                    set_option(index);
-                                    close_options();
-                                }}
-                                style={settingsStyles.option}
-                            >
-                                <Text style={settingsStyles.option_text}>{option}</Text>
-                            </Pressable>
-                        ))}
-                    </Animated.View>
-                </View>
-            </Modal>
-        </View>
-    );
-}
-
-const Settings_Holder = ({ title, children }: SettingsHolderProps) => {
-    return (
-        <View style={settingsStyles.holder}>
-            <Text style={settingsStyles.category_header}>{title}</Text>
-            <View style={settingsStyles.settings_container}>{children}</View>
-        </View>
-    );
+    const [choice, setChoice] = useState(0);
+    const [choicePickerVisible, setChoicePickerVisible] = useState(false);
+    return <Base><ScrollView contentContainerStyle={styles.savedContent} showsVerticalScrollIndicator={false}><BackButton onPress={onBack} /><View style={styles.savedHeader}><View style={styles.highlighter} /><Text style={styles.savedTitle}>{title}</Text></View><View style={styles.savedCard}><SettingRow label={config.toggle}><Toggle value={enabled} onChange={setEnabled} /></SettingRow><SettingRow label={config.secondary}><Toggle value={secondary} onChange={setSecondary} /></SettingRow><SettingRow label={config.selection}><Pressable onPress={() => setChoicePickerVisible(true)} style={styles.sort}><Text style={styles.sortText}>{config.options[choice]}</Text><Ionicons name="chevron-down" size={18} color={colors.white} /></Pressable></SettingRow></View></ScrollView><OptionSheet visible={choicePickerVisible} title={config.selection} options={config.options} selected={choice} onClose={() => setChoicePickerVisible(false)} onSelect={index => setChoice(index)} /></Base>;
 };
-
-const SettingsPage = ({ title, onBack, children }: SettingsPageProps) => {
-    return (
-        <View style={settingsPageStyles.container}>
-            <Back_Button onPress={onBack} />
-            <Header1 style={settingsPageStyles.title}>{title}</Header1>
-            <ScrollView
-                style={settingsPageStyles.scroll}
-                showsVerticalScrollIndicator
-                indicatorStyle="black"
-                persistentScrollbar
-                contentContainerStyle={settingsPageStyles.content}
-            >
-                {children}
-            </ScrollView>
-        </View>
-    );
-};
-
 const Settings = () => {
     const router = useRouter();
-    const [activePage, setActivePage] = useState<SettingsPageTitle | null>(null);
-    const [sign_out_open, set_sign_out_open] = useState(false);
-    const pagePosition = useRef(new Animated.Value(0)).current;
-    const sign_out_position = useRef(new Animated.Value(Dimensions.get('window').height)).current;
-    const screenWidth = Dimensions.get('window').width;
-    const screenHeight = Dimensions.get('window').height;
-
-    useEffect(() => {
-        if (activePage) {
-            Animated.timing(pagePosition, {
-                toValue: 0,
-                duration: 250,
-                useNativeDriver: true,
-            }).start();
-        }
-    }, [activePage, pagePosition]);
-
-    const openPage = (page: SettingsPageTitle) => {
-        pagePosition.setValue(screenWidth);
-        setActivePage(page);
-    };
-
-    const closePage = () => {
-        Animated.timing(pagePosition, {
-            toValue: screenWidth,
-            duration: 200,
-            useNativeDriver: true,
-        }).start(() => setActivePage(null));
-    };
-
-    const open_sign_out = () => {
-        set_sign_out_open(true);
-        sign_out_position.setValue(screenHeight);
-        requestAnimationFrame(() => {
-            Animated.timing(sign_out_position, {
-                toValue: 0,
-                duration: 250,
-                useNativeDriver: true,
-            }).start();
-        });
-    };
-
-    const close_sign_out = () => {
-        Animated.timing(sign_out_position, {
-            toValue: screenHeight,
-            duration: 200,
-            useNativeDriver: true,
-        }).start(() => set_sign_out_open(false));
-    };
-
-    const confirm_sign_out = () => {
-        Animated.timing(sign_out_position, {
-            toValue: screenHeight,
-            duration: 200,
-            useNativeDriver: true,
-        }).start(() => router.replace('/Landing'));
-    };
-
-    return (
-        <Base style={{paddingBottom: 0}}>
-            <Back_Button style={{marginBottom: 20}} href="/home"/>
-
-            <ScrollView 
-                style={settingsStyles.main_scroll}
-                contentContainerStyle={{gap: 20, paddingBottom: 50, paddingRight: 20}}
-                showsVerticalScrollIndicator
-                indicatorStyle="black"
-                persistentScrollbar
-                >
-                <Header1 style={{textAlign: 'left', marginBottom: 0, marginTop: -5}}>
-                    settings
-                </Header1>
-
-                {/* needs button later */}
-                <Search_Bar style={{marginTop: 10}} placeholder='Search'/>
-                <Settings_Holder title="Marketplace & Orders">
-                    <Settings_Button text="Saved Listings" style={{backgroundColor: colors.maroonLight}} onPress={() => openPage('Saved Listings')}/>
-                    <Settings_Button text="Order History" style={{backgroundColor: colors.gold}} onPress={() => openPage('Order History')}/>
-                    <Settings_Button text="Purchase Notifications" style={{backgroundColor: colors.sage}} onPress={() => openPage('Purchase Notifications')}/>
-                    <Settings_Button text="Payment Methods" style={{backgroundColor: colors.maroon}} onPress={() => openPage('Payment Methods')}/>
-                </Settings_Holder>
-                <Settings_Holder title="Selling & Store">
-                    <Settings_Button text="Seller Profile" style={{backgroundColor: colors.maroonLight}} onPress={() => openPage('Seller Profile')}/>
-                    <Settings_Button text="Listing Defaults" style={{backgroundColor: colors.gold}} onPress={() => openPage('Listing Defaults')}/>
-                    <Settings_Button text="Pickup Preferences" style={{backgroundColor: colors.sage}} onPress={() => openPage('Pickup Preferences')}/>
-                    <Settings_Button text="Sales Notifications" style={{backgroundColor: colors.maroon}} onPress={() => openPage('Sales Notifications')}/>
-                </Settings_Holder>
-                <Settings_Holder title="Account & Safety">
-                    <Settings_Button text="Profile Visibility" style={{backgroundColor: colors.maroonLight}} onPress={() => openPage('Profile Visibility')}/>
-                    <Settings_Button text="Blocked Users" style={{backgroundColor: colors.gold}} onPress={() => openPage('Blocked Users')}/>
-                    <Settings_Button text="Privacy Controls" style={{backgroundColor: colors.sage}} onPress={() => openPage('Privacy Controls')}/>
-                    <Settings_Button text="Help & Support" style={{backgroundColor: colors.maroon}} onPress={() => openPage('Help & Support')}/>
-                </Settings_Holder>
-                <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Sign Out"
-                    onPress={open_sign_out}
-                    style={{backgroundColor: colors.maroon, borderRadius: 22, padding: 10,}}
-                >
-                    <Text style={{color: colors.white}}>Sign Out</Text>
-                </Pressable>
-            </ScrollView>
-            {activePage && (
-                <Animated.View style={[settingsStyles.page, { transform: [{ translateX: pagePosition }] }]}>
-                    <SettingsPage title={activePage} onBack={closePage}>
-                        <View style={settingsPageStyles.settings_container}>
-                            {settingsPageControls[activePage].map((control) => (
-                                <Settings_Interactive
-                                    key={control.setting_name}
-                                    {...control}
-                                />
-                            ))}
-                        </View>
-                    </SettingsPage>
-                </Animated.View>
-            )}
-            <Modal
-                visible={sign_out_open}
-                transparent
-                animationType="none"
-                onRequestClose={close_sign_out}
-            >
-                <View style={settingsStyles.options_overlay}>
-                    <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="Close sign out confirmation"
-                        onPress={close_sign_out}
-                        style={settingsStyles.options_backdrop}
-                    />
-                    <Animated.View
-                        style={[
-                            settingsStyles.options_sheet,
-                            { transform: [{ translateY: sign_out_position }] },
-                        ]}
-                    >
-                        <Text style={settingsStyles.options_title}>
-                            Are you sure you want to sign out?
-                        </Text>
-                        <View style={settingsStyles.confirmation_actions}>
-                            <Pressable
-                                accessibilityRole="button"
-                                accessibilityLabel="Cancel sign out"
-                                onPress={close_sign_out}
-                                style={settingsStyles.cancel_button}
-                            >
-                                <Text style={settingsStyles.cancel_button_text}>Cancel</Text>
-                            </Pressable>
-                            <Pressable
-                                accessibilityRole="button"
-                                accessibilityLabel="Confirm sign out"
-                                onPress={confirm_sign_out}
-                                style={settingsStyles.confirm_button}
-                            >
-                                <Text style={settingsStyles.confirm_button_text}>Confirm</Text>
-                            </Pressable>
-                        </View>
-                    </Animated.View>
-                </View>
-            </Modal>
-        </Base>
-    );
-}
-
-export default Settings;
-
-const settingsStyles = StyleSheet.create({
-    main_scroll: {
-        marginRight: -20,
+    const [saved, setSaved] = useState(false);
+    const [detail, setDetail] = useState<string | null>(null);
+    const [logoutVisible, setLogoutVisible] = useState(false);
+    if (saved) return <SavedListings onBack={() => setSaved(false)} />;
+    if (detail) return <DetailSettings title={detail} onBack={() => setDetail(null)} />;
+    return <Base style={{
+        paddingBottom: 0
+    }}><ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+                <BackButton onPress={() => router.back()} /><PageTitle>settings</PageTitle><Squiggle />
+                <View style={styles.search}><Ionicons name="search" size={28} color={colors.maroon} /><TextInput placeholder="Search" placeholderTextColor={colors.muted} style={styles.searchInput} /></View>
+                {groups.map(group => <View key={group.title} style={styles.group}><Text style={styles.groupTitle}>{group.title}</Text><View style={styles.settingsCard}>{group.rows.map(([label, icon], index) => <Pressable key={label} onPress={() => label === 'Saved Listings' ? setSaved(true) : setDetail(label)} style={[styles.settingRow, index > 0 && styles.divider]}><View style={[styles.iconTile, {
+                            backgroundColor: [colors.tileRed, colors.mustard, colors.sage, colors.maroon][index]
+                        }]}><Ionicons name={icon as any} size={24} color={colors.white} /></View><Text style={styles.rowLabel}>{label}</Text><Ionicons name="chevron-forward" size={28} color={colors.mutedLight} /></Pressable>)}</View></View>)}
+                <Pressable style={styles.logoutButton} onPress={() => setLogoutVisible(true)}><Ionicons name="log-out-outline" size={22} color={colors.white} /><Text style={styles.logoutText}>Log out</Text></Pressable>
+        </ScrollView><OptionSheet visible={logoutVisible} title="Log out of DormDeal?" options={['Cancel', 'Log out']} selected={-1} onClose={() => setLogoutVisible(false)} onSelect={async index => {
+            if (index === 1) {
+                await supabase.auth.signOut();
+                router.replace('/Landing');
+            }
+        }} /><TabBar active="profile" /></Base>;
+};
+const SettingRow = ({
+    label,
+    children
+}: any) => <View style={styles.settingRow}><Text style={styles.rowLabel}>{label}</Text>{children}</View>;
+const Toggle = ({
+    value,
+    onChange
+}: {
+    value: boolean;
+    onChange: (next: boolean) => void;
+}) => <Pressable accessibilityRole="switch" accessibilityState={{
+    checked: value
+}} onPress={() => onChange(!value)} style={[styles.toggle, value && styles.toggleOn]}><View style={[styles.toggleThumb, value && styles.toggleThumbOn]} /></Pressable>;
+const styles = StyleSheet.create({
+    content: {
+        paddingTop: 8,
+        paddingBottom: 110
     },
-    holder: {
-        flexDirection: 'column',
+    savedContent: {
+        paddingTop: 8,
+        paddingBottom: 110
     },
-    category_header: {
-        marginBottom: 10,
-        fontWeight: 'bold',
-        color: colors.maroonDark,
+    group: {
+        marginTop: 22
     },
-    settings_container: {
+    groupTitle: {
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontSize: 18,
+        fontWeight: '700',
+        marginLeft: 4,
+        marginBottom: 7
+    },
+    settingsCard: {
         backgroundColor: colors.white,
-        padding: 10,
-        width: '100%',
-        borderRadius: 24,
-        flexDirection: 'column',
-        gap: 10,
+        shadowColor: '#000',
+        shadowOpacity: 0.16,
+        shadowRadius: 6,
+        shadowOffset: {
+            width: 0,
+            height: 2
+        },
+        elevation: 3
     },
-    button_container: {
+    savedCard: {
+        marginTop: 48,
+        backgroundColor: colors.white,
+        shadowColor: '#000',
+        shadowOpacity: 0.15,
+        shadowRadius: 5,
+        shadowOffset: {
+            width: 0,
+            height: 3
+        },
+        elevation: 4
+    },
+    settingRow: {
+        minHeight: 76,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'flex-start',
-        width: '100%',
-        minHeight: 50,
-        paddingHorizontal: 6, // Adjust regular settings button padding here.
+        gap: 14
     },
-    image: {
-        width: 35,
-        height: 35,
-        borderRadius: 21,
+    divider: {
+        borderTopWidth: 1,
+        borderColor: colors.divider
     },
-    button_text: {
-        marginLeft: 10,
-        textAlign: 'left',
-    },
-    interactive_container: {
-        minHeight: 56,
-        gap: 15,
-        flexDirection: 'row',
+    iconTile: {
+        width: 42,
+        height: 42,
+        borderRadius: 8,
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'center'
     },
-    interactive_name: {
+    rowLabel: {
         flex: 1,
+        color: colors.ink,
+        fontFamily: 'Outfit',
+        fontSize: 17
     },
-    toggle: {
-        width: 56,
-        height: 32,
-        padding: 3,
-        borderRadius: 16,
-        backgroundColor: "#d3d3d3",
-        justifyContent: 'center',
-    },
-    toggle_enabled_overlay: {
-        ...StyleSheet.absoluteFillObject,
-        borderRadius: 16,
-        backgroundColor: colors.sage,
-    },
-    toggle_thumb: {
-        width: 26,
-        height: 26,
-        borderRadius: 13,
+    search: {
+        height: 52,
         backgroundColor: colors.white,
+        marginTop: 22,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        gap: 12,
+        shadowColor: '#000',
+        shadowOpacity: 0.16,
+        shadowRadius: 6,
+        shadowOffset: {
+            width: 0,
+            height: 2
+        },
+        elevation: 3
     },
-    select_container: {
-        alignItems: 'flex-end',
-        minWidth: 150,
+    searchInput: {
+        flex: 1,
+        fontFamily: 'Outfit',
+        fontSize: 17,
+        color: colors.ink
     },
-    select_button: {
-        minWidth: 150,
-        paddingVertical: 10,
-        paddingHorizontal: 12, // Adjust select button padding here.
-        borderRadius: 18,
+    logoutButton: {
+        height: 54,
+        marginTop: 32,
         backgroundColor: colors.maroonLight,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
+        gap: 10
     },
-    select_text: {
+    logoutText: {
         color: colors.white,
-        fontSize: 14,
+        fontFamily: 'Outfit',
+        fontWeight: '700',
+        fontSize: 17
     },
-    select_arrow: {
-        marginLeft: 8,
-        color: colors.white,
-        lineHeight: 14,
+    savedHeader: {
+        marginTop: 58,
+        alignSelf: 'flex-start',
+        position: 'relative',
+        justifyContent: 'center'
     },
-    options_overlay: {
-        flex: 1,
-        justifyContent: 'flex-end',
-    },
-    options_backdrop: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(31, 20, 20, 0.35)',
-    },
-    options_sheet: {
-        paddingTop: 20,
-        paddingRight: 20,
-        paddingBottom: 30,
-        paddingLeft: 20,
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        backgroundColor: colors.white,
-        elevation: 8,
-    },
-    option: {
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.blush,
-    },
-    options_title: {
-        marginBottom: 8,
-        color: colors.maroonDark,
-        fontWeight: 'bold',
-        textAlign: 'left',
-    },
-    option_text: {
-        textAlign: 'left',
-    },
-    confirmation_actions: {
-        flexDirection: 'row',
-        gap: 10,
-        marginTop: 8,
-    },
-    cancel_button: {
-        flex: 1,
-        alignItems: 'center',
-        paddingVertical: 12,
-        borderRadius: 18,
-        backgroundColor: colors.blush,
-    },
-    cancel_button_text: {
-        color: colors.maroonDark,
-    },
-    confirm_button: {
-        flex: 1,
-        alignItems: 'center',
-        paddingVertical: 12,
-        borderRadius: 18,
-        backgroundColor: colors.maroon,
-    },
-    confirm_button_text: {
-        color: colors.white,
-    },
-    page: {
+    highlighter: {
         position: 'absolute',
-        top: 0,
-        right: 0,
-        bottom: 0,
         left: 0,
-        paddingTop: 50,
-        paddingLeft: 20,
-        backgroundColor: colors.cream,
+        right: 14,
+        bottom: 1,
+        height: 18,
+        backgroundColor: colors.gold
     },
-});
-
-const settingsPageStyles = StyleSheet.create({
-    container: {
-        flex: 1,
+    savedTitle: {
+        color: colors.maroon,
+        fontFamily: 'Outfit',
+        fontSize: 44,
+        fontWeight: '800',
+        zIndex: 1
     },
-    scroll: {
-        marginRight: -20,
+    sort: {
+        minHeight: 44,
+        borderRadius: 8,
+        paddingHorizontal: 14,
+        backgroundColor: colors.tileRed,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10
     },
-    title: {
-        marginTop: 20,
-        marginBottom: 15,
+    sortText: {
+        color: colors.white,
+        fontFamily: 'Outfit',
+        fontWeight: '700',
+        fontSize: 13
     },
-    content: {
-        paddingBottom: 50,
-        paddingRight: 40,
+    toggle: {
+        width: 54,
+        height: 30,
+        borderRadius: 6,
+        padding: 4,
+        backgroundColor: colors.switchOff,
+        justifyContent: 'center'
     },
-    settings_container: {
+    toggleOn: {
+        backgroundColor: colors.sage
+    },
+    toggleThumb: {
+        width: 22,
+        height: 22,
+        borderRadius: 5,
         backgroundColor: colors.white,
-        padding: 10,
-        width: '100%',
-        borderRadius: 24,
-        flexDirection: 'column',
-        gap: 10,
+        shadowColor: '#000',
+        shadowOpacity: .18,
+        shadowRadius: 2,
+        elevation: 2
     },
+    toggleThumbOn: {
+        alignSelf: 'flex-end'
+    },
+    sheetScrim: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,.28)',
+        justifyContent: 'flex-end'
+    },
+    sortSheet: {
+        width: '100%',
+        alignSelf: 'stretch',
+        backgroundColor: colors.white,
+        paddingTop: 16,
+        paddingHorizontal: 20,
+        paddingBottom: 24,
+        borderTopLeftRadius: 12,
+        borderTopRightRadius: 12,
+        gap: 0,
+        shadowColor: '#000',
+        shadowOpacity: .2,
+        shadowRadius: 8,
+        elevation: 8
+    },
+    sheetHandle: {
+        alignSelf: 'center',
+        width: 36,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: colors.mutedLight,
+        marginBottom: 14
+    },
+    sheetTitle: {
+        color: colors.ink,
+        fontFamily: 'Outfit',
+        fontWeight: '700',
+        fontSize: 20,
+        marginBottom: 8
+    },
+    sheetOption: {
+        minHeight: 54,
+        backgroundColor: colors.white,
+        paddingHorizontal: 2,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+    },
+    sheetDivider: {
+        borderTopWidth: 1,
+        borderColor: colors.divider
+    },
+    sheetOptionText: {
+        color: colors.ink,
+        fontFamily: 'Outfit',
+        fontSize: 16
+    }
 });
+export default Settings;

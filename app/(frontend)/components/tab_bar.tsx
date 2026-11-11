@@ -2,6 +2,7 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../root_styles';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type TabName = 'home' | 'catalog' | 'post' | 'inbox' | 'profile';
 
@@ -16,28 +17,30 @@ const tabs = [
 
 const TabBar = (props: { active?: TabName }) => {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
 
     return (
         <View style={bar.wrap}>
-            <View style={bar.bar}>
+            <View style={[bar.bar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
                 {tabs.map((tab) => {
                     const isActive = tab.name === props.active;
                     const isPost = tab.name === 'post';
 
                     return (
-                        <Pressable
-                            key={tab.name}
-                            onPress={() => router.push(tab.href)}
-                            style={[bar.tab, isPost && bar.postButton]}
-                            accessibilityLabel={tab.name}
-                        >
-                            <Ionicons
-                                name={isActive ? tab.iconActive : tab.icon}
-                                size={isPost ? 30 : 25}
-                                color={colors.white}
-                            />
-                            {isActive && <View style={bar.dot} />}
-                        </Pressable>
+                        <View key={tab.name} style={bar.tab}>
+                            <Pressable
+                                onPress={() => router.push(tab.href)}
+                                style={isPost ? bar.postVisual : bar.tabButton}
+                                accessibilityLabel={tab.name}
+                            >
+                                <Ionicons
+                                    name={isActive ? tab.iconActive : tab.icon}
+                                    size={isPost ? 32 : 25}
+                                    color={isPost ? colors.maroon : colors.white}
+                                />
+                                {isActive && !isPost && <View style={bar.dot} />}
+                            </Pressable>
+                        </View>
                     );
                 })}
             </View>
@@ -48,16 +51,18 @@ const TabBar = (props: { active?: TabName }) => {
 const bar = StyleSheet.create({
     wrap: {
         position: 'absolute', // float on top of the screen
-        left: 16,
-        right: 16,
-        bottom: 24,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 100,
+        elevation: 20,
     },
     bar: {
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
-        height: 72,
-        borderRadius: 36,
+        minHeight: 82,
+        paddingTop: 8,
         backgroundColor: colors.maroon,
         shadowColor: colors.ink,
         shadowOpacity: 0.25,
@@ -66,24 +71,32 @@ const bar = StyleSheet.create({
         elevation: 8,
     },
     tab: {
-        width: 48,
-        height: 48,
+        flex: 1,
+        height: 50,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    postButton: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: colors.maroonLight,
+    tabButton: {
+        width: '100%',
+        height: 50,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    postVisual: {
+        width: 50,
+        height: 50,
+        backgroundColor: colors.goldLight,
+        borderRadius: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     dot: {
         position: 'absolute',
-        bottom: 0,
+        bottom: 1,
         width: 5,
         height: 5,
         borderRadius: 3,
-        backgroundColor: colors.gold, // little gold dot under the current tab
+        backgroundColor: colors.gold,
     },
 });
 
