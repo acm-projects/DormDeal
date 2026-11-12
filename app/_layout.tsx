@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase';
 import { colors } from './root_styles';
 
 const LANDING_ROUTE = '/Landing';
+const HOME_ROUTE = '/home';
 const PUBLIC_PAGES = ['login', 'signup', 'sign_up', 'sign-up', 'landing', 'resetpassword'];
 const RootLayout = () => {
     const [loaded] = useFonts({
@@ -35,8 +36,11 @@ const RootLayout = () => {
     useEffect(() => {
         if (!checked) return;
         const current = String(segments[segments.length - 1] ?? '').toLowerCase();
-        if (!signedIn && !PUBLIC_PAGES.includes(current)) {
+        const isPublicPage = PUBLIC_PAGES.includes(current);
+        if (!signedIn && !isPublicPage) {
             router.replace(LANDING_ROUTE);
+        } else if (signedIn && isPublicPage) {
+            router.replace(HOME_ROUTE);
         }
     }, [checked, signedIn, segments, router]);
     return (
