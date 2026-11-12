@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Text, View, ImageBackground, StyleSheet, ScrollView, Pressable, Animated, PanResponder, ActivityIndicator } from 'react-native';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Text, View, StyleSheet, ScrollView, Pressable, Animated, PanResponder, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
@@ -8,7 +8,6 @@ import TabBar from '../components/tab_bar';
 import Calendar from '../components/calendar';
 import { items } from '../../../data/items';
 import { formatCategory, formatListingPrice, formatSellerName, getRecommendations, recordListingInteraction, RecommendedListing } from '../../../lib/recommendations';
-import PaperBg from '../../../assets/images/paper_bg.png';
 
 // what one pickup looks like
 type Pickup = {
@@ -106,6 +105,7 @@ const fallbackListings: FeedListing[] = items.map(item => ({
     ...item,
     isLive: false
 }));
+const CARD_WIDTH = 250;
 function getVisualDeck(listings: FeedListing[]) {
     if (listings.length < 3) return listings;
     return [listings[0], listings[1], listings[2], ...listings.slice(3)];
@@ -126,6 +126,9 @@ const CardStack = ({
     const [undoing, setUndoing] = useState(false);
     const [undoOutgoing, setUndoOutgoing] = useState<FeedListing | null>(null);
     const router = useRouter();
+    const { width: viewportWidth } = useWindowDimensions();
+    // The card starts centered. Allow room for the rotated corners and shadow.
+    const offscreenLeft = -(viewportWidth / 2 + CARD_WIDTH);
     const deckRef = useRef(getVisualDeck(listings));
     const dismissedHistory = useRef<FeedListing[]>([]);
     const frontPosition = useRef(new Animated.ValueXY()).current;
@@ -152,7 +155,7 @@ const CardStack = ({
         }
         Animated.parallel([Animated.timing(frontPosition, {
             toValue: {
-                x: -420,
+                x: offscreenLeft,
                 y: 0
             },
             duration: 280,
@@ -185,22 +188,11 @@ const CardStack = ({
             toValue: 1,
             duration: 280,
             useNativeDriver: false
-        })]).start(() => {
+        })]).start(({ finished }) => {
+            if (!finished) return;
             const next = [current[1], current[2], current[3], ...current.slice(4)];
             deckRef.current = next;
             setDeck(next);
-            frontPosition.setValue({
-                x: 0,
-                y: 0
-            });
-            rearLeftPosition.setValue(-34);
-            rearRightPosition.setValue(34);
-            rearLeftScale.setValue(0.96);
-            rearRightScale.setValue(0.92);
-            rearLeftRotation.setValue(-5);
-            rearRightRotation.setValue(5);
-            incomingOpacity.setValue(0);
-            transitionRunning.current = false;
         });
     };
     const undo = () => {
@@ -233,7 +225,6 @@ const CardStack = ({
                     setUndoing(false);
                     setUndoOutgoing(null);
                     undoOutgoingOpacity.setValue(1);
-                    transitionRunning.current = false;
                 });
             });
         });
@@ -243,6 +234,9 @@ const CardStack = ({
         deckRef.current = nextDeck;
         dismissedHistory.current = [];
         setDeck(nextDeck);
+    }, [listings]);
+    useLayoutEffect(() => {
+        // Reset after the departing card has left the rendered deck.
         frontPosition.setValue({
             x: 0,
             y: 0
@@ -254,8 +248,8 @@ const CardStack = ({
         rearLeftRotation.setValue(-5);
         rearRightRotation.setValue(5);
         incomingOpacity.setValue(0);
-        transitionRunning.current = false;
-    }, [listings, frontPosition, rearLeftPosition, rearRightPosition, rearLeftScale, rearRightScale, rearLeftRotation, rearRightRotation, incomingOpacity]);
+        if (!undoing) transitionRunning.current = false;
+    }, [deck, undoing, frontPosition, rearLeftPosition, rearRightPosition, rearLeftScale, rearRightScale, rearLeftRotation, rearRightRotation, incomingOpacity]);
     useEffect(() => {
         noRecommendationsOpacity.setValue(0);
         if (!deck[0]) {
@@ -302,7 +296,8 @@ const CardStack = ({
     // tilt the card as it's dragged, like flicking a real card
     const tilt = frontPosition.x.interpolate({
         inputRange: [-200, 0, 200],
-        outputRange: ['-12deg', '0deg', '12deg']
+        outputRange: ['-12deg', '0deg', '12deg'],
+        extrapolate: 'clamp'
     });
     return <View style={home.stack}>
                         {deck.slice(0, 4).map((item, depth) => {
@@ -324,7 +319,7 @@ const CardStack = ({
                     transform: [{
                         translateX: undoing ? undoProgress.interpolate({
                             inputRange: [0, 1],
-                            outputRange: [-420, 0]
+                            outputRange: [offscreenLeft, 0]
                         }) : frontPosition.x
                     }, {
                         translateY: undoing ? 0 : frontPosition.y
@@ -412,7 +407,7 @@ const CardStack = ({
                         <View style={home.stackControls}>
                                 <Text style={home.swipeHint}>swipe left <Ionicons name="arrow-back" size={22} color={colors.maroon} /></Text>
                                 <Pressable style={[home.nextButton, dismissedHistory.current.length === 0 && home.undoDisabled]} onPress={undo} accessibilityLabel="Undo last dismissed recommendation">
-                                        <Ionicons name="arrow-forward" size={25} color={colors.maroon} />
+                                        <Ionicons name="arrow-undo-outline" size={25} color={colors.maroon} />
                                 </Pressable>
                         </View>
                 </View>;
@@ -467,7 +462,7 @@ const Home = () => {
             cancelled = true;
         };
     }, []);
-    return <ImageBackground source={PaperBg} style={home.screen} resizeMode="cover">
+    return <View style={home.screen}>
                         <ScrollView contentContainerStyle={home.content}>
 
                                 {/* greeting on the left, avatar on the right */}
@@ -535,7 +530,7 @@ const Home = () => {
                         </ScrollView>
 
                         <TabBar active="home" />
-                </ImageBackground>;
+                </View>;
 };
 function toFeedListing(listing: RecommendedListing): FeedListing {
     const sellerName = formatSellerName(listing.seller_name);
@@ -557,8 +552,6 @@ const home = StyleSheet.create({
     screen: {
         flex: 1,
         width: '100%',
-        // fill the whole width, parent was squishing us
-        backgroundColor: colors.cream
     },
     content: {
         paddingTop: 48,
@@ -640,6 +633,7 @@ const home = StyleSheet.create({
         marginTop: 24
     },
     sectionTitle: {
+        flexShrink: 1,
         fontSize: 22,
         fontWeight: '700',
         color: colors.ink,
@@ -672,7 +666,7 @@ const home = StyleSheet.create({
     },
     // polaroid cards
     card: {
-        width: 250,
+        width: CARD_WIDTH,
         backgroundColor: colors.white,
         borderRadius: 3,
         padding: 12,
@@ -803,7 +797,7 @@ const home = StyleSheet.create({
         position: 'absolute',
         top: 0,
         left: '50%',
-        marginLeft: -125
+        marginLeft: -CARD_WIDTH / 2
     },
     tape: {
         position: 'absolute',
@@ -860,8 +854,9 @@ const home = StyleSheet.create({
         backgroundColor: colors.maroon
     },
     toggleText: {
-        fontSize: 18,
-        fontFamily: 'Caveat',
+        fontSize: 16,
+        fontFamily: 'Outfit',
+        fontWeight: '600',
         color: colors.ink
     },
     toggleTextActive: {

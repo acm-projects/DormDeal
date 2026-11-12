@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Image } from 'react-native';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Base from '../components/base';
-import { BackButton, PrimaryButton, SecondaryButton } from '../components/design';
+import { BackButton, PrimaryButton } from '../components/design';
 import { colors } from '../../root_styles';
 import { signInWithMicrosoft, signUpWithPassword } from '../../../lib/auth';
 import MicrosoftLogo from '../../../assets/images/microsoft.png';

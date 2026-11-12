@@ -1,4 +1,4 @@
-import { StyleSheet, Image, View, TextInput, TouchableOpacity } from 'react-native';
+import { StyleSheet, Image, View } from 'react-native';
 import Text from './text_styles'
 import message_arrow_2 from '../../../assets/svgs/message_arrow_2.svg'
 

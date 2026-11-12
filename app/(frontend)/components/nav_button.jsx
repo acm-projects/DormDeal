@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, Pressable } from 'react-native';
+import { Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router'
 import styles from '../../root_styles'
 

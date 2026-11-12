@@ -239,7 +239,6 @@ const page = StyleSheet.create({
     screen: {
         flex: 1,
         width: '100%',
-        backgroundColor: colors.cream,
     },
     content: {
         paddingBottom: 140, // room for the button bar
@@ -296,6 +295,7 @@ const page = StyleSheet.create({
     },
     sellerInfo: {
         gap: 2,
+        flexShrink: 1,
     },
     sellerName: {
         fontSize: 16,
@@ -304,12 +304,12 @@ const page = StyleSheet.create({
         fontFamily: 'Outfit',
     },
     verified: {
-        fontSize: 12,
+        fontSize: 14,
         color: colors.muted,
         fontFamily: 'Outfit',
     },
     title: {
-        fontSize: 26,
+        fontSize: 30,
         fontWeight: '700',
         color: colors.ink,
         fontFamily: 'Outfit',
@@ -323,6 +323,7 @@ const page = StyleSheet.create({
     },
     tags: {
         flexDirection: 'row',
+        flexWrap: 'wrap',
         gap: 8,
     },
     tag: {
@@ -335,7 +336,7 @@ const page = StyleSheet.create({
         backgroundColor: colors.maroon,
     },
     tagText: {
-        fontSize: 13,
+        fontSize: 15,
         fontWeight: '600',
         color: colors.ink,
         fontFamily: 'Outfit',
@@ -344,8 +345,8 @@ const page = StyleSheet.create({
         color: colors.white,
     },
     description: {
-        fontSize: 15,
-        lineHeight: 22,
+        fontSize: 17,
+        lineHeight: 25,
         color: colors.ink,
         fontFamily: 'Outfit',
     },
@@ -357,6 +358,7 @@ const page = StyleSheet.create({
     detailRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        gap: 12,
         paddingVertical: 13,
         borderBottomWidth: 1,
         borderBottomColor: colors.blush,
@@ -365,12 +367,14 @@ const page = StyleSheet.create({
         borderBottomWidth: 0, // no line under the last row
     },
     detailLabel: {
-        fontSize: 14,
+        fontSize: 16,
         color: colors.muted,
         fontFamily: 'Outfit',
     },
     detailValue: {
-        fontSize: 14,
+        flexShrink: 1,
+        textAlign: 'right',
+        fontSize: 16,
         fontWeight: '600',
         color: colors.ink,
         fontFamily: 'Outfit',

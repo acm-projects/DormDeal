@@ -1,16 +1,17 @@
-import { useEffect, useState } from 'react';
-import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { createURL } from 'expo-linking';
 import { Ionicons } from '@expo/vector-icons';
-import { Animated, Easing, FlatList, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Animated, Clipboard, Easing, FlatList, Platform, Pressable, Share, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Text from '../components/text_styles';
 import Base from '../components/base';
 import TabBar from '../components/tab_bar';
+import ProfileOptions from '../../../components/profile-options';
 
 const colors = {
     maroon: '#8F0000',
     ink: '#241818',
     muted: '#625757',
-    paper: '#FFFDFB',
     gold: '#F3D83B',
     palePink: '#F4DCDC',
     paleBlue: '#DDE3EE',
@@ -33,6 +34,28 @@ const listings = [
     {title: 'Dorm rug', price: '$25', color: colors.paleTan},
     {title: 'Desk lamp', price: '$15', color: colors.paleBlue},
     {title: 'Laundry basket', price: '$10', color: colors.paleGreen},
+];
+
+const ownOptions = [
+    { id: 'settings', label: 'Edit profile', icon: 'pencil-outline' },
+    { id: 'share', label: 'Share profile', icon: 'share-outline' },
+    { id: 'myListings', label: 'My listings', icon: 'pricetag-outline', count: listings.length },
+    { id: 'saved', label: 'Saved items', icon: 'heart-outline' },
+    { id: 'notifications', label: 'Notifications', icon: 'notifications-outline' },
+    { id: 'privacy', label: 'Privacy & safety', icon: 'shield-checkmark-outline' },
+    { id: 'help', label: 'Help & feedback', icon: 'help-circle-outline' },
+    { id: 'logout', label: 'Log out', icon: 'log-out-outline', danger: true, divider: true },
+];
+
+const otherOptions = [
+    { id: 'message', label: 'Message ' + profile.name.split(' ')[0], icon: 'chatbox-outline' },
+    { id: 'share', label: 'Share profile', icon: 'share-outline' },
+    { id: 'copy', label: 'Copy profile link', icon: 'link-outline' },
+    { id: 'saveSeller', label: 'Save seller', icon: 'heart-outline' },
+    { id: 'listings', label: 'View all listings', icon: 'pricetag-outline', count: listings.length },
+    { id: 'mute', label: 'Mute notifications', icon: 'notifications-off-outline' },
+    { id: 'report', label: 'Report user', icon: 'flag-outline', danger: true, divider: true },
+    { id: 'block', label: 'Block user', icon: 'ban-outline', danger: true },
 ];
 
 const Rating = () => (
@@ -64,9 +87,60 @@ const ListingCard = ({listing, onPress}) => (
 
 const Profile = () => {
     const router = useRouter();
+    const { profile_id: profileId } = useLocalSearchParams();
     const {height} = useWindowDimensions();
-    const [entryDirection] = useState(() => (Math.random() < 0.5 ? 1 : -1));
     const [revealProgress] = useState(() => new Animated.Value(0));
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [anchorTop, setAnchorTop] = useState(null);
+    const [menuNotice, setMenuNotice] = useState('');
+    const moreButton = useRef(null);
+    const closeMenu = useCallback(() => setMenuOpen(false), []);
+    const isOwnProfile = profileId === '1' || profileId === 'me';
+
+    async function selectOption(id) {
+        setMenuNotice('');
+        switch (id) {
+            case 'settings':
+            case 'saved':
+            case 'notifications':
+            case 'privacy':
+            case 'help':
+            case 'logout':
+                closeMenu();
+                router.push('/Settings');
+                return;
+            case 'myListings':
+                closeMenu();
+                router.push('/Listings');
+                return;
+            case 'listings':
+                closeMenu();
+                router.push('/Store');
+                return;
+            case 'message':
+                closeMenu();
+                router.push('/Contacts');
+                return;
+            case 'share':
+            case 'copy':
+                try {
+                    const path = '/Profile/' + encodeURIComponent(String(profileId));
+                    const link = Platform.OS === 'web' ? new URL(path, window.location.origin).href : createURL(path);
+                    if (id === 'share' && Platform.OS !== 'web') await Share.share({ message: link });
+                    else if (id === 'share' && typeof navigator.share === 'function') await navigator.share({ url: link });
+                    else {
+                        if (Platform.OS === 'web') await navigator.clipboard.writeText(link);
+                        else Clipboard.setString(link);
+                        setMenuNotice('Profile link copied.');
+                    }
+                } catch (error) {
+                    if (error?.name !== 'AbortError') setMenuNotice('Could not share or copy this profile link.');
+                }
+                return;
+            default:
+                setMenuNotice('This action is unavailable.');
+        }
+    }
 
     useEffect(() => {
         const reveal = Animated.timing(revealProgress, {
@@ -87,13 +161,13 @@ const Profile = () => {
             {
                 translateY: revealProgress.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [height * entryDirection, 0],
+                    outputRange: [height, 0],
                 }),
             },
             {
                 rotate: revealProgress.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [`${15 * entryDirection}deg`, '0deg'],
+                    outputRange: ['15deg', '0deg'],
                 }),
             },
         ],
@@ -102,9 +176,20 @@ const Profile = () => {
     const listHeader = (
         <View>
             <Pressable
-                style={styles.moreButton}
+                ref={moreButton}
+                style={[styles.moreButton, menuOpen && styles.moreOpen]}
                 accessibilityRole="button"
                 accessibilityLabel="More profile options"
+                accessibilityState={{ expanded: menuOpen }}
+                onPress={() => {
+                    if (menuOpen) {
+                        closeMenu();
+                        return;
+                    }
+                    moreButton.current?.measureInWindow?.((_x, y, _width, buttonHeight) => setAnchorTop(y + buttonHeight + 8));
+                    setMenuNotice('');
+                    setMenuOpen(true);
+                }}
                 hitSlop={10}
             >
                 <Ionicons name="ellipsis-horizontal" size={22} color={colors.maroon} />
@@ -175,6 +260,8 @@ const Profile = () => {
                     }
                 />
             </Animated.View>
+            {menuOpen && <ProfileOptions name={profile.name} options={isOwnProfile ? ownOptions : otherOptions}
+                onSelect={selectOption} onClose={closeMenu} anchorTop={anchorTop} notice={menuNotice} />}
             <TabBar active="profile" />
         </Base>
     );
@@ -183,6 +270,7 @@ const Profile = () => {
 export default Profile;
 
 const styles = StyleSheet.create({
+    moreOpen: { backgroundColor: colors.palePink, borderRadius: 10 },
     base: {
         paddingTop: 8,
         paddingLeft: 8,
@@ -191,7 +279,7 @@ const styles = StyleSheet.create({
     },
     profileSheet: {
         flex: 1,
-        backgroundColor: colors.paper,
+        backgroundColor: colors.white,
         shadowColor: colors.ink,
         shadowOpacity: 0.16,
         shadowRadius: 7,

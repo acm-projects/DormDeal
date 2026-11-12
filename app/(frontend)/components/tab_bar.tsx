@@ -1,8 +1,9 @@
 import { View, Pressable, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../root_styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getTabTransition, navigateWithTransition } from '../../../components/transitions/pageTransitions';
 
 type TabName = 'home' | 'catalog' | 'post' | 'inbox' | 'profile';
 
@@ -16,8 +17,9 @@ const tabs = [
 ] as const;
 
 const TabBar = (props: { active?: TabName }) => {
-    const router = useRouter();
+    const pathname = usePathname();
     const insets = useSafeAreaInsets();
+    const stageBottom = Math.max(82, 58 + Math.max(insets.bottom, 10));
 
     return (
         <View style={bar.wrap}>
@@ -29,7 +31,9 @@ const TabBar = (props: { active?: TabName }) => {
                     return (
                         <View key={tab.name} style={bar.tab}>
                             <Pressable
-                                onPress={() => router.push(tab.href)}
+                                onPress={() => {
+                                    void navigateWithTransition({ pathname, stageBottom }, tab.href, getTabTransition(tab.href));
+                                }}
                                 style={isPost ? bar.postVisual : bar.tabButton}
                                 accessibilityLabel={tab.name}
                             >

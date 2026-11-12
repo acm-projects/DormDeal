@@ -1,5 +1,4 @@
 import { View, Image, StyleSheet } from 'react-native';
-import { Header1 } from '../components/text_styles'
 import TextInput from '../components/text_input'
 
 const Account_Text_Input = ({img_source, placeholder, style={}, children = []}) => {
