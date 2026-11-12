@@ -109,7 +109,7 @@ const landingStyles = StyleSheet.create({
     },
     tagWrap: {
         position: 'absolute',
-        top: 90,
+        top: 82,
         left: '58%',
         marginLeft: -25,
         zIndex: 10,

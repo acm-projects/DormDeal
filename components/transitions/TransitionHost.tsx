@@ -1,7 +1,7 @@
 import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { usePathname, useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
-import { d, notifyTransitionComplete, registerTransitionHost, type TransitionId, type TransitionSource } from './pageTransitions';
+import { d, registerTransitionHost, type TransitionId, type TransitionSource } from './pageTransitions';
 import { captureScreen, releaseScreen, TransitionSurface } from './transitionSurface';
 import type { Snapshot, TransitionScene } from './transitionSurface.types';
 
@@ -99,7 +99,6 @@ export function TransitionHost({ children, fontsReady }: { children: ReactNode; 
             }
             if (outgoing !== undefined) releaseScreen(outgoing);
             if (incoming !== undefined) releaseScreen(incoming);
-            if (id && !current.cancelled) notifyTransitionComplete(id);
         }
     }, [fontsReady, router, size]);
 

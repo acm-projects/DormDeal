@@ -23,7 +23,14 @@ const SignUp = () => {
         setMessage('');
         try {
             const result = await signUpWithPassword(name.trim(), email.trim(), password);
-            if (result.session) router.replace('/');else setMessage('Check your email to confirm your account, then log in.');
+            const createdAccount = (result.user?.identities?.length ?? 0) > 0;
+            if (!createdAccount) {
+                setMessage('An account already exists for that email. Please log in instead.');
+            } else if (result.session) {
+                router.replace('/Joined');
+            } else {
+                setMessage('Check your email to confirm your account, then log in.');
+            }
         } catch (error) {
             setMessage(error instanceof Error ? error.message : 'Unable to sign up. Please try again.');
         } finally {
@@ -54,7 +61,7 @@ const Field = ({
 const microsoftStyle = StyleSheet.create({
     button: {
         height: 52,
-        borderRadius: 999,
+        borderRadius: 4,
         backgroundColor: colors.white,
         borderColor: '#E5DDDA',
         borderWidth: 2,
