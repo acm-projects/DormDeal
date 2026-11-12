@@ -1,13 +1,16 @@
-import { useCallback, useState } from 'react';
-import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { Header1 } from '../components/text_styles'
-import Text from '../components/text_styles'
+import { useCallback, useRef, useState } from 'react';
+import { AccessibilityInfo, Animated, Platform, Text as NativeText, View, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Text, { Header1 } from '../components/text_styles';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { colors } from '../../root_styles';
 import TabBar from '../components/tab_bar';
 import { supabase } from '../../../lib/supabase';
 import Search_Bar from '../components/search_bar';
 import Svg, { Path } from 'react-native-svg';
+import OptionsOverlay from '../../../components/options-overlay';
+import { hideConversations, readHiddenConversations } from '../../../components/inbox-removal';
 
 type Chat = {
     id: number;
@@ -40,11 +43,14 @@ const get_initials = (name: string) =>
         .join('') || '?';
 
 // one row in the chat list
-const ChatRow = (props: { chat: Chat; onPress: () => void }) => {
+const ChatRow = (props: { chat: Chat; onPress: () => void; editing: boolean; selected: boolean }) => {
     const c = props.chat;
 
     return (
-        <Pressable style={contacts.row} onPress={props.onPress}>
+        <Pressable style={[contacts.row, props.selected && contacts.selectedRow]} onPress={props.onPress}
+            accessibilityRole={props.editing ? 'checkbox' : 'button'}
+            accessibilityState={props.editing ? { checked: props.selected } : undefined}
+            accessibilityLabel={props.editing ? c.name + ', ' + c.item : undefined}>
             <Svg style={contacts.paperclip} width={30} height={43} viewBox="0 0 30 43" accessibilityLabel="Pinned message">
                 <Path
                     d="M7 17.5 3.8 14a5 5 0 0 1 7.4-6.8l14.2 15.4a7 7 0 0 1-10.3 9.5L4.3 17.4a4.8 4.8 0 0 1 7-6.5l12.2 13.2"
@@ -55,6 +61,9 @@ const ChatRow = (props: { chat: Chat; onPress: () => void }) => {
                     strokeLinejoin="round"
                 />
             </Svg>
+            {props.editing && <View style={[contacts.checkbox, props.selected && contacts.checked]}>
+                {props.selected && <Ionicons name="checkmark" color={colors.white} size={18} />}
+            </View>}
             <View style={contacts.rowAvatar}>
                 <Text style={contacts.rowInitials}>{c.initials}</Text>
             </View>
@@ -64,13 +73,13 @@ const ChatRow = (props: { chat: Chat; onPress: () => void }) => {
                     <Text style={[contacts.rowName, c.unread && contacts.bold]}>{c.name}</Text>
                     {c.unread && <View style={contacts.unreadDot} />}
                 </View>
-                <Text style={contacts.rowItem}>re: {c.item}</Text>
-                <Text
+                <NativeText style={contacts.rowItem} numberOfLines={1}>re: {c.item}</NativeText>
+                <NativeText
                     style={[contacts.rowMessage, c.unread && contacts.rowMessageUnread]}
                     numberOfLines={1}
                 >
                     {c.lastMessage}
-                </Text>
+                </NativeText>
             </View>
 
             <Text style={contacts.rowTime}>{c.time}</Text>
@@ -80,16 +89,84 @@ const ChatRow = (props: { chat: Chat; onPress: () => void }) => {
 
 const Contacts = () => {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const [query, setQuery] = useState(''); // what's typed in the search bar
     const [chats, setChats] = useState<Chat[]>([]);
     const [loading, setLoading] = useState(true);
+    const [account, setAccount] = useState<string>();
+    const [hidden, setHidden] = useState<string[]>([]);
+    const [editing, setEditing] = useState(false);
+    const [selected, setSelected] = useState<number[]>([]);
+    const [confirm, setConfirm] = useState(false);
+    const [removing, setRemoving] = useState<number[]>([]);
+    const [notice, setNotice] = useState('');
+    const [undoAvailable, setUndoAvailable] = useState(false);
+    const [motion] = useState(() => new Animated.Value(0));
+    const pending = useRef<{ account: string; ids: number[]; timer?: ReturnType<typeof setTimeout> } | null>(null);
+    const dismissConfirm = useCallback(() => setConfirm(false), []);
+
+    const flush = useCallback(() => {
+        const deletion = pending.current;
+        if (!deletion) return;
+        pending.current = null;
+        clearTimeout(deletion.timer);
+        setUndoAvailable(false);
+        try {
+            const next = hideConversations(deletion.account, deletion.ids.map(String));
+            setHidden(next);
+            setNotice('');
+        } catch {
+            setHidden((current) => current.filter((id) => !deletion.ids.some((item) => String(item) === id)));
+            setNotice('Could not remove conversations. They have been restored.');
+        }
+    }, []);
+
+    function undo() {
+        const deletion = pending.current;
+        if (!deletion) return;
+        pending.current = null;
+        clearTimeout(deletion.timer);
+        setHidden((current) => current.filter((id) => !deletion.ids.some((item) => String(item) === id)));
+        setUndoAvailable(false);
+        setNotice('');
+    }
+
+    function removeSelected() {
+        if (!account || !selected.length || removing.length) return;
+        flush();
+        const deletion = { account, ids: selected, timer: undefined as ReturnType<typeof setTimeout> | undefined };
+        pending.current = deletion;
+        setConfirm(false);
+        setRemoving(selected);
+        motion.setValue(0);
+        const finish = () => {
+            if (pending.current !== deletion) return;
+            setHidden((current) => [...current, ...deletion.ids.map(String)]);
+            setRemoving([]);
+            setSelected([]);
+            setEditing(false);
+            setNotice(deletion.ids.length === 1 ? 'Conversation removed' : 'Conversations removed');
+            setUndoAvailable(true);
+            deletion.timer = setTimeout(() => flush(), 5000);
+        };
+        void AccessibilityInfo.isReduceMotionEnabled().then((reduced) => {
+            if (pending.current !== deletion) return;
+            if (reduced) finish();
+            else Animated.timing(motion, { toValue: 1, duration: 400, useNativeDriver: Platform.OS !== 'web' })
+                .start(({ finished }) => { if (finished) finish(); });
+        }, finish);
+    }
 
     // load real conversations every time this screen comes into focus
     useFocusEffect(
         useCallback(() => {
+            let active = true;
             const load = async () => {
                 const { data: auth } = await supabase.auth.getUser();
                 const me = auth.user?.id;
+                if (!active) return;
+                setAccount(me);
+                setHidden(me ? readHiddenConversations(me) : []);
 
                 const { data: convos, error } = await supabase
                     .from('conversations')
@@ -97,10 +174,12 @@ const Contacts = () => {
                     .order('last_message_at', { ascending: false, nullsFirst: false });
 
                 if (error || !convos) {
+                    if (!active) return;
                     console.error(error);
                     setLoading(false);
                     return;
                 }
+                if (!active) return;
 
                 const rows: any[] = convos;
                 if (rows.length === 0) {
@@ -121,6 +200,7 @@ const Contacts = () => {
                         .in('conversation_id', convo_ids)
                         .order('sent_at', { ascending: false }),
                 ]);
+                if (!active) return;
 
                 const names = new Map((users ?? []).map((u: any) => [u.user_id, u.name]));
 
@@ -149,17 +229,27 @@ const Contacts = () => {
                 setLoading(false);
             };
             load();
-        }, [])
+            return () => {
+                active = false;
+                flush();
+                motion.stopAnimation();
+                setRemoving([]);
+                setSelected([]);
+                setEditing(false);
+                setConfirm(false);
+            };
+        }, [flush, motion])
     );
 
     // only chats whose name matches the search
-    const shown = chats.filter((c) =>
+    const inbox = chats.filter((chat) => !hidden.includes(String(chat.id)));
+    const shown = inbox.filter((c) =>
         c.name.toLowerCase().includes(query.toLowerCase())
     );
 
     return (
         <View style={contacts.screen}>
-            <ScrollView contentContainerStyle={contacts.content}>
+            <ScrollView contentContainerStyle={contacts.content} keyboardShouldPersistTaps="handled">
 
                 <View style={contacts.titleBlock}>
                     <Header1 style={contacts.title}>messages</Header1>
@@ -184,15 +274,17 @@ const Contacts = () => {
                         returnKeyType="search"
                         accessibilityLabel="Search messages"
                     />
-                    <Pressable style={contacts.editButton}>
-                        <Text style={contacts.editText}>Edit</Text>
+                    <Pressable accessibilityRole="button" style={[contacts.editButton, editing && contacts.editActive]} disabled={removing.length > 0}
+                        onPress={() => { setEditing(!editing); setSelected([]); }}>
+                        <Text style={[contacts.editText, editing && contacts.onMaroon]}>{editing ? 'Done' : 'Edit'}</Text>
                     </Pressable>
                 </View>
 
                 {/* recent people, scroll sideways */}
+                <View style={editing && contacts.recentMuted} pointerEvents={editing ? 'none' : 'auto'} aria-hidden={editing}>
                 <Text style={contacts.recentLabel}>recent</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={contacts.recentRow}>
-                    {chats.slice(0, 4).map((c, index) => (
+                    {inbox.slice(0, 4).map((c, index) => (
                         <Pressable key={c.id} style={contacts.recentPerson} onPress={() => router.push(`/Messages/${c.id}`)}>
                             <View style={contacts.recentAvatarWrap}>
                                 <View style={contacts.recentAvatar}>
@@ -200,15 +292,25 @@ const Contacts = () => {
                                 </View>
                                 {index === 0 && <View style={contacts.recentNotification} />}
                             </View>
-                            <Text style={contacts.recentName} numberOfLines={1}>{c.name.split(' ')[0]}</Text>
+                            <NativeText style={contacts.recentName} numberOfLines={1}>{c.name.split(' ')[0]}</NativeText>
                         </Pressable>
                     ))}
                 </ScrollView>
+                </View>
 
                 {/* chat list */}
                 <View style={contacts.list}>
                     {shown.map((c) => (
-                        <ChatRow key={c.id} chat={c} onPress={() => router.push(`/Messages/${c.id}`)} />
+                        <Animated.View key={c.id} style={removing.includes(c.id) && {
+                            opacity: motion.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+                            transform: [{ translateX: motion.interpolate({ inputRange: [0, 1], outputRange: [0, 180] }) }],
+                        }}>
+                            <ChatRow chat={c} editing={editing} selected={selected.includes(c.id)} onPress={() => {
+                                if (removing.length) return;
+                                if (!editing) router.push(`/Messages/${c.id}`);
+                                else setSelected((current) => current.includes(c.id) ? current.filter((id) => id !== c.id) : [...current, c.id]);
+                            }} />
+                        </Animated.View>
                     ))}
                 </View>
 
@@ -219,18 +321,62 @@ const Contacts = () => {
                         : shown.length === 0
                         ? query
                             ? `No one named "${query}"`
-                            : 'No conversations yet'
+                            : 'Hooray! No more messages!'
                         : 'Hooray! No more messages!'}
                 </Text>
 
             </ScrollView>
 
-            <TabBar active="inbox" />
+            {!!notice && <View style={[contacts.toast, { bottom: Math.max(insets.bottom, 10) + 76 }]}>
+                <NativeText accessibilityRole="alert" style={contacts.toastText}>{notice}</NativeText>
+                <Pressable accessibilityRole="button" onPress={undoAvailable ? undo : () => setNotice('')}>
+                    <NativeText style={contacts.toastAction}>{undoAvailable ? 'Undo' : 'Dismiss'}</NativeText>
+                </Pressable>
+            </View>}
+            {editing ? <View style={[contacts.editBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+                <View style={contacts.editSummary}>
+                    <NativeText style={contacts.selection}>{selected.length} selected</NativeText>
+                    <NativeText style={contacts.onMaroon}>Deleting only removes the chat from this inbox</NativeText>
+                </View>
+                <Pressable accessibilityRole="button" disabled={!selected.length || removing.length > 0}
+                    onPress={() => setConfirm(true)} style={[contacts.deleteButton, (!selected.length || removing.length > 0) && contacts.recentMuted]}>
+                    <Ionicons name="trash-outline" size={19} color={colors.maroon} />
+                    <NativeText style={contacts.deleteText}>Delete</NativeText>
+                </Pressable>
+            </View> : <TabBar active="inbox" />}
+            {confirm && <OptionsOverlay anchored title="Delete conversations" onClose={dismissConfirm}>
+                {(close: () => void) => <View style={contacts.confirmCard}>
+                    <NativeText style={contacts.confirmTitle}>Delete {selected.length} {selected.length === 1 ? 'conversation' : 'conversations'}?</NativeText>
+                    <NativeText style={contacts.confirmCopy}>They’ll leave your inbox on this device. Your listings stay up.</NativeText>
+                    <View style={contacts.confirmActions}>
+                        <Pressable accessibilityRole="button" onPress={close} style={contacts.deleteButton}><NativeText style={contacts.deleteText}>Keep them</NativeText></Pressable>
+                        <Pressable accessibilityRole="button" onPress={removeSelected} style={[contacts.deleteButton, contacts.editActive]}><NativeText style={[contacts.deleteText, contacts.onMaroon]}>Delete</NativeText></Pressable>
+                    </View>
+                </View>}
+            </OptionsOverlay>}
         </View>
     );
 };
 
 const contacts = StyleSheet.create({
+    selectedRow: { backgroundColor: '#F9E8E8', borderColor: colors.maroon, borderWidth: 2 },
+    checkbox: { width: 26, height: 26, flexShrink: 0, borderWidth: 2, borderColor: colors.maroon, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
+    checked: { backgroundColor: colors.maroon },
+    editActive: { backgroundColor: colors.maroon },
+    onMaroon: { color: colors.white },
+    recentMuted: { opacity: 0.45 },
+    editBar: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.maroon, padding: 16 },
+    editSummary: { flex: 1 },
+    selection: { fontFamily: 'Caveat', fontWeight: '700', fontSize: 26, color: colors.white },
+    deleteButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.goldLight, paddingHorizontal: 12 },
+    deleteText: { fontFamily: 'Outfit', fontWeight: '800', color: colors.maroon, fontSize: 15 },
+    toast: { position: 'absolute', zIndex: 101, left: 20, right: 20, padding: 12, borderRadius: 8, backgroundColor: colors.maroonDark, flexDirection: 'row', alignItems: 'center', gap: 12 },
+    toastText: { flex: 1, color: colors.white, fontFamily: 'Outfit' },
+    toastAction: { color: colors.goldLight, fontFamily: 'Outfit', fontWeight: '800', padding: 6 },
+    confirmCard: { backgroundColor: colors.white, padding: 16, borderRadius: 12, gap: 12 },
+    confirmTitle: { fontFamily: 'Outfit', fontWeight: '800', fontSize: 21, color: colors.maroon },
+    confirmCopy: { fontFamily: 'Outfit', color: colors.ink, fontSize: 15 },
+    confirmActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     screen: {
         flex: 1,
         width: '100%',
