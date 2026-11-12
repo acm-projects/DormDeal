@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     },
     primary: {
         height: 52,
-        borderRadius: 999,
+        borderRadius: 6,
         backgroundColor: colors.maroon,
         alignItems: 'center',
         justifyContent: 'center',
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     },
     microsoft: {
         height: 52,
-        borderRadius: 999,
+        borderRadius: 6,
         backgroundColor: colors.white,
         borderColor: '#E5DDDA',
         borderWidth: 2,

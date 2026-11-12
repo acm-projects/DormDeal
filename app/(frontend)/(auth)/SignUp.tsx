@@ -54,7 +54,7 @@ const Field = ({
 const microsoftStyle = StyleSheet.create({
     button: {
         height: 52,
-        borderRadius: 999,
+        borderRadius: 4,
         backgroundColor: colors.white,
         borderColor: '#E5DDDA',
         borderWidth: 2,
