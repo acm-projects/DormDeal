@@ -1,10 +1,9 @@
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Base from '../../components/base';
 import { colors } from '../../../root_styles';
-import { isTransitionPending, subscribeToTransitionComplete } from '../../../../components/transitions/pageTransitions';
 
 const CONFETTI = [
     { left: '7%', color: '#F7D95F', delay: 0, duration: 4100, drift: 34, turn: 420 },
@@ -35,7 +34,6 @@ const iconPopStyle = (progress, startX, startY, rotation) => ({
 
 export default function Confirmation() {
     const router = useRouter();
-    const [canRevealSuccess, setCanRevealSuccess] = useState(() => !isTransitionPending('stamp'));
     const checkProgress = useRef(new Animated.Value(0)).current;
     const detailsIn = useRef(new Animated.Value(0)).current;
     const iconPops = useRef([
@@ -46,14 +44,6 @@ export default function Confirmation() {
     const confettiFalls = useRef(CONFETTI.map(() => new Animated.Value(0))).current;
 
     useEffect(() => {
-        if (canRevealSuccess) return undefined;
-        return subscribeToTransitionComplete((id) => {
-            if (id === 'stamp') setCanRevealSuccess(true);
-        });
-    }, [canRevealSuccess]);
-
-    useEffect(() => {
-        if (!canRevealSuccess) return undefined;
         const primaryAnimation = Animated.parallel([
             Animated.timing(checkProgress, {
                 toValue: 1,
@@ -91,7 +81,7 @@ export default function Confirmation() {
             primaryAnimation.stop();
             detailsAnimation.stop();
         };
-    }, [canRevealSuccess, checkProgress, confettiFalls, detailsIn, iconPops]);
+    }, [checkProgress, confettiFalls, detailsIn, iconPops]);
 
     const detailStyle = {
         opacity: detailsIn,

@@ -7,7 +7,6 @@ import TabBar from '../components/tab_bar';
 import { BackButton, PageTitle, Squiggle } from '../components/design';
 import { colors } from '../../root_styles';
 import { supabase } from '../../../lib/supabase';
-import { getDoorTransitionEnabled, setDoorTransitionEnabled } from '../../../components/transitions/pageTransitions';
 const groups = [{
     title: 'Marketplace & Orders',
     rows: [['Saved Listings', 'heart'], ['Order History', 'receipt'], ['Purchase Notifications', 'notifications'], ['Payment Methods', 'card'], ['Recommendation quiz', 'sparkles']]
@@ -174,7 +173,6 @@ const Settings = () => {
     const [saved, setSaved] = useState(false);
     const [detail, setDetail] = useState<string | null>(null);
     const [logoutVisible, setLogoutVisible] = useState(false);
-    const [doorTransitions, setDoorTransitions] = useState(getDoorTransitionEnabled);
     if (saved) return <SavedListings onBack={() => setSaved(false)} />;
     if (detail) return <DetailSettings title={detail} onBack={() => setDetail(null)} />;
     return <Base style={{
@@ -189,14 +187,6 @@ const Settings = () => {
                         }} style={[styles.settingRow, index > 0 && styles.divider]}><View style={[styles.iconTile, {
                             backgroundColor: [colors.tileRed, colors.mustard, colors.sage, colors.maroon][index % 4]
                         }]}><Ionicons name={icon as any} size={24} color={colors.white} /></View><Text style={styles.rowLabel}>{label}</Text><Ionicons name="chevron-forward" size={28} color={colors.mutedLight} /></Pressable>)}</View></View>)}
-                <View style={styles.settingsCard}>
-                    <SettingRow label="Enable Door Transition">
-                        <Toggle value={doorTransitions} onChange={(enabled) => {
-                            setDoorTransitionEnabled(enabled);
-                            setDoorTransitions(enabled);
-                        }} />
-                    </SettingRow>
-                </View>
                 <Pressable style={styles.logoutButton} onPress={() => setLogoutVisible(true)}><Ionicons name="log-out-outline" size={22} color={colors.white} /><Text style={styles.logoutText}>Log out</Text></Pressable>
         </ScrollView><OptionSheet visible={logoutVisible} title="Log out of DormDeal?" options={['Cancel', 'Log out']} selected={-1} onClose={() => setLogoutVisible(false)} onSelect={async index => {
             if (index === 1) {
