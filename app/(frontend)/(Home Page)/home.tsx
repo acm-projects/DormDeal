@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Text, View, ImageBackground, StyleSheet, ScrollView, Pressable, Animated, PanResponder, ActivityIndicator, useWindowDimensions } from 'react-native';
+import { Text, View, StyleSheet, ScrollView, Pressable, Animated, PanResponder, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
@@ -8,7 +8,6 @@ import TabBar from '../components/tab_bar';
 import Calendar from '../components/calendar';
 import { items } from '../../../data/items';
 import { formatCategory, formatListingPrice, formatSellerName, getRecommendations, recordListingInteraction, RecommendedListing } from '../../../lib/recommendations';
-import PaperBg from '../../../assets/images/paper_bg.png';
 
 // what one pickup looks like
 type Pickup = {
@@ -408,7 +407,7 @@ const CardStack = ({
                         <View style={home.stackControls}>
                                 <Text style={home.swipeHint}>swipe left <Ionicons name="arrow-back" size={22} color={colors.maroon} /></Text>
                                 <Pressable style={[home.nextButton, dismissedHistory.current.length === 0 && home.undoDisabled]} onPress={undo} accessibilityLabel="Undo last dismissed recommendation">
-                                        <Ionicons name="arrow-forward" size={25} color={colors.maroon} />
+                                        <Ionicons name="arrow-undo-outline" size={25} color={colors.maroon} />
                                 </Pressable>
                         </View>
                 </View>;
@@ -463,7 +462,7 @@ const Home = () => {
             cancelled = true;
         };
     }, []);
-    return <ImageBackground source={PaperBg} style={home.screen} resizeMode="cover">
+    return <View style={home.screen}>
                         <ScrollView contentContainerStyle={home.content}>
 
                                 {/* greeting on the left, avatar on the right */}
@@ -531,7 +530,7 @@ const Home = () => {
                         </ScrollView>
 
                         <TabBar active="home" />
-                </ImageBackground>;
+                </View>;
 };
 function toFeedListing(listing: RecommendedListing): FeedListing {
     const sellerName = formatSellerName(listing.seller_name);
@@ -553,8 +552,6 @@ const home = StyleSheet.create({
     screen: {
         flex: 1,
         width: '100%',
-        // fill the whole width, parent was squishing us
-        backgroundColor: colors.cream
     },
     content: {
         paddingTop: 48,
@@ -636,6 +633,7 @@ const home = StyleSheet.create({
         marginTop: 24
     },
     sectionTitle: {
+        flexShrink: 1,
         fontSize: 22,
         fontWeight: '700',
         color: colors.ink,
@@ -856,8 +854,9 @@ const home = StyleSheet.create({
         backgroundColor: colors.maroon
     },
     toggleText: {
-        fontSize: 18,
-        fontFamily: 'Caveat',
+        fontSize: 16,
+        fontFamily: 'Outfit',
+        fontWeight: '600',
         color: colors.ink
     },
     toggleTextActive: {

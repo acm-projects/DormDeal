@@ -1,10 +1,9 @@
-import { Animated, ImageBackground, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import Svg, { Circle, ClipPath, Defs, G, Path, Text as SvgText } from 'react-native-svg';
 import Base from '../components/base';
 import { colors } from '../../root_styles';
-import PaperBackground from '../../../assets/images/paper_bg.png';
 export default function Landing() {
     const router = useRouter();
     const {
@@ -41,7 +40,7 @@ export default function Landing() {
         inputRange: [0, 1],
         outputRange: ['-5deg', '5deg']
     });
-    return <ImageBackground source={PaperBackground} resizeMode="cover" style={landingStyles.background}><Base style={landingStyles.base}><View style={landingStyles.screen}>
+    return <Base style={landingStyles.base}><View style={landingStyles.screen}>
         <View style={landingStyles.brand}><View style={landingStyles.hanger} /><Animated.View style={[landingStyles.tagWrap, {
                         transform: [{
                             rotate: tagRotation
@@ -50,7 +49,7 @@ export default function Landing() {
         <EarthIllustration orbit={spin} scale={globeScale} />
         <Text style={landingStyles.tagline}>Marketplace for students,{"\n"}by <Text style={landingStyles.hand}>students.</Text></Text>
         <View style={landingStyles.buttons}><Pressable accessibilityLabel="Log in" onPress={() => router.push('/Login')} style={landingStyles.login}><Text style={landingStyles.loginText}>Log in</Text></Pressable><Pressable accessibilityLabel="Sign up" onPress={() => router.push('/SignUp')} style={landingStyles.signUp}><Text style={landingStyles.signUpText}>Sign up</Text></Pressable></View><Text style={landingStyles.caption}>Join with your school email. Students only.</Text>
-    </View></Base></ImageBackground>;
+    </View></Base>;
     /* return <Base style={styles.base}><View style={styles.screen}>
         <View style={styles.brand} accessibilityLabel="DormDeal"><View style={styles.string}/><View style={styles.tag}><Text style={styles.tagText}>Deal</Text></View><Text style={styles.word}>Dorm</Text><View style={styles.squiggle}/></View>
         <View style={styles.people}><Text>○</Text><Text>○</Text><Text>○</Text><Text>○</Text></View>
@@ -105,11 +104,7 @@ function EarthIllustration({
         }]}><Svg width={426} height={424} viewBox="-48 -48 426 424" style={landingStyles.earthCanvas} overflow="visible"><Defs><ClipPath id="earthClip"><Circle cx={165} cy={164} r={112} /></ClipPath></Defs><G clipPath="url(#earthClip)"><Circle cx={165} cy={164} r={112} fill="#CFE3F0" /><Path d="M58 114 C85 75 124 83 130 116 C138 147 105 168 78 154 C60 145 52 130 58 114 Z" fill="#8DBF8B" stroke={colors.ink} strokeWidth={3} /><Path d="M173 112 C199 90 247 105 256 139 C263 174 235 200 207 195 C181 190 164 164 167 140 Z" fill="#8DBF8B" stroke={colors.ink} strokeWidth={3} /><Path d="M142 216 C174 202 213 222 209 249 C203 273 169 282 147 266 C129 253 124 231 142 216 Z" fill="#8DBF8B" stroke={colors.ink} strokeWidth={3} /></G><Circle cx={165} cy={164} r={112} fill="none" stroke={colors.ink} strokeWidth={4} /><Student x={165} y={52} angle={0} /><Student x={262} y={108} angle={60} /><Student x={262} y={220} angle={120} /><Student x={165} y={276} angle={180} /><Student x={68} y={220} angle={240} /><Student x={68} y={108} angle={300} /></Svg></Animated.View></View>;
 }
 const landingStyles = StyleSheet.create({
-    background: {
-        flex: 1
-    },
     base: {
-        backgroundColor: 'transparent',
         paddingHorizontal: 0
     },
     screen: {

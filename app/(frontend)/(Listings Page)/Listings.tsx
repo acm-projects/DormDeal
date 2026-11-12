@@ -169,9 +169,13 @@ const Listings = () => {
 };
 const styles = StyleSheet.create({
     screen: {
+        paddingLeft: 0,
+        paddingRight: 0,
         paddingBottom: 0
     },
     content: {
+        // Keep the side gutters inside the scroll viewport so shadows can extend into them.
+        paddingHorizontal: 20,
         paddingTop: 8,
         paddingBottom: 130,
         gap: 14

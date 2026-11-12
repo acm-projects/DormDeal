@@ -10,7 +10,6 @@ const colors = {
     maroon: '#8F0000',
     ink: '#241818',
     muted: '#625757',
-    paper: '#FFFDFB',
     gold: '#F3D83B',
     palePink: '#F4DCDC',
     paleBlue: '#DDE3EE',
@@ -65,7 +64,6 @@ const ListingCard = ({listing, onPress}) => (
 const Profile = () => {
     const router = useRouter();
     const {height} = useWindowDimensions();
-    const [entryDirection] = useState(() => (Math.random() < 0.5 ? 1 : -1));
     const [revealProgress] = useState(() => new Animated.Value(0));
 
     useEffect(() => {
@@ -87,13 +85,13 @@ const Profile = () => {
             {
                 translateY: revealProgress.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [height * entryDirection, 0],
+                    outputRange: [height, 0],
                 }),
             },
             {
                 rotate: revealProgress.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [`${15 * entryDirection}deg`, '0deg'],
+                    outputRange: ['15deg', '0deg'],
                 }),
             },
         ],
@@ -191,7 +189,7 @@ const styles = StyleSheet.create({
     },
     profileSheet: {
         flex: 1,
-        backgroundColor: colors.paper,
+        backgroundColor: colors.white,
         shadowColor: colors.ink,
         shadowOpacity: 0.16,
         shadowRadius: 7,

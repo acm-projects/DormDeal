@@ -1,7 +1,11 @@
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { useFonts } from 'expo-font';
 import { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import PaperBackground from '../components/paper-background';
 import { supabase } from '../lib/supabase';
+import { colors } from './root_styles';
+
 const LANDING_ROUTE = '/Landing';
 const PUBLIC_PAGES = ['login', 'signup', 'sign_up', 'sign-up', 'landing', 'resetpassword'];
 const LoadFonts = () => {
@@ -39,7 +43,19 @@ const RootLayout = () => {
             router.replace(LANDING_ROUTE);
         }
     }, [checked, signedIn, segments, router]);
-    if (!checked) return null;
-    return <Slot />;
+    return (
+        <View style={styles.screen}>
+            <PaperBackground />
+            {checked && <Slot />}
+        </View>
+    );
 };
+
+const styles = StyleSheet.create({
+    screen: {
+        flex: 1,
+        backgroundColor: colors.appBg,
+    },
+});
+
 export default RootLayout;

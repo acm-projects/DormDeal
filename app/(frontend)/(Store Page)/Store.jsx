@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router'
-import { ActivityIndicator, Alert, Animated, Dimensions, FlatList, Image, LayoutAnimation, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, Dimensions, FlatList, Image, LayoutAnimation, Pressable, ScrollView, StyleSheet, Text as NativeText, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
 import { colors } from '../../root_styles';
 import { Header1 } from '../components/text_styles';
 import Text from '../components/text_styles';
@@ -384,16 +383,14 @@ const Listing_Card = (props) => {
                 </Button>
             </View>
             <View style={styles.cardInfo}>
-                <View style={styles.cardLeft}>
-                    <Text style={styles.cardTitle} numberOfLines={2}>{props.title}</Text>
-                    <View style={styles.sellerRow}>
-                        <View style={styles.sellerDot}>
-                            <Text style={styles.sellerInitials}>{props.initials}</Text>
-                        </View>
-                        <Text style={styles.sellerName} numberOfLines={1} ellipsizeMode="tail">{props.seller}</Text>
+                <NativeText style={styles.cardTitle} numberOfLines={2}>{props.title}</NativeText>
+                <View style={styles.sellerRow}>
+                    <View style={styles.sellerDot}>
+                        <Text style={styles.sellerInitials}>{props.initials}</Text>
                     </View>
+                    <NativeText style={styles.sellerName} numberOfLines={1}>{props.seller}</NativeText>
                 </View>
-                <View style={styles.cardRight}>
+                <View style={styles.priceRow}>
                     <Text style={styles.priceLabel}>Price</Text>
                     <Text style={styles.price}>{props.price}</Text>
                 </View>
@@ -608,17 +605,6 @@ const Store = () => {
 
     return (
         <Base>
-            <View style={styles.board_background} pointerEvents="none">
-                <Svg width="100%" height="100%">
-                    <Defs>
-                        <Pattern id="board-dots" x="0" y="0" width="16" height="16" patternUnits="userSpaceOnUse">
-                            <Circle cx="8" cy="8" r="1.5" fill="#a9865d" opacity="0.7" />
-                        </Pattern>
-                    </Defs>
-                    <Rect width="100%" height="100%" fill="#c7a77d" />
-                    <Rect width="100%" height="100%" fill="url(#board-dots)" />
-                </Svg>
-            </View>
             <View style={styles.catalog_panel}>
                 <View style={styles.catalog_pin} />
                 <View style={styles.catalog_pin_secondary} />
@@ -686,10 +672,10 @@ const Store = () => {
                             >
                                 <Ionicons name="search" size={17} color={colors.muted} />
                                 <View style={styles.search_suggestion_text}>
-                                    <Text style={styles.search_suggestion_title} numberOfLines={1}>{listing.title}</Text>
-                                    <Text style={styles.search_suggestion_category} numberOfLines={1}>
+                                    <NativeText style={styles.search_suggestion_title} numberOfLines={1}>{listing.title}</NativeText>
+                                    <NativeText style={styles.search_suggestion_category} numberOfLines={1}>
                                         {formatCategory(listing.category)} · {formatListingPrice(listing.price)}
-                                    </Text>
+                                    </NativeText>
                                 </View>
                             </Pressable>
                         ))}
@@ -797,10 +783,6 @@ const Store = () => {
 export default Store
 
 const styles = StyleSheet.create({
-    board_background: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: '#c7a77d',
-    },
     catalog_panel: {
         position: 'relative',
         backgroundColor: colors.white,
@@ -988,14 +970,14 @@ const styles = StyleSheet.create({
     search_suggestion_title: {
         color: colors.ink,
         fontFamily: 'Outfit',
-        fontSize: 15,
+        fontSize: 17,
         fontWeight: '600',
     },
     search_suggestion_category: {
         marginTop: 2,
         color: colors.muted,
         fontFamily: 'Outfit',
-        fontSize: 12,
+        fontSize: 14,
     },
     filter_container: {
         flexDirection: 'row',
@@ -1319,24 +1301,18 @@ const styles = StyleSheet.create({
         borderRadius: 0,
     },
     cardInfo: {
-        position: 'relative',
-        minHeight: 76,
-        paddingHorizontal: 4,
-        paddingTop: 16,
-        paddingBottom: 8,
-    },
-    cardLeft: {
-        width: '100%',
         gap: 6,
+        paddingHorizontal: 4,
+        paddingTop: 12,
+        paddingBottom: 4,
     },
     cardTitle: {
         textAlign: 'left',
-        paddingRight: 72,
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: '600',
         color: colors.ink,
-        fontFamily: 'Caveat',
-        lineHeight: 20,
+        fontFamily: 'Outfit',
+        lineHeight: 24,
     },
     sellerRow: {
         flexDirection: 'row',
@@ -1355,7 +1331,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     sellerInitials: {
-        fontSize: 9,
+        fontSize: 11,
         fontWeight: '700',
         color: colors.maroon,
         fontFamily: 'Outfit',
@@ -1364,26 +1340,23 @@ const styles = StyleSheet.create({
         flex: 1,
         minWidth: 0,
         textAlign: 'left',
-        fontSize: 13,
+        fontSize: 15,
         color: colors.muted,
         fontFamily: 'Outfit',
     },
-    cardRight: {
-        position: 'absolute',
-        top: 12,
-        right: 4,
-        alignItems: 'flex-end',
-        flexShrink: 0,
-        width: 68,
-        minWidth: 68,
+    priceRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        alignItems: 'baseline',
+        gap: 6,
     },
     priceLabel: {
-        fontSize: 12,
+        fontSize: 14,
         color: colors.muted,
         fontFamily: 'Outfit',
     },
     price: {
-        fontSize: 21,
+        fontSize: 22,
         fontWeight: '700',
         color: colors.maroon,
         fontFamily: 'Outfit',
@@ -1393,8 +1366,8 @@ const styles = StyleSheet.create({
         marginTop: 4,
         color: colors.muted,
         fontFamily: 'Outfit',
-        fontSize: 11,
-        lineHeight: 14,
+        fontSize: 14,
+        lineHeight: 18,
         paddingBottom: 4,
         paddingHorizontal: 4,
         textAlign: 'center',

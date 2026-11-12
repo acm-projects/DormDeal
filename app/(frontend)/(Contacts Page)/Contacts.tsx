@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, ImageBackground, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Header1 } from '../components/text_styles'
 import Text from '../components/text_styles'
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -8,8 +8,6 @@ import TabBar from '../components/tab_bar';
 import { supabase } from '../../../lib/supabase';
 import Search_Bar from '../components/search_bar';
 import Svg, { Path } from 'react-native-svg';
-
-import PaperBg from '../../../assets/images/paper_bg.png';
 
 type Chat = {
     id: number;
@@ -160,7 +158,7 @@ const Contacts = () => {
     );
 
     return (
-        <ImageBackground source={PaperBg} style={contacts.screen}>
+        <View style={contacts.screen}>
             <ScrollView contentContainerStyle={contacts.content}>
 
                 <View style={contacts.titleBlock}>
@@ -228,7 +226,7 @@ const Contacts = () => {
             </ScrollView>
 
             <TabBar active="inbox" />
-        </ImageBackground>
+        </View>
     );
 };
 
@@ -236,7 +234,6 @@ const contacts = StyleSheet.create({
     screen: {
         flex: 1,
         width: '100%',
-        backgroundColor: colors.white,
     },
     content: {
         paddingTop: 76,
