@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import Base from '../components/base';
 import { BackButton } from '../components/design';
 import { colors } from '../../root_styles';

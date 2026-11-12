@@ -50,33 +50,12 @@ export default function Landing() {
         <Text style={landingStyles.tagline}>Marketplace for students,{"\n"}by <Text style={landingStyles.hand}>students.</Text></Text>
         <View style={landingStyles.buttons}><Pressable accessibilityLabel="Log in" onPress={() => router.push('/Login')} style={landingStyles.login}><Text style={landingStyles.loginText}>Log in</Text></Pressable><Pressable accessibilityLabel="Sign up" onPress={() => router.push('/SignUp')} style={landingStyles.signUp}><Text style={landingStyles.signUpText}>Sign up</Text></Pressable></View><Text style={landingStyles.caption}>Join with your school email. Students only.</Text>
     </View></Base>;
-    /* return <Base style={styles.base}><View style={styles.screen}>
-        <View style={styles.brand} accessibilityLabel="DormDeal"><View style={styles.string}/><View style={styles.tag}><Text style={styles.tagText}>Deal</Text></View><Text style={styles.word}>Dorm</Text><View style={styles.squiggle}/></View>
-        <View style={styles.people}><Text>○</Text><Text>○</Text><Text>○</Text><Text>○</Text></View>
-        <Animated.View accessible accessibilityLabel="Spinning Earth with students chatting around it" style={[styles.earth, { transform: [{ rotate: spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }]}><View style={[styles.land, styles.landOne]}/><View style={[styles.land, styles.landTwo]}/><View style={[styles.land, styles.landThree]}/></Animated.View>
-        <Text style={styles.tagline}>Marketplace for students,{"\n"}by <Text style={styles.hand}>students.</Text></Text>
-        <View style={styles.buttons}><Pressable accessibilityLabel="Log in" onPress={() => router.push('/Login')} style={styles.login}><Text style={styles.loginText}>Log in</Text></Pressable><Pressable accessibilityLabel="Sign up" onPress={() => router.push('/SignUp')} style={styles.signUp}><Text style={styles.signUpText}>Sign up</Text></Pressable></View><Text style={styles.caption}>Join with your school email. Students only.</Text>
-    </View></Base>;
-    } */
 }
 function Squiggle() {
     return <Svg width={160} height={12}><Path d="M2 7 Q16 1 30 7 T58 7 T86 7 T114 7 T142 6 T158 6" stroke={colors.maroon} strokeWidth={3} fill="none" strokeLinecap="round" /></Svg>;
 }
 function DealTag() {
     return <Svg width={150} height={74} viewBox="0 0 150 74"><Path d="M25 14 H138 a8 8 0 0 1 8 8 V58 a8 8 0 0 1 -8 8 H25 L5 40 Z" fill={colors.maroon} stroke={colors.maroonDark} strokeWidth={3} /><Circle cx={25} cy={40} r={6} fill={colors.appBg} stroke={colors.maroonDark} strokeWidth={2} /><SvgText x={89} y={52} fill="white" fontFamily="Outfit" fontSize={32} fontWeight="800" textAnchor="middle">Deal</SvgText></Svg>;
-}
-function Person({
-    x,
-    y,
-    flip = false
-}) {
-    return <View style={[landingStyles.person, {
-        left: x,
-        top: y,
-        transform: [{
-            scaleX: flip ? -1 : 1
-        }]
-    }]}><Svg width={44} height={64} viewBox="0 0 44 64"><Circle cx={22} cy={9} r={6} fill={colors.cream} stroke={colors.ink} strokeWidth={3} /><Path d="M22 15 V35 M22 24 L7 16 M22 24 L37 30 M22 35 L13 55 M22 35 L31 55" stroke={colors.ink} strokeWidth={3} strokeLinecap="round" /><Path d="M18 17 H26" stroke={colors.maroon} strokeWidth={4} /></Svg></View>;
 }
 function Student({
     x,
@@ -150,37 +129,15 @@ const landingStyles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center'
     },
-    earthCompact: {
-        height: 238
-    },
-    earthTall: {
-        height: 286
-    },
     orbit: {
         position: 'absolute',
         width: 330,
         height: 328
     },
-    orbitCompact: {
-        transform: [{
-            scale: .62
-        }]
-    },
-    orbitTall: {
-        transform: [{
-            scale: .78
-        }]
-    },
     earthCanvas: {
         position: 'absolute',
         left: -48,
         top: -48
-    },
-    person: {
-        position: 'absolute',
-        width: 44,
-        height: 64,
-        zIndex: 2
     },
     tagline: {
         color: colors.ink,

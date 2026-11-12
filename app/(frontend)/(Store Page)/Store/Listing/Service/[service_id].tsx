@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image } from 'react-native';
+import { Text, View, Image } from 'react-native';
 import Nav_Button from '../../../../components/nav_button'
 import Base from '../../../../components/base'
 import styles from '../../../../../root_styles'
