@@ -1,0 +1,31 @@
+@property --r{syntax:'<length>';inherits:false;initial-value:0px}
+@property --p{syntax:'<percentage>';inherits:false;initial-value:0%}
+.dd-transition-stage{--maroon:#7a0000;--maroon-d:#4d0000;--tape:#fbe27a;--paper:#f4f1ec;--ink:#2a2a2a;--cork:#c4a574;--blush:#f0d9d9;--hand:'Caveat',cursive;--sans:'Outfit',system-ui,sans-serif;position:absolute;inset:0;perspective:1400px;overflow:hidden;background:#cfc9bf;z-index:200;isolation:isolate}
+.dd-transition-stage>.screen{position:absolute;inset:0;overflow:hidden;display:none}
+.dd-transition-stage>.screen.active,.dd-transition-stage>.screen.anim{display:block}
+.dd-transition-stage>.fx{position:absolute;pointer-events:none;box-sizing:border-box}
+.dd-transition-stage>.fx *{box-sizing:border-box}
+.dd-transition-stage .sticky{z-index:20;box-shadow:0 3px 6px #0004;font:700 22px/1 var(--hand);color:#3a3a3a;padding:10px 8px;overflow:hidden;opacity:0}
+.dd-transition-stage .stamp{left:50%;top:50%;z-index:25;transform:translate(-50%,-50%) rotate(-10deg);opacity:0;border:9px solid var(--maroon);color:var(--maroon);border-radius:14px;padding:6px 22px;font:800 66px/1.05 var(--sans);letter-spacing:3px;text-align:center;mix-blend-mode:multiply;background:#fff8;white-space:nowrap}
+.dd-transition-stage .stamp small{display:block;font:700 15px var(--sans);letter-spacing:6px}
+.dd-transition-stage .ring{left:50%;top:50%;z-index:15;border-radius:50%;border:12px solid var(--maroon);box-shadow:inset 0 0 0 8px var(--tape);transform:translate(-50%,-50%)}
+/* door loader */
+.dd-transition-stage .loader{inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;background:radial-gradient(ellipse at 50% 38%,#a01616,#6a0000 72%)}
+.dd-transition-stage .loader::before{content:"";position:absolute;inset:0;background:radial-gradient(#ffffff14 1.2px,transparent 1.6px) 0 0/18px 18px}
+.dd-transition-stage .scene{perspective:700px;display:flex;flex-direction:column;align-items:center;position:relative}
+.dd-transition-stage .frame{width:150px;height:214px;border:9px solid #3a0000;border-bottom:0;background:#160800;position:relative;border-radius:6px 6px 0 0}
+.dd-transition-stage .light{position:absolute;inset:0;background:linear-gradient(#fff8cf,#ffd45e 65%,#eaa92c);opacity:0}
+.dd-transition-stage .doorp{position:absolute;inset:0;background:linear-gradient(90deg,#f6eedf,#e6dac3);transform-origin:0 50%;box-shadow:inset 0 0 0 4px #d6caae,3px 0 10px #0004}
+.dd-transition-stage .doorp i{position:absolute;display:block}
+.dd-transition-stage .doorp .plate{top:20px;left:50%;transform:translateX(-50%);background:var(--tape);color:#5a4400;font:800 13px var(--sans);padding:3px 9px;border-radius:2px;box-shadow:0 1px 2px #0004}
+.dd-transition-stage .doorp .peep{top:58px;left:50%;width:11px;height:11px;margin-left:-5px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#999,#222);box-shadow:0 0 0 2px #c9a94f}
+.dd-transition-stage .doorp .knob{right:12px;top:118px;width:17px;height:17px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff2b0,#b8962a);box-shadow:0 2px 3px #0005}
+.dd-transition-stage .doorp .pn{left:18px;right:18px;height:52px;border:3px solid #cfc2a5;box-shadow:inset 2px 2px 5px #0002,1px 1px 0 #fff}
+.dd-transition-stage .doorp .p1{top:84px}.dd-transition-stage .doorp .p2{top:146px;height:56px}
+.dd-transition-stage .mat{width:196px;height:15px;background:var(--tape);color:#5a4400;font:800 9px var(--sans);letter-spacing:5px;display:grid;place-items:center;border-radius:2px;box-shadow:0 5px 8px #0006}
+.dd-transition-stage .ltxt{font:700 30px var(--hand);color:#fbeed0}
+.dd-transition-stage .ltxt i{display:inline-block;font-style:normal;animation:dotb .9s infinite}
+.dd-transition-stage .ltxt i:nth-child(2){animation-delay:.15s}.dd-transition-stage .ltxt i:nth-child(3){animation-delay:.3s}
+@keyframes dotb{0%,60%,100%{transform:none}30%{transform:translateY(-8px)}}
+.dd-transition-stage .plane{z-index:20;left:0;top:0;width:80px;height:50px;filter:drop-shadow(3px 5px 4px #0005)}
+.dd-transition-stage .trail{inset:0;z-index:12;width:100%;height:100%}

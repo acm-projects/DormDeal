@@ -3,21 +3,17 @@ import { useFonts } from 'expo-font';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import PaperBackground from '../components/paper-background';
+import { TransitionHost } from '../components/transitions/TransitionHost';
 import { supabase } from '../lib/supabase';
 import { colors } from './root_styles';
 
 const LANDING_ROUTE = '/Landing';
 const PUBLIC_PAGES = ['login', 'signup', 'sign_up', 'sign-up', 'landing', 'resetpassword'];
-const LoadFonts = () => {
-    const [loaded, error] = useFonts({
+const RootLayout = () => {
+    const [loaded] = useFonts({
         'Outfit': require('../assets/fonts/Outfit-VariableFont.ttf'),
         'Caveat': require('../assets/fonts/Caveat-VariableFont.ttf')
     });
-    useEffect(() => {}, [loaded, error]);
-    if (!loaded && !error) return null;
-};
-const RootLayout = () => {
-    LoadFonts();
     const router = useRouter();
     const segments = useSegments();
     const [checked, setChecked] = useState(false);
@@ -45,8 +41,10 @@ const RootLayout = () => {
     }, [checked, signedIn, segments, router]);
     return (
         <View style={styles.screen}>
-            <PaperBackground />
-            {checked && <Slot />}
+            <TransitionHost fontsReady={loaded}>
+                <PaperBackground />
+                {checked && <Slot />}
+            </TransitionHost>
         </View>
     );
 };
