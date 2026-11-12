@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, PanResponder, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -76,23 +76,35 @@ function PriceTag({ children }: { children: React.ReactNode }) {
     </View>;
 }
 
-function MeetupMap({ selected, onSelect }: { selected: string; onSelect: (spot: string) => void }) {
+const mapTiles = Array.from({ length: 25 }, (_, index) => [15152 + index % 5, 26409 + Math.floor(index / 5)]);
+
+function MeetupMap({ selected, onSelect, customMode, customPin, onCustomPin }: { selected: string; onSelect: (spot: string) => void; customMode: boolean; customPin: { x: number; y: number } | null; onCustomPin: (pin: { x: number; y: number }) => void }) {
+    const [offset, setOffset] = useState({ x: 0, y: 0 });
+    const offsetRef = useRef(offset);
+    const offsetAtGestureStart = useRef(offset);
+    const clamp = (value: number) => Math.max(-100, Math.min(100, value));
+    const panResponder = useRef(PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 4 || Math.abs(gesture.dy) > 4,
+        onPanResponderGrant: () => { offsetAtGestureStart.current = offsetRef.current; },
+        onPanResponderMove: (_, gesture) => {
+            const next = { x: clamp(offsetAtGestureStart.current.x + gesture.dx), y: clamp(offsetAtGestureStart.current.y + gesture.dy) };
+            offsetRef.current = next;
+            setOffset(next);
+        },
+    })).current;
     return <View style={styles.map}>
-        <View style={styles.mapCanvas}>
-            <Svg width="100%" height="100%" viewBox="0 0 342 255">
-                <Path d="M13 46H329 M13 228H329 M92 10V245 M262 10V245 M92 132H262" fill="none" stroke="#D3CBB7" strokeWidth={19} />
-                <Path d="M13 46H329 M13 228H329 M92 10V245 M262 10V245 M92 132H262" fill="none" stroke="#FFFAF0" strokeWidth={14} />
-                <Path d="M171 58V121 M110 96H230 M110 190L164 154L236 186" fill="none" stroke="#F3ECD9" strokeWidth={6} />
-                {[[138, 52, 66, 35], [128, 106, 64, 40], [226, 156, 68, 39], [22, 168, 59, 41], [208, 57, 39, 24]].map(([x, y, width, height]) =>
-                    <Rect key={x} x={x} y={y} width={width} height={height} rx={3} fill="#E8DCC0" stroke="#A99A78" strokeWidth={2} />)}
-            </Svg>
+        <Pressable {...panResponder.panHandlers} onPress={(event) => customMode && onCustomPin({ x: event.nativeEvent.locationX - offset.x, y: event.nativeEvent.locationY - offset.y })} style={styles.mapCanvas}>
+            <View style={[styles.mapLayer, { transform: [{ translateX: offset.x }, { translateY: offset.y }] }]}>
+            {mapTiles.map(([x, y], index) => <Image key={`${x}-${y}`} source={{ uri: `https://tile.openstreetmap.org/16/${x}/${y}.png` }} style={[styles.mapTile, { left: `${((index % 5) - 1) * 33.333}%`, top: `${(Math.floor(index / 5) - 1) * 33.333}%` }]} />)}
             <Text style={styles.mapLabel}>UT DALLAS</Text>
-            <Text style={styles.compass}>N</Text>
             {spots.map(({ label, x, y }) => <Pressable key={label} accessibilityRole="button" accessibilityLabel={label}
                 accessibilityState={{ selected: selected === label }} onPress={() => onSelect(label)} style={[styles.pin, { left: x, top: y }]}>
                 <Ionicons name={selected === label ? 'location' : 'location-outline'} size={32} color={colors.maroon} />
             </Pressable>)}
-        </View>
+            {customMode && customPin && <View pointerEvents="none" style={[styles.pin, { left: customPin.x, top: customPin.y }]}><Ionicons name="location" size={36} color={colors.maroon} /></View>}
+            </View>
+        </Pressable>
+        <Text style={styles.mapAttribution}>© OpenStreetMap contributors · {customMode ? 'Tap to drop your pin, or drag around UTD' : 'Choose a campus pickup spot'}</Text>
     </View>;
 }
 
@@ -153,6 +165,8 @@ export default function CreateListing() {
     const [postedId, setPostedId] = useState<number | null>(null);
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState('');
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+    const [customPin, setCustomPin] = useState<{ x: number; y: number } | null>(null);
     const publishing = useRef(false);
     const service = kind === 'service';
     const meetupLabel = customMeetup ? customLocation.trim() : meetup;
@@ -168,6 +182,7 @@ export default function CreateListing() {
             setCondition('');
         }
         setMessage('');
+        setFieldErrors({});
     }
 
     async function pickPhoto() {
@@ -182,18 +197,24 @@ export default function CreateListing() {
     }
 
     function next() {
-        const errors = [
-            kind ? '' : 'Pick one to continue.',
-            title.trim().length < 3 ? 'Give it a title with at least 3 characters.'
-                : !categoryValue ? 'Pick a category.'
-                    : description.trim().length < 10 ? 'Add a description with at least 10 characters.' : '',
-            !free && (!Number.isFinite(numericPrice) || numericPrice <= 0) ? 'Add a price or tap Free.'
-                : customMeetup && !meetupLabel ? 'Enter your custom meetup location.' : '',
-        ];
-        if (errors[step]) {
-            setMessage(errors[step]);
+        const errors: Record<string, string> = {};
+        if (step === 0 && !kind) errors.kind = 'Choose what you are posting.';
+        if (step === 1) {
+            if (title.trim().length < 3) errors.title = 'Use at least 3 characters.';
+            if (description.trim().length < 10) errors.description = 'Use at least 10 characters.';
+            if (!categoryValue) errors.category = 'Choose a category.';
+        }
+        if (step === 2) {
+            if (!free && (!Number.isFinite(numericPrice) || numericPrice <= 0)) errors.price = 'Add a price or choose Free.';
+            if (customMeetup && !meetupLabel && !customPin) errors.meetup = 'Enter a location or drop a pin on the map.';
+            if (!customMeetup && !meetup) errors.meetup = 'Choose a pickup spot.';
+        }
+        if (Object.keys(errors).length) {
+            setFieldErrors(errors);
+            setMessage('');
         } else {
             setMessage('');
+            setFieldErrors({});
             setStep(step + 1);
         }
     }
@@ -203,6 +224,7 @@ export default function CreateListing() {
         publishing.current = true;
         setBusy(true);
         setMessage('');
+        setFieldErrors({});
         try {
             const listing = await createListing({
                 title, description, price: numericPrice, category: categoryValue,
@@ -243,10 +265,12 @@ export default function CreateListing() {
         setMeetup('');
         setCustomMeetup(false);
         setCustomLocation('');
+        setCustomPin(null);
         setDates([]);
         setSelectedTimes([]);
         setImage(null);
         setMessage('');
+        setFieldErrors({});
         setPostedId(null);
     }
 
@@ -263,7 +287,9 @@ export default function CreateListing() {
     function chooseMeetup(value: string) {
         setMeetup(value);
         setCustomMeetup(false);
+        setCustomPin(null);
         setMessage('');
+        setFieldErrors({});
     }
 
     return <PaperForm pageKey={postedId ? 'posted' : step}
@@ -313,6 +339,7 @@ export default function CreateListing() {
                         </Pressable>
                     </FormMotion>
                 </FormMotion>)}
+                {!!fieldErrors.kind && <Text style={styles.fieldError}>{fieldErrors.kind}</Text>}
             </>}
             {step === 1 && <>
                 <Text style={styles.section}>Photo</Text>
@@ -331,16 +358,19 @@ export default function CreateListing() {
                     <PhotoDecorations />
                 </View>
                 <Text style={styles.section}>give it a title</Text>
-                <TextInput accessibilityLabel="Listing title" style={[styles.field, styles.yellow]} value={title} maxLength={40}
-                    placeholder={service ? 'e.g. Calc II tutoring' : 'e.g. Mini fridge, 3.1 cu ft'} placeholderTextColor={colors.muted} onChangeText={setTitle} />
+                <TextInput accessibilityLabel="Listing title" style={[styles.field, styles.yellow, fieldErrors.title && styles.invalid]} value={title} maxLength={40}
+                    placeholder={service ? 'e.g. Calc II tutoring' : 'e.g. Mini fridge, 3.1 cu ft'} placeholderTextColor={colors.muted} onChangeText={(value) => { setTitle(value); setFieldErrors((current) => ({ ...current, title: '' })); }} />
                 <Text style={styles.counter}>{title.length}/40</Text>
+                {!!fieldErrors.title && <Text style={styles.fieldError}>{fieldErrors.title}</Text>}
                 <Text style={styles.section}>{service ? 'describe your service' : 'give a description!'}</Text>
-                <TextInput accessibilityLabel="Listing description" style={[styles.field, styles.description]} value={description} maxLength={200} multiline
+                <TextInput accessibilityLabel="Listing description" style={[styles.field, styles.description, fieldErrors.description && styles.invalid]} value={description} maxLength={200} multiline
                     placeholder={service ? 'What you cover, how sessions work, what to bring…' : 'What are you selling? Size, edition, what’s included…'}
-                    placeholderTextColor={colors.muted} onChangeText={setDescription} />
+                    placeholderTextColor={colors.muted} onChangeText={(value) => { setDescription(value); setFieldErrors((current) => ({ ...current, description: '' })); }} />
                 <Text style={styles.counter}>{description.length}/200</Text>
+                {!!fieldErrors.description && <Text style={styles.fieldError}>{fieldErrors.description}</Text>}
                 <Text style={styles.section}>pick a category</Text>
-                <View style={styles.chips}>{choices.map(([label]) => <Chip key={label} label={label} selected={category === label} onPress={() => setCategory(label)} />)}</View>
+                <View style={[styles.chips, fieldErrors.category && styles.invalidGroup]}>{choices.map(([label]) => <Chip key={label} label={label} selected={category === label} onPress={() => { setCategory(label); setFieldErrors((current) => ({ ...current, category: '' })); }} />)}</View>
+                {!!fieldErrors.category && <Text style={styles.fieldError}>{fieldErrors.category}</Text>}
                 {!service && <>
                     <Text style={styles.section}>what condition is it in?</Text>
                     <View style={styles.chips}>{conditions.map((value) => <Chip key={value} label={value} selected={condition === value} onPress={() => setCondition(value)} />)}</View>
@@ -356,6 +386,7 @@ export default function CreateListing() {
                                 if (/^\d*(?:\.\d{0,2})?$/.test(value.replace(',', '.'))) {
                                     setFree(false);
                                     setPrice(value.replace(',', '.'));
+                                    setFieldErrors((current) => ({ ...current, price: '' }));
                                 }
                             }} />
                         {service && !free && <Text style={styles.priceUnit}>{rateUnits.find(([unit]) => unit === rateUnit)?.[1]}</Text>}
@@ -363,20 +394,20 @@ export default function CreateListing() {
                 </PriceTag>
                 <View style={styles.chips}>
                     {['5', '10', '20', '50'].map((amount) => <Chip key={amount} label={'$' + amount} selected={!free && price === amount}
-                        onPress={() => { setPrice(amount); setFree(false); }} />)}
-                    <Chip label="Free" selected={free} onPress={() => { setFree(!free); setPrice(''); }} />
+                        onPress={() => { setPrice(amount); setFree(false); setFieldErrors((current) => ({ ...current, price: '' })); }} />)}
+                    <Chip label="Free" selected={free} onPress={() => { setFree(!free); setPrice(''); setFieldErrors((current) => ({ ...current, price: '' })); }} />
                 </View>
+                {!!fieldErrors.price && <Text style={styles.fieldError}>{fieldErrors.price}</Text>}
                 {service && !free && <View style={styles.chips}>
                     {rateUnits.map(([value, label]) => <Chip key={value} label={label} selected={rateUnit === value} onPress={() => setRateUnit(value)} />)}
                 </View>}
                 <View style={styles.paymentNote}><Ionicons name="information-circle-outline" size={20} color={colors.maroon} />
                     <Text style={styles.flexCopy}>Payment is settled in chat when you meet. DormDeal doesn’t handle money.</Text></View>
                 <Text style={styles.section}>pick a meetup spot</Text>
-                <MeetupMap selected={customMeetup ? '' : meetup} onSelect={chooseMeetup} />
-                <Text style={styles.copy}>Campus schematic</Text>
+                <MeetupMap selected={customMeetup ? '' : meetup} onSelect={chooseMeetup} customMode={customMeetup} customPin={customPin} onCustomPin={(pin) => { setCustomPin(pin); setFieldErrors((current) => ({ ...current, meetup: '' })); }} />
                 <View style={styles.chips}>{spots.map(({ label }) => <Chip key={label} label={label} selected={!customMeetup && meetup === label} onPress={() => chooseMeetup(label)} />)}</View>
                 <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: customMeetup }}
-                    onPress={() => { setCustomMeetup((selected) => !selected); setMessage(''); }}
+                    onPress={() => { setCustomMeetup((selected) => !selected); setMessage(''); setFieldErrors((current) => ({ ...current, meetup: '' })); }}
                     style={[paperFormStyles.card, styles.customOption, customMeetup && styles.typeSelected]}>
                     <View style={[styles.customCheck, customMeetup && styles.selectedChip]}>
                         {customMeetup && <Ionicons name="checkmark" size={18} color={colors.white} />}
@@ -385,9 +416,10 @@ export default function CreateListing() {
                 </Pressable>
                 {customMeetup && <FormMotion>
                     <TextInput accessibilityLabel="Custom meetup location" value={customLocation} maxLength={120}
-                        onChangeText={(value) => { setCustomLocation(value); setMessage(''); }}
-                        placeholder="Enter a meetup location" placeholderTextColor={colors.muted} style={[styles.field, styles.customInput]} />
+                        onChangeText={(value) => { setCustomLocation(value); setMessage(''); setFieldErrors((current) => ({ ...current, meetup: '' })); }}
+                        placeholder="Enter a meetup location" placeholderTextColor={colors.muted} style={[styles.field, styles.customInput, fieldErrors.meetup && styles.invalid]} />
                 </FormMotion>}
+                {!!fieldErrors.meetup && <Text style={styles.fieldError}>{fieldErrors.meetup}</Text>}
             </>}
             {step === 3 && <>
                 <Text style={styles.section}>when are you free?</Text>
@@ -426,12 +458,12 @@ export default function CreateListing() {
 const styles = StyleSheet.create({
     top: { flexDirection: 'row', alignItems: 'center', gap: 16 },
     progress: { flex: 1, flexDirection: 'row', justifyContent: 'center', gap: 12, paddingRight: 48 },
-    dot: { width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: colors.maroon },
+    dot: { width: 24, height: 12, borderRadius: 3, borderWidth: 2, borderColor: colors.maroon },
     filledDot: { backgroundColor: colors.maroon },
     form: { gap: 13 },
     heading: { fontSize: 46, lineHeight: 49 },
     section: { fontFamily: 'Caveat', fontWeight: '700', fontSize: 32, lineHeight: 34, color: colors.maroon },
-    typeCard: { borderWidth: 3, borderColor: colors.ink, backgroundColor: '#FFFDF8', padding: 14, marginVertical: 5 },
+    typeCard: { borderWidth: 2, borderColor: colors.ink, backgroundColor: '#FFFDF8', padding: 14, marginVertical: 5 },
     typeSelected: { borderColor: colors.maroon, backgroundColor: '#FFF7DD' },
     tape: { position: 'absolute', right: 20, top: -10, width: 68, height: 19, backgroundColor: '#FBE27ADD', transform: [{ rotate: '4deg' }], zIndex: 1 },
     illustration: { minHeight: 110, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 9 },
@@ -468,13 +500,18 @@ const styles = StyleSheet.create({
     priceUnit: { fontFamily: 'Caveat', color: colors.maroon, fontSize: 19, fontWeight: '700', maxWidth: '35%' },
     paymentNote: { flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: colors.goldLight, padding: 11 },
     map: { width: '100%', maxWidth: 480, borderWidth: 3, borderColor: colors.ink, backgroundColor: '#E4EBD5' },
-    mapCanvas: { width: '100%', aspectRatio: 342 / 255, position: 'relative' },
+    mapCanvas: { width: '100%', aspectRatio: 342 / 255, position: 'relative', overflow: 'hidden' },
+    mapLayer: { ...StyleSheet.absoluteFill },
+    mapTile: { position: 'absolute', width: '33.34%', height: '33.34%' },
     mapLabel: { position: 'absolute', top: 7, left: 7, backgroundColor: colors.goldLight, padding: 5, fontFamily: 'Outfit', fontWeight: '800', fontSize: 11, color: colors.ink },
-    compass: { position: 'absolute', right: 7, bottom: 7, padding: 6, borderRadius: 20, borderWidth: 1, borderColor: colors.ink, backgroundColor: colors.cream, fontFamily: 'Outfit', fontWeight: '800', fontSize: 12, color: colors.ink },
+    mapAttribution: { fontFamily: 'Outfit', fontSize: 10, color: colors.muted, paddingTop: 3 },
     pin: { position: 'absolute', width: 44, height: 44, marginLeft: -22, marginTop: -36, alignItems: 'center', justifyContent: 'center' },
     customOption: { minHeight: 51, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 2, borderColor: colors.maroon, borderRadius: 6, paddingHorizontal: 12 },
     customCheck: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.maroon, borderRadius: 4 },
     customInput: { backgroundColor: colors.white, borderWidth: 2, borderColor: colors.maroon, fontSize: 17 },
+    invalid: { borderColor: '#B33B3B', backgroundColor: '#FBE9E9' },
+    invalidGroup: { borderLeftWidth: 3, borderLeftColor: '#B33B3B', paddingLeft: 7 },
+    fieldError: { fontFamily: 'Outfit', fontSize: 13, fontWeight: '700', color: '#B33B3B', marginTop: -6 },
     calendar: { borderWidth: 2, borderColor: colors.ink, paddingHorizontal: 5, paddingBottom: 7 },
     calendarTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     monthButton: { width: 43, height: 44, alignItems: 'center', justifyContent: 'center' },

@@ -225,7 +225,6 @@ const Marketplace_Listing = () => {
                     </Pressable>
                     <Pressable style={page.buyButton} onPress={() => {
                         if (item.liveListingId) recordListingInteraction(item.liveListingId, 'purchase').catch(() => undefined);
-                        router.push('/Store/Checkout');
                     }}>
                         <Text style={page.buyText}>Add to cart</Text>
                     </Pressable>
@@ -262,7 +261,7 @@ const page = StyleSheet.create({
         left: 20,
         width: 44,
         height: 44,
-        borderRadius: 22,
+        borderRadius: 0,
         backgroundColor: colors.white,
         alignItems: 'center',
         justifyContent: 'center',

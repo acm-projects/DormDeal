@@ -29,7 +29,7 @@ export const SecondaryButton = ({ children, onPress }: { children: ReactNode; on
 );
 
 export const styles = StyleSheet.create({
-    back: { width: 56, height: 56, backgroundColor: colors.cream, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 5, shadowOffset: { width: 0, height: 2 } },
+    back: { width: 56, height: 56, backgroundColor: colors.cream, alignItems: 'center', justifyContent: 'center', borderRadius: 0, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }, elevation: 3 },
     pageTitle: { color: colors.maroon, fontFamily: 'Outfit', fontSize: 52, fontWeight: '700', letterSpacing: -1.5 },
     handwrittenTitle: { fontFamily: 'Caveat', fontSize: 40, color: colors.ink },
     squiggle: { width: 168, height: 16, marginTop: 2, overflow: 'visible' },

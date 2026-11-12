@@ -210,11 +210,15 @@ const Toggle = ({
 }} onPress={() => onChange(!value)} style={[styles.toggle, value && styles.toggleOn]}><View style={[styles.toggleThumb, value && styles.toggleThumbOn]} /></Pressable>;
 const styles = StyleSheet.create({
     content: {
-        paddingTop: 8,
+        paddingTop: 14,
+        paddingHorizontal: 8,
+        marginHorizontal: -8,
         paddingBottom: 110
     },
     savedContent: {
-        paddingTop: 8,
+        paddingTop: 14,
+        paddingHorizontal: 8,
+        marginHorizontal: -8,
         paddingBottom: 110
     },
     group: {

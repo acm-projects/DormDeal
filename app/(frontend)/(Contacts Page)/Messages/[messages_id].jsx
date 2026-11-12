@@ -237,8 +237,8 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     back_button: {
-        width: 45,
-        height: 45,
+        width: 56,
+        height: 56,
         backgroundColor: colors.cream,
         borderRadius: 0,
         boxShadow: '0px 3px 8px rgba(31,20,20,0.12)',

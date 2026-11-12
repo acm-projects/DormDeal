@@ -33,7 +33,7 @@ export default function ProfileOptions({ name, options, onClose, onSelect, ancho
 }
 
 const styles = StyleSheet.create({
-    card: { backgroundColor: colors.white, borderRadius: 12, boxShadow: '0 8px 25px #0004' },
+    card: { backgroundColor: colors.white, borderRadius: 4, boxShadow: '0 8px 25px #0004' },
     content: { padding: 16 },
     heading: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingBottom: 9, borderBottomWidth: 2, borderColor: colors.maroon },
     title: { fontFamily: 'Outfit', fontSize: 24, fontWeight: '800', color: colors.maroon },

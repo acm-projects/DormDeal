@@ -49,13 +49,13 @@ export default function CatalogOptions({ kind, appliedFilters, sortConfig, onApp
                             <Ionicons name="close" size={28} color={colors.maroon} />
                         </Pressable>
                     </View>
-                    <Text style={styles.subtitle}>{filter ? 'pick what you want to see' : 'how should the board be ordered?'}</Text>
+                    <Text style={styles.subtitle}>{filter ? 'what do you want to see?' : 'any particular order you prefer?'}</Text>
                     <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                         {filter ? <View style={styles.grid}>
                             {filters.map(([name, icon], index) => <FormMotion key={name} delay={index * 50} style={styles.tileColumn}>
                                 <Pressable accessibilityRole="button" aria-pressed={draftFilters[name]}
                                     disabled={name === 'Distance' || name === 'Convenience'}
-                                    accessibilityHint={name === 'Distance' || name === 'Convenience' ? 'This filter is unavailable' : undefined}
+                                    accessibilityHint={name === 'Distance' || name === 'Convenience' ? 'This filter is unavailable until listings include location data' : undefined}
                                     onPress={() => setDraftFilters((current) => ({ ...current, [name]: !current[name] }))}
                                     style={({ pressed }) => [styles.tile, draftFilters[name] && styles.tileSelected, pressed && styles.pressed,
                                         (name === 'Distance' || name === 'Convenience') && styles.unavailable]}>

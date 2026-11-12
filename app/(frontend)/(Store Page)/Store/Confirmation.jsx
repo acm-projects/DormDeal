@@ -117,11 +117,16 @@ export default function Confirmation() {
                     <Animated.View style={[confirmUI.grade, detailStyle]}><Text style={confirmUI.gradeText}>A+</Text></Animated.View>
                 </View>
                 <Text style={confirmUI.title}>Order confirmed!</Text>
-                <Text style={confirmUI.message}>3 items are yours. Pick them up Fri at{`\n`}3 PM, Library lobby. Alex R. and the{`\n`}sellers have been told.</Text>
+                <Text style={confirmUI.plan}>your new plan now:</Text>
+                <View style={confirmUI.schedule}>
+                    <Text style={confirmUI.scheduleTitle}>Pickup schedule</Text>
+                    <View style={confirmUI.scheduleRow}><View style={confirmUI.schedulePerson}><Text style={confirmUI.person}>Alex R.</Text><Text style={confirmUI.location}><Ionicons name="location-outline" size={14} color={colors.ink}/> Library lobby</Text></View><Text style={confirmUI.when}>Fri, 3 PM</Text><Text style={confirmUI.items}>2 items</Text></View>
+                    <View style={confirmUI.scheduleRow}><View style={confirmUI.schedulePerson}><Text style={confirmUI.person}>Jordan M.</Text><Text style={confirmUI.location}><Ionicons name="location-outline" size={14} color={colors.ink}/> Student Union</Text></View><Text style={confirmUI.when}>Sat, 11 AM</Text><Text style={confirmUI.items}>1 item</Text></View>
+                </View>
             </View>
             <View style={confirmUI.actions}>
                 <Pressable onPress={() => router.push('/Contacts')} style={confirmUI.primary}><Text style={confirmUI.primaryText}>Message the sellers</Text></Pressable>
-                <Pressable onPress={() => router.push('/Store')} style={confirmUI.secondary}><Text style={confirmUI.secondaryText}>Keep browsing</Text></Pressable>
+                <View style={confirmUI.secondaryActions}><Pressable onPress={() => router.replace('/home')} style={confirmUI.secondary}><Text style={confirmUI.secondaryText}>Go home</Text></Pressable><Pressable onPress={() => router.push('/Store')} style={confirmUI.secondary}><Text style={confirmUI.secondaryText}>Keep browsing</Text></Pressable></View>
             </View>
         </Base>
     );
@@ -133,5 +138,5 @@ const confirmUI=StyleSheet.create({
  hero:{width:230,height:170,alignItems:'center',justifyContent:'center',position:'relative'},
  check:{width:132,height:132,borderRadius:66,backgroundColor:colors.maroon,alignItems:'center',justifyContent:'center'},checkReveal:{position:'absolute',left:20,top:22,height:90,overflow:'hidden'},
  grade:{position:'absolute',top:79,right:0,width:81,height:81,borderRadius:41,borderWidth:4,borderColor:'#C0392B',backgroundColor:colors.appBg,alignItems:'center',justifyContent:'center'},gradeText:{fontFamily:'Caveat',fontWeight:'700',fontSize:50,color:'#C0392B'},
- title:{marginTop:22,fontFamily:'Outfit',fontWeight:'700',fontSize:42,letterSpacing:-1.5,color:colors.maroon},message:{marginTop:22,fontFamily:'Caveat',fontWeight:'600',fontSize:25,lineHeight:31,textAlign:'center',color:colors.ink},actions:{gap:16,paddingBottom:8},primary:{height:52,backgroundColor:colors.maroon,alignItems:'center',justifyContent:'center'},primaryText:{fontFamily:'Outfit',fontWeight:'700',fontSize:18,color:colors.white},secondary:{height:52,backgroundColor:colors.cream,alignItems:'center',justifyContent:'center',shadowColor:'#000',shadowOpacity:.15,shadowRadius:4,elevation:3},secondaryText:{fontFamily:'Outfit',fontWeight:'700',fontSize:18,color:colors.maroon}
+ title:{marginTop:12,fontFamily:'Outfit',fontWeight:'700',fontSize:42,letterSpacing:-1.5,color:colors.maroon},plan:{fontFamily:'Caveat',fontWeight:'700',fontSize:25,color:colors.muted,marginTop:17},schedule:{width:'100%',marginTop:12,padding:15,borderWidth:2,borderColor:colors.maroon,borderRadius:4,gap:15,backgroundColor:colors.white,shadowColor:'#000',shadowOpacity:.12,shadowRadius:5,elevation:3},scheduleTitle:{fontFamily:'Caveat',fontWeight:'700',fontSize:25,color:colors.maroon},scheduleRow:{minHeight:48,flexDirection:'row',alignItems:'flex-start',gap:8},schedulePerson:{flex:1},person:{fontFamily:'Outfit',fontWeight:'700',fontSize:16,lineHeight:19,color:colors.ink},location:{fontFamily:'Outfit',fontSize:12,color:colors.muted,marginTop:5},when:{fontFamily:'Outfit',fontSize:14,lineHeight:19,fontWeight:'700',color:colors.maroon,flex:1,textAlign:'center'},items:{fontFamily:'Outfit',fontSize:12,lineHeight:19,color:colors.muted,textAlign:'right'},actions:{gap:10,paddingBottom:8},secondaryActions:{flexDirection:'row',gap:10},primary:{height:48,backgroundColor:colors.maroon,alignItems:'center',justifyContent:'center',flex:1},primaryText:{fontFamily:'Outfit',fontWeight:'700',fontSize:18,color:colors.white},secondary:{height:48,backgroundColor:colors.cream,alignItems:'center',justifyContent:'center',shadowColor:'#000',shadowOpacity:.15,shadowRadius:4,elevation:3,flex:1},secondaryText:{fontFamily:'Outfit',fontWeight:'700',fontSize:16,color:colors.maroon}
 });

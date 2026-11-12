@@ -13,7 +13,7 @@ export function PaperForm({ children, header, footer, pageKey }: {
     pageKey?: string | number;
 }) {
     const insets = useSafeAreaInsets();
-    const gutters = { paddingLeft: Math.max(24, insets.left), paddingRight: Math.max(24, insets.right) };
+    const gutters = { paddingLeft: Math.max(20, insets.left), paddingRight: Math.max(20, insets.right) };
     return (
         <FormMotionProvider>
             <Base style={styles.base}>
@@ -37,7 +37,7 @@ export function FormBack({ label = 'Go back', close = false, onPress, disabled }
 }) {
     return (
         <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} disabled={disabled} style={styles.back}>
-            <Ionicons name={close ? 'close' : 'chevron-back'} size={24} color={colors.maroon} />
+            <Ionicons name={close ? 'close' : 'chevron-back'} size={30} color={colors.maroon} />
         </Pressable>
     );
 }
@@ -87,8 +87,8 @@ const styles = StyleSheet.create({
     stage: { flexGrow: 1 },
     content: { flexGrow: 1, paddingTop: 22, paddingBottom: 18 },
     footer: { gap: 8, paddingTop: 8, paddingBottom: 4 },
-    back: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.cream, boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.18)' },
-    action: { minHeight: 58, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: colors.maroon, boxShadow: '0px 3px 0px #4d0000, 0px 6px 12px rgba(122, 0, 0, 0.22)' },
+    back: { width: 56, height: 56, borderRadius: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.cream, boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.18)' },
+    action: { minHeight: 56, alignItems: 'center', justifyContent: 'center', borderRadius: 4, backgroundColor: colors.maroon, boxShadow: '0px 4px 9px rgba(122, 0, 0, 0.22)' },
     actionText: { color: colors.white, fontFamily: 'Caveat', fontSize: 30, fontWeight: '700', textAlign: 'center', paddingHorizontal: 10 },
     muted: { opacity: 0.55 },
     pressed: { transform: [{ translateY: 3 }], boxShadow: 'none' },

@@ -1,6 +1,6 @@
-import { StyleSheet, Image } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router'
-import Arrow_Up from '../../../assets/svgs/black_arrow.svg'
 import Button from './button'
 
 const Back_Button = ({href, onPress, ...buttonProps}) => {
@@ -11,15 +11,11 @@ const Back_Button = ({href, onPress, ...buttonProps}) => {
             {...buttonProps}
             onPress={onPress || (() => router.push(href))}
         >
-            <Image source={Arrow_Up} style={styles.image}/>
+            <Ionicons name="chevron-back" size={30} color="#800000" />
         </Button>
     );
 }
 
 export default Back_Button;
 
-const styles = StyleSheet.create({
-    image: {
-        opacity: 0.45
-    },
-})
+const styles = StyleSheet.create({})

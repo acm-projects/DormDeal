@@ -47,7 +47,7 @@ const ChatRow = (props: { chat: Chat; onPress: () => void; editing: boolean; sel
     const c = props.chat;
 
     return (
-        <Pressable style={[contacts.row, props.selected && contacts.selectedRow]} onPress={props.onPress}
+        <Pressable style={[contacts.row, c.unread && contacts.unreadRow, props.selected && contacts.selectedRow]} onPress={props.onPress}
             accessibilityRole={props.editing ? 'checkbox' : 'button'}
             accessibilityState={props.editing ? { checked: props.selected } : undefined}
             accessibilityLabel={props.editing ? c.name + ', ' + c.item : undefined}>
@@ -196,7 +196,7 @@ const Contacts = () => {
                     supabase.from('app-users').select('user_id, name').in('user_id', other_ids),
                     supabase
                         .from('messages')
-                        .select('conversation_id, content, sent_at')
+                        .select('conversation_id, content, sent_at, sender_id')
                         .in('conversation_id', convo_ids)
                         .order('sent_at', { ascending: false }),
                 ]);
@@ -222,7 +222,7 @@ const Contacts = () => {
                             item: r.listings?.title ?? 'a listing',
                             lastMessage: last?.content ?? 'No messages yet',
                             time: stamp ? time_ago(stamp) : '',
-                            unread: false, // no read column in the database yet
+                            unread: Boolean(last && last.sender_id !== me),
                         };
                     })
                 );
@@ -523,6 +523,7 @@ const contacts = StyleSheet.create({
         elevation: 3,
         position: 'relative',
     },
+    unreadRow: { borderLeftColor: colors.maroon },
     paperclip: {
         position: 'absolute',
         left: -13,
