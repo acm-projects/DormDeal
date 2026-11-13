@@ -8,6 +8,7 @@ import {
     Animated,
     PanResponder,
     ActivityIndicator,
+    Image,
     useWindowDimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -21,10 +22,12 @@ import {
     formatCategory,
     formatListingPrice,
     formatSellerName,
-    getRecommendations,
     recordListingInteraction,
-    RecommendedListing,
 } from "../../../lib/recommendations";
+import {
+    getMarketplaceListings,
+    type MarketplaceListing,
+} from "../../../lib/api/listings";
 
 // what one pickup looks like
 type Pickup = {
@@ -80,6 +83,7 @@ type RecCardProps = {
     price: string;
     category: string;
     reason?: string;
+    imageUrl?: string | null;
 };
 
 // one card, reused for every item
@@ -87,9 +91,17 @@ const RecCard = (props: RecCardProps) => {
     return (
         <View style={home.card}>
             <View style={home.cardPhoto}>
-                <Text selectable={false} style={home.photoPlaceholder}>
-                    [item photo]
-                </Text>
+                {props.imageUrl ? (
+                    <Image
+                        source={{ uri: props.imageUrl }}
+                        style={home.cardPhotoImage}
+                        resizeMode="contain"
+                    />
+                ) : (
+                    <Text selectable={false} style={home.photoPlaceholder}>
+                        [item photo]
+                    </Text>
+                )}
             </View>
             <View style={home.categoryBadge}>
                 <Text selectable={false} style={home.categoryBadgeText}>
@@ -146,6 +158,7 @@ type FeedListing = {
     price: string;
     category: string;
     reason?: string;
+    imageUrl?: string | null;
     isLive: boolean;
     liveListingId?: number;
 };
@@ -394,6 +407,7 @@ const CardStack = ({ listings }: { listings: FeedListing[] }) => {
                         price={item.price}
                         category={item.category}
                         reason={item.reason}
+                        imageUrl={item.imageUrl}
                     />
                 );
                 const layer = (
@@ -610,6 +624,7 @@ const CardStack = ({ listings }: { listings: FeedListing[] }) => {
                         price={undoOutgoing.price}
                         category={undoOutgoing.category}
                         reason={undoOutgoing.reason}
+                        imageUrl={undoOutgoing.imageUrl}
                     />
                 </Animated.View>
             )}
@@ -742,23 +757,27 @@ const Home = () => {
         });
     };
 
-    // recommended cards: start with the demo items, swap in real ones once they load
+    // Start with demo cards, then replace them with a randomized marketplace sample.
     const [listings, setListings] = useState<FeedListing[]>(fallbackListings);
     const [loadingRecs, setLoadingRecs] = useState(true);
     const [recError, setRecError] = useState<string | null>(null);
     useEffect(() => {
         let cancelled = false;
-        getRecommendations(20)
-            .then((recs) => {
+        getMarketplaceListings()
+            .then((marketplaceListings) => {
                 if (cancelled) return;
-                // nothing recommended yet (new account, no listings): keep the demo cards
-                if (recs.length > 0) setListings(recs.map(toFeedListing));
+                const randomListings = [...marketplaceListings]
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, 20);
+                if (randomListings.length > 0) {
+                    setListings(randomListings.map(toFeedListing));
+                }
             })
             .catch((err) => {
                 if (cancelled) return;
-                console.warn("Could not load recommendations", err);
+                console.warn("Could not load marketplace listings", err);
                 setRecError(
-                    "Couldn't load your recommendations, showing examples.",
+                    "Couldn't load marketplace listings, showing examples.",
                 );
             })
             .finally(() => {
@@ -906,7 +925,7 @@ const Home = () => {
         </View>
     );
 };
-function toFeedListing(listing: RecommendedListing): FeedListing {
+function toFeedListing(listing: MarketplaceListing): FeedListing {
     const sellerName = formatSellerName(listing.seller_name);
     const words = sellerName.split(/\s+/);
     const initials =
@@ -921,7 +940,7 @@ function toFeedListing(listing: RecommendedListing): FeedListing {
         initials,
         price: formatListingPrice(listing.price),
         category: formatCategory(listing.category),
-        reason: listing.recommendation_reason,
+        imageUrl: listing.image_url,
         isLive: true,
         liveListingId: listing.listing_id,
     };
@@ -1061,7 +1080,9 @@ const home = StyleSheet.create({
     cardPhoto: {
         height: 250,
         borderRadius: 4,
-        backgroundColor: colors.maroon,
+        backgroundColor: colors.white,
+        borderWidth: 3,
+        borderColor: colors.maroon,
         alignItems: "center",
         justifyContent: "center",
         boxShadow: [
@@ -1073,6 +1094,10 @@ const home = StyleSheet.create({
                 inset: true,
             },
         ],
+    },
+    cardPhotoImage: {
+        width: "100%",
+        height: "100%",
     },
     photoPlaceholder: {
         color: colors.white,
