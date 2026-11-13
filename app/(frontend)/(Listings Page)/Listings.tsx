@@ -1,8 +1,16 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+    type ReactNode,
+} from "react";
 import {
     ActivityIndicator,
+    Animated,
     Alert,
     Image,
+    LayoutAnimation,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -27,6 +35,46 @@ import {
     formatCategory,
     formatListingPrice,
 } from "../../../lib/recommendations";
+
+const ActionReveal = ({
+    children,
+    exiting = false,
+    onExited,
+}: {
+    children: ReactNode;
+    exiting?: boolean;
+    onExited?: () => void;
+}) => {
+    const reveal = useRef(new Animated.Value(0)).current;
+    useEffect(() => {
+        const animation = Animated.timing(reveal, {
+            toValue: exiting ? 0 : 1,
+            duration: exiting ? 160 : 240,
+            useNativeDriver: true,
+        });
+        animation.start(({ finished }) => {
+            if (exiting && finished) onExited?.();
+        });
+        return () => animation.stop();
+    }, [exiting, onExited, reveal]);
+    return (
+        <Animated.View
+            style={{
+                opacity: reveal,
+                transform: [
+                    {
+                        translateY: reveal.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [14, 0],
+                        }),
+                    },
+                ],
+            }}
+        >
+            {children}
+        </Animated.View>
+    );
+};
 const Listings = () => {
     const router = useRouter();
     const [listings, setListings] = useState<ListingWithImage[]>([]);
@@ -35,6 +83,10 @@ const Listings = () => {
     const [busyId, setBusyId] = useState<number | null>(null);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+    const [closingEditId, setClosingEditId] = useState<number | null>(null);
+    const [closingDeleteId, setClosingDeleteId] = useState<number | null>(
+        null,
+    );
     const [editTitle, setEditTitle] = useState("");
     const [editDescription, setEditDescription] = useState("");
     const [editPrice, setEditPrice] = useState("");
@@ -75,6 +127,7 @@ const Listings = () => {
         };
     }, []);
     const beginEditing = (listing: Listing) => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         setEditingId(listing.listing_id);
         setEditTitle(listing.title);
         setEditDescription(listing.description ?? "");
@@ -147,6 +200,7 @@ const Listings = () => {
         setBusyId(listing.listing_id);
         try {
             await deleteListing(listing.listing_id);
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
             setListings((current) =>
                 current.filter(
                     (item) => item.listing_id !== listing.listing_id,
@@ -223,7 +277,15 @@ const Listings = () => {
                     listings.map((listing) => (
                         <View key={listing.listing_id} style={styles.card}>
                             {editingId === listing.listing_id ? (
-                                <>
+                                <ActionReveal
+                                    exiting={
+                                        closingEditId === listing.listing_id
+                                    }
+                                    onExited={() => {
+                                        setEditingId(null);
+                                        setClosingEditId(null);
+                                    }}
+                                >
                                     <Text style={styles.editLabel}>Title</Text>
                                     <TextInput
                                         value={editTitle}
@@ -252,7 +314,11 @@ const Listings = () => {
                                     <View style={styles.actions}>
                                         <Pressable
                                             style={styles.secondaryButton}
-                                            onPress={() => setEditingId(null)}
+                                            onPress={() =>
+                                                setClosingEditId(
+                                                    listing.listing_id,
+                                                )
+                                            }
                                         >
                                             <Text style={styles.secondaryText}>
                                                 Cancel
@@ -280,7 +346,7 @@ const Listings = () => {
                                             )}
                                         </Pressable>
                                     </View>
-                                </>
+                                </ActionReveal>
                             ) : (
                                 <>
                                     <View style={styles.cardTop}>
@@ -390,11 +456,15 @@ const Listings = () => {
                                             disabled={
                                                 busyId === listing.listing_id
                                             }
-                                            onPress={() =>
+                                            onPress={() => {
+                                                LayoutAnimation.configureNext(
+                                                    LayoutAnimation.Presets
+                                                        .easeInEaseOut,
+                                                );
                                                 setDeleteConfirmId(
                                                     listing.listing_id,
-                                                )
-                                            }
+                                                );
+                                            }}
                                         >
                                             <Ionicons
                                                 name="trash-outline"
@@ -404,6 +474,16 @@ const Listings = () => {
                                         </Pressable>
                                     </View>
                                     {deleteConfirmId === listing.listing_id ? (
+                                        <ActionReveal
+                                            exiting={
+                                                closingDeleteId ===
+                                                listing.listing_id
+                                            }
+                                            onExited={() => {
+                                                setDeleteConfirmId(null);
+                                                setClosingDeleteId(null);
+                                            }}
+                                        >
                                         <View style={styles.deleteConfirm}>
                                             <Text
                                                 style={styles.deleteConfirmText}
@@ -416,7 +496,9 @@ const Listings = () => {
                                                         styles.secondaryButton
                                                     }
                                                     onPress={() =>
-                                                        setDeleteConfirmId(null)
+                                                        setClosingDeleteId(
+                                                            listing.listing_id,
+                                                        )
                                                     }
                                                 >
                                                     <Text
@@ -456,6 +538,7 @@ const Listings = () => {
                                                 </Pressable>
                                             </View>
                                         </View>
+                                        </ActionReveal>
                                     ) : null}
                                 </>
                             )}

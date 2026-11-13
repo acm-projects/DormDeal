@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
     Animated,
     Modal,
@@ -49,6 +49,70 @@ const groups = [
         ],
     },
 ] as const;
+
+const SettingsScene = ({ children }: { children: ReactNode }) => {
+    const reveal = useRef(new Animated.Value(0)).current;
+    useEffect(() => {
+        Animated.timing(reveal, {
+            toValue: 1,
+            duration: 320,
+            useNativeDriver: true,
+        }).start();
+    }, [reveal]);
+    return (
+        <Animated.View
+            style={{
+                flex: 1,
+                opacity: reveal,
+                transform: [
+                    {
+                        translateY: reveal.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [20, 0],
+                        }),
+                    },
+                ],
+            }}
+        >
+            {children}
+        </Animated.View>
+    );
+};
+
+const SettingReveal = ({
+    children,
+    delay,
+}: {
+    children: ReactNode;
+    delay: number;
+}) => {
+    const reveal = useRef(new Animated.Value(0)).current;
+    useEffect(() => {
+        Animated.timing(reveal, {
+            toValue: 1,
+            duration: 220,
+            delay,
+            useNativeDriver: true,
+        }).start();
+    }, [delay, reveal]);
+    return (
+        <Animated.View
+            style={{
+                opacity: reveal,
+                transform: [
+                    {
+                        translateY: reveal.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [12, 0],
+                        }),
+                    },
+                ],
+            }}
+        >
+            {children}
+        </Animated.View>
+    );
+};
 const SavedListings = ({ onBack }: { onBack: () => void }) => {
     const [notify, setNotify] = useState(true);
     const [unavailable, setUnavailable] = useState(false);
@@ -61,17 +125,23 @@ const SavedListings = ({ onBack }: { onBack: () => void }) => {
     ];
     return (
         <Base style={styles.screen}>
+            <SettingsScene>
             <ScrollView
                 contentContainerStyle={styles.savedContent}
                 showsVerticalScrollIndicator={false}
             >
+                <SettingReveal delay={0}>
                 <View style={styles.backInset}>
                     <BackButton onPress={onBack} />
                 </View>
+                </SettingReveal>
+                <SettingReveal delay={90}>
                 <View style={styles.savedHeader}>
                     <View style={styles.highlighter} />
                     <Text style={styles.savedTitle}>Saved Listings</Text>
                 </View>
+                </SettingReveal>
+                <SettingReveal delay={180}>
                 <View style={styles.savedCard}>
                     <SettingRow label="Notify me when saved items change price">
                         <Toggle value={notify} onChange={setNotify} />
@@ -93,7 +163,9 @@ const SavedListings = ({ onBack }: { onBack: () => void }) => {
                         <Toggle value={unavailable} onChange={setUnavailable} />
                     </SettingRow>
                 </View>
+                </SettingReveal>
             </ScrollView>
+            </SettingsScene>
             <OptionSheet
                 visible={sortPickerVisible}
                 title="Sort saved listings"
@@ -286,17 +358,23 @@ const DetailSettings = ({
     const [choicePickerVisible, setChoicePickerVisible] = useState(false);
     return (
         <Base style={styles.screen}>
+            <SettingsScene>
             <ScrollView
                 contentContainerStyle={styles.savedContent}
                 showsVerticalScrollIndicator={false}
             >
+                <SettingReveal delay={0}>
                 <View style={styles.backInset}>
                     <BackButton onPress={onBack} />
                 </View>
+                </SettingReveal>
+                <SettingReveal delay={90}>
                 <View style={styles.savedHeader}>
                     <View style={styles.highlighter} />
                     <Text style={styles.savedTitle}>{title}</Text>
                 </View>
+                </SettingReveal>
+                <SettingReveal delay={180}>
                 <View style={styles.savedCard}>
                     <SettingRow label={config.toggle}>
                         <Toggle value={enabled} onChange={setEnabled} />
@@ -320,7 +398,9 @@ const DetailSettings = ({
                         </Pressable>
                     </SettingRow>
                 </View>
+                </SettingReveal>
             </ScrollView>
+            </SettingsScene>
             <OptionSheet
                 visible={choicePickerVisible}
                 title={config.selection}
@@ -346,15 +426,21 @@ const Settings = () => {
                 paddingBottom: 0,
             }}
         >
+            <SettingsScene>
             <ScrollView
                 contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
             >
+                <SettingReveal delay={0}>
                 <View style={styles.backInset}>
                     <BackButton onPress={() => router.back()} />
                 </View>
+                </SettingReveal>
+                <SettingReveal delay={90}>
                 <PageTitle>settings</PageTitle>
                 <Squiggle />
+                </SettingReveal>
+                <SettingReveal delay={180}>
                 <View style={styles.search}>
                     <Ionicons name="search" size={28} color={colors.maroon} />
                     <TextInput
@@ -363,7 +449,9 @@ const Settings = () => {
                         style={styles.searchInput}
                     />
                 </View>
-                {groups.map((group) => (
+                </SettingReveal>
+                {groups.map((group, groupIndex) => (
+                    <SettingReveal key={group.title} delay={270 + groupIndex * 75}>
                     <View key={group.title} style={styles.group}>
                         <Text style={styles.groupTitle}>{group.title}</Text>
                         <View style={styles.settingsCard}>
@@ -414,6 +502,7 @@ const Settings = () => {
                             ))}
                         </View>
                     </View>
+                    </SettingReveal>
                 ))}
                 <Pressable
                     style={styles.logoutButton}
@@ -427,6 +516,7 @@ const Settings = () => {
                     <Text style={styles.logoutText}>Log out</Text>
                 </Pressable>
             </ScrollView>
+            </SettingsScene>
             <OptionSheet
                 visible={logoutVisible}
                 title="Log out of DormDeal?"

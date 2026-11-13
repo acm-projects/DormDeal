@@ -2,12 +2,12 @@ import {
     StyleSheet,
     ScrollView,
     View,
-    Image,
     Pressable,
     TextInput,
 } from "react-native";
 import { useEffect, useRef, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import Svg, { Path } from "react-native-svg";
 import Other_Message_Box from "../../../../src/components/message_box_pink";
 import You_Message_Box from "../../../../src/components/message_box_red";
@@ -16,9 +16,6 @@ import Button from "../../../../src/components/button";
 import Base from "../../../../src/components/base";
 import Text from "../../../../src/components/text_styles";
 import { colors } from "../../../root_styles";
-import avatar_test from "../../../../assets/svgs/avatar_sample.svg";
-import menu_icon from "../../../../assets/svgs/menu.svg";
-import arrow from "../../../../assets/svgs/white_arrow.svg";
 import { supabase } from "../../../../lib/supabase";
 
 const PaperclipIcon = ({ color = "#8F969E", size = 28 }) => (
@@ -165,7 +162,13 @@ const Messages = () => {
             <View style={styles.header_container}>
                 <Back_Button href="/Contacts" style={styles.back_button} />
                 <View style={styles.header_quick_info}>
-                    <Image source={avatar_test} />
+                    <View style={styles.profile_avatar}>
+                        <Ionicons
+                            name="person"
+                            size={22}
+                            color={colors.white}
+                        />
+                    </View>
                     <View style={styles.text_info}>
                         <Text style={styles.header_name}>{chat_title}</Text>
                         <Text style={styles.header_subtitle}>
@@ -173,8 +176,15 @@ const Messages = () => {
                         </Text>
                     </View>
                 </View>
-                <Button style={styles.menu_button}>
-                    <Image source={menu_icon}></Image>
+                <Button
+                    style={styles.menu_button}
+                    accessibilityLabel="Conversation options"
+                >
+                    <Ionicons
+                        name="ellipsis-horizontal"
+                        size={25}
+                        color={colors.maroon}
+                    />
                 </Button>
             </View>
 
@@ -252,12 +262,13 @@ const Messages = () => {
                     <Pressable
                         onPress={send_message}
                         style={styles.upload_button}
+                        accessibilityLabel="Send message"
                     >
-                        <Image
-                            source={arrow}
-                            tintColor={colors.white}
-                            style={styles.send_icon}
-                        ></Image>
+                        <Ionicons
+                            name="arrow-up"
+                            size={28}
+                            color={colors.white}
+                        />
                     </Pressable>
                 </View>
             </View>
@@ -280,7 +291,6 @@ const styles = StyleSheet.create({
         height: 56,
         backgroundColor: colors.cream,
         borderRadius: 0,
-        boxShadow: "0px 1px 4px rgba(31,20,20,0.12)",
         boxShadow: `0px 1px 2px rgba(0, 0, 0, 0.08)`,
     },
     messages_container: {
@@ -304,8 +314,16 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         width: "100%",
         borderRadius: 0,
-        height: 45,
+        height: 56,
         boxShadow: "0px 3px 8px rgba(31,20,20,0.12)",
+    },
+    profile_avatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: colors.maroon,
     },
     text_info: {
         flex: 1,
@@ -326,8 +344,8 @@ const styles = StyleSheet.create({
         fontFamily: "Outfit",
     },
     menu_button: {
-        width: 45,
-        height: 45,
+        width: 56,
+        height: 56,
         backgroundColor: colors.cream,
         borderRadius: 0,
         alignItems: "center",
@@ -473,11 +491,5 @@ const styles = StyleSheet.create({
         outlineStyle: "none",
         fontFamily: "Outfit",
         fontSize: 16,
-    },
-    send_icon: {
-        width: 24,
-        height: 24,
-        opacity: 1,
-        transform: [{ rotate: "90deg" }],
     },
 });

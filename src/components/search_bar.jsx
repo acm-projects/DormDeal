@@ -1,6 +1,6 @@
-import { View, Image, StyleSheet, TextInput, Pressable } from "react-native";
+import { View, StyleSheet, TextInput, Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import component_root_styles from "../../app/root_styles";
-import search_icon from "../../assets/images/search_icon.png";
 
 const Search_Bar = ({
     placeholder = "",
@@ -25,7 +25,7 @@ const Search_Bar = ({
                 style={styles.search_button}
                 accessibilityLabel="Search"
             >
-                <Image source={search_icon} style={styles.search_icon} />
+                <Ionicons name="search-outline" size={23} color="#777" />
             </Pressable>
         </View>
     );
@@ -54,23 +54,16 @@ const styles = StyleSheet.create({
         flex: 1,
         minWidth: 0,
         paddingLeft: 20,
-        paddingRight: 20,
-        marginRight: 15,
+        paddingRight: 4,
+        marginRight: 0,
         borderRadius: 24,
         height: "100%",
         fontWeight: "bold",
         textAlign: "left",
         color: "#7D7D7D",
     },
-    search_icon: {
-        filter: "brightness(0)",
-        opacity: 0.45,
-        width: 22,
-        height: 22,
-        marginRight: 20,
-    },
     search_button: {
-        width: 44,
+        width: 38,
         height: 44,
         flexShrink: 0,
         alignItems: "center",

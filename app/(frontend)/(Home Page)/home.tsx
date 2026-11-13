@@ -692,8 +692,55 @@ const Home = () => {
     const userName = "Alex R."; // swap for real name once login works
     const initials = "AR"; // same, comes from login later
     const [mode, setMode] = useState<"buy" | "sell">("buy"); // which tab is picked
+    const pickupMotion = useRef(new Animated.Value(0)).current;
+    const pickupOpacity = useRef(new Animated.Value(1)).current;
+    const pickupTransitionRunning = useRef(false);
     const shown = pickups.filter((p) => p.type === mode); // only the matching pickups
     const router = useRouter();
+
+    const selectPickupMode = (nextMode: "buy" | "sell") => {
+        if (nextMode === mode || pickupTransitionRunning.current) return;
+
+        pickupTransitionRunning.current = true;
+        const direction = nextMode === "sell" ? 1 : -1;
+        Animated.parallel([
+            Animated.timing(pickupMotion, {
+                toValue: direction * 28,
+                duration: 120,
+                useNativeDriver: true,
+            }),
+            Animated.timing(pickupOpacity, {
+                toValue: 0,
+                duration: 120,
+                useNativeDriver: true,
+            }),
+        ]).start(({ finished }) => {
+            if (!finished) {
+                pickupTransitionRunning.current = false;
+                return;
+            }
+
+            setMode(nextMode);
+            pickupMotion.setValue(-direction * 28);
+            pickupOpacity.setValue(0);
+            requestAnimationFrame(() => {
+                Animated.parallel([
+                    Animated.timing(pickupMotion, {
+                        toValue: 0,
+                        duration: 160,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(pickupOpacity, {
+                        toValue: 1,
+                        duration: 160,
+                        useNativeDriver: true,
+                    }),
+                ]).start(() => {
+                    pickupTransitionRunning.current = false;
+                });
+            });
+        });
+    };
 
     // recommended cards: start with the demo items, swap in real ones once they load
     const [listings, setListings] = useState<FeedListing[]>(fallbackListings);
@@ -796,7 +843,7 @@ const Home = () => {
 
                     <View style={home.toggle}>
                         <Pressable
-                            onPress={() => setMode("buy")}
+                            onPress={() => selectPickupMode("buy")}
                             style={[
                                 home.toggleOption,
                                 mode === "buy" && home.toggleActive,
@@ -812,7 +859,7 @@ const Home = () => {
                             </Text>
                         </Pressable>
                         <Pressable
-                            onPress={() => setMode("sell")}
+                            onPress={() => selectPickupMode("sell")}
                             style={[
                                 home.toggleOption,
                                 mode === "sell" && home.toggleActive,
@@ -830,14 +877,22 @@ const Home = () => {
                     </View>
                 </View>
 
-                <View style={home.pickupList}>
+                <Animated.View
+                    style={[
+                        home.pickupList,
+                        {
+                            opacity: pickupOpacity,
+                            transform: [{ translateX: pickupMotion }],
+                        },
+                    ]}
+                >
                     {shown.map((p) => (
                         <PickupCard key={p.id} pickup={p} />
                     ))}
                     {shown.length === 0 && (
                         <Text style={home.emptyText}>No pickups yet!</Text>
                     )}
-                </View>
+                </Animated.View>
 
                 <View style={[home.sectionRow, home.calendarHeader]}>
                     <Text style={home.sectionTitle}>Your calendar</Text>
@@ -929,9 +984,8 @@ const home = StyleSheet.create({
         fontFamily: "Outfit",
     },
     settingsButton: {
-        width: 30,
-        height: 30,
-        padding: 6,
+        width: 42,
+        height: 42,
         borderRadius: 28,
         backgroundColor: colors.white,
         alignItems: "center",

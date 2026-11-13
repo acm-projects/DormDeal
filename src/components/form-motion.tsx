@@ -58,7 +58,8 @@ type Motion =
     | "shake"
     | "door"
     | "glow"
-    | "pulse";
+    | "pulse"
+    | "slide";
 
 const durations: Record<Motion, number> = {
     fade: 500,
@@ -71,6 +72,7 @@ const durations: Record<Motion, number> = {
     door: 1100,
     glow: 2400,
     pulse: 2200,
+    slide: 420,
 };
 
 function useProgress(
@@ -200,7 +202,7 @@ export function FormMotion({
                     {
                         rotate: progress.interpolate({
                             inputRange: [0, 0.7, 1],
-                            outputRange: ["-14deg", "-8deg", "-8deg"],
+                            outputRange: ["-7deg", "-4deg", "-4deg"],
                         }),
                     },
                     {
@@ -259,6 +261,19 @@ export function FormMotion({
                         scale: progress.interpolate({
                             inputRange: [0, 0.5, 1],
                             outputRange: [1, 1.04, 1],
+                        }),
+                    },
+                ],
+            };
+            break;
+        case "slide":
+            motion = {
+                opacity: progress,
+                transform: [
+                    {
+                        translateX: progress.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [40, 0],
                         }),
                     },
                 ],

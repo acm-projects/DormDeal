@@ -1,5 +1,13 @@
-import { useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import {
+    Animated,
+    Image,
+    LayoutAnimation,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    View,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { colors } from "../../../root_styles";
@@ -28,11 +36,75 @@ const PaymentIcon = ({ method }) =>
         />
     );
 
+const PaymentOption = ({ method, selected, onPress }) => {
+    const dotScale = useRef(new Animated.Value(selected ? 1 : 0)).current;
+    const fade = useRef(new Animated.Value(1)).current;
+
+    useEffect(() => {
+        fade.setValue(0.45);
+        Animated.parallel([
+            Animated.timing(fade, {
+                toValue: 1,
+                duration: 180,
+                useNativeDriver: true,
+            }),
+            Animated.spring(dotScale, {
+                toValue: selected ? 1 : 0,
+                friction: 5,
+                tension: 120,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }, [dotScale, fade, selected]);
+
+    return (
+        <Pressable
+            onPress={onPress}
+            style={[
+                checkoutUI.payRow,
+                selected && checkoutUI.paySelected,
+            ]}
+        >
+            <Animated.View
+                style={[checkoutUI.payContent, { opacity: fade }]}
+            >
+                <PaymentIcon method={method} />
+                <Text style={checkoutUI.payLabel}>{method}</Text>
+                <View style={checkoutUI.radio}>
+                    <Animated.View
+                        style={[
+                            checkoutUI.radioDot,
+                            { transform: [{ scale: dotScale }] },
+                        ]}
+                    />
+                </View>
+            </Animated.View>
+        </Pressable>
+    );
+};
+
 function RedesignedCheckout() {
     const router = useRouter();
     const [open, setOpen] = useState(false);
     const [payment, setPayment] = useState("Visa *6767");
+    const itemReveal = useRef(new Animated.Value(0)).current;
     const methods = ["Visa *6767", "Zelle", "Cash at pickup"];
+    const toggleItems = () => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setOpen((current) => {
+            const next = !current;
+            if (next) {
+                itemReveal.setValue(0);
+                Animated.timing(itemReveal, {
+                    toValue: 1,
+                    delay: 130,
+                    duration: 200,
+                    useNativeDriver: true,
+                }).start();
+            }
+            return next;
+        });
+    };
     return (
         <Base>
             <Pressable onPress={() => router.back()} style={checkoutUI.close}>
@@ -43,7 +115,7 @@ function RedesignedCheckout() {
             <ScrollView contentContainerStyle={checkoutUI.content}>
                 <View style={checkoutUI.card}>
                     <Pressable
-                        onPress={() => setOpen(!open)}
+                        onPress={toggleItems}
                         style={checkoutUI.cardHeader}
                     >
                         <Ionicons
@@ -59,7 +131,22 @@ function RedesignedCheckout() {
                         />
                     </Pressable>
                     {open && (
-                        <View style={checkoutUI.tiles}>
+                        <Animated.View
+                            style={[
+                                checkoutUI.tiles,
+                                {
+                                    opacity: itemReveal,
+                                    transform: [
+                                        {
+                                            translateY: itemReveal.interpolate({
+                                                inputRange: [0, 1],
+                                                outputRange: [-8, 0],
+                                            }),
+                                        },
+                                    ],
+                                },
+                            ]}
+                        >
                             {orderedItems.map((item) => (
                                 <View key={item.title} style={checkoutUI.tile}>
                                     <View style={checkoutUI.tilePhoto} />
@@ -71,7 +158,7 @@ function RedesignedCheckout() {
                                     </Text>
                                 </View>
                             ))}
-                        </View>
+                        </Animated.View>
                     )}
                 </View>
                 <View style={checkoutUI.card}>
@@ -79,22 +166,12 @@ function RedesignedCheckout() {
                         Payment Option
                     </Text>
                     {methods.map((method) => (
-                        <Pressable
+                        <PaymentOption
                             key={method}
+                            method={method}
+                            selected={payment === method}
                             onPress={() => setPayment(method)}
-                            style={[
-                                checkoutUI.payRow,
-                                payment === method && checkoutUI.paySelected,
-                            ]}
-                        >
-                            <PaymentIcon method={method} />
-                            <Text style={checkoutUI.payLabel}>{method}</Text>
-                            <View style={checkoutUI.radio}>
-                                {payment === method && (
-                                    <View style={checkoutUI.radioDot} />
-                                )}
-                            </View>
-                        </Pressable>
+                        />
                     ))}
                 </View>
                 <View style={checkoutUI.card}>
@@ -198,6 +275,12 @@ const checkoutUI = StyleSheet.create({
         gap: 12,
     },
     paySelected: { backgroundColor: colors.roseSelected },
+    payContent: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+    },
     payLabel: { flex: 1, fontFamily: "Outfit", fontSize: 18 },
     radio: {
         width: 23,
