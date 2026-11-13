@@ -689,8 +689,8 @@ const PickupCard = (props: { pickup: Pickup }) => {
     );
 };
 const Home = () => {
-    const userName = "Maya"; // swap for real name once login works
-    const initials = "MR"; // same, comes from login later
+    const userName = "Alex R."; // swap for real name once login works
+    const initials = "AR"; // same, comes from login later
     const [mode, setMode] = useState<"buy" | "sell">("buy"); // which tab is picked
     const shown = pickups.filter((p) => p.type === mode); // only the matching pickups
     const router = useRouter();
