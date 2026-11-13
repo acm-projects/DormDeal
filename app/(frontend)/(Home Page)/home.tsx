@@ -8,7 +8,6 @@ import {
     Animated,
     PanResponder,
     ActivityIndicator,
-    LayoutAnimation,
     useWindowDimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -694,22 +693,53 @@ const Home = () => {
     const initials = "AR"; // same, comes from login later
     const [mode, setMode] = useState<"buy" | "sell">("buy"); // which tab is picked
     const pickupMotion = useRef(new Animated.Value(0)).current;
+    const pickupOpacity = useRef(new Animated.Value(1)).current;
+    const pickupTransitionRunning = useRef(false);
     const shown = pickups.filter((p) => p.type === mode); // only the matching pickups
     const router = useRouter();
 
     const selectPickupMode = (nextMode: "buy" | "sell") => {
-        if (nextMode === mode) return;
-        LayoutAnimation.configureNext({
-            duration: 260,
-            update: { type: LayoutAnimation.Types.easeInEaseOut },
+        if (nextMode === mode || pickupTransitionRunning.current) return;
+
+        pickupTransitionRunning.current = true;
+        const direction = nextMode === "sell" ? 1 : -1;
+        Animated.parallel([
+            Animated.timing(pickupMotion, {
+                toValue: direction * 28,
+                duration: 120,
+                useNativeDriver: true,
+            }),
+            Animated.timing(pickupOpacity, {
+                toValue: 0,
+                duration: 120,
+                useNativeDriver: true,
+            }),
+        ]).start(({ finished }) => {
+            if (!finished) {
+                pickupTransitionRunning.current = false;
+                return;
+            }
+
+            setMode(nextMode);
+            pickupMotion.setValue(-direction * 28);
+            pickupOpacity.setValue(0);
+            requestAnimationFrame(() => {
+                Animated.parallel([
+                    Animated.timing(pickupMotion, {
+                        toValue: 0,
+                        duration: 160,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(pickupOpacity, {
+                        toValue: 1,
+                        duration: 160,
+                        useNativeDriver: true,
+                    }),
+                ]).start(() => {
+                    pickupTransitionRunning.current = false;
+                });
+            });
         });
-        pickupMotion.setValue(nextMode === "sell" ? 28 : -28);
-        setMode(nextMode);
-        Animated.timing(pickupMotion, {
-            toValue: 0,
-            duration: 240,
-            useNativeDriver: true,
-        }).start();
     };
 
     // recommended cards: start with the demo items, swap in real ones once they load
@@ -851,10 +881,7 @@ const Home = () => {
                     style={[
                         home.pickupList,
                         {
-                            opacity: pickupMotion.interpolate({
-                                inputRange: [-28, 0, 28],
-                                outputRange: [0, 1, 0],
-                            }),
+                            opacity: pickupOpacity,
                             transform: [{ translateX: pickupMotion }],
                         },
                     ]}
@@ -957,9 +984,8 @@ const home = StyleSheet.create({
         fontFamily: "Outfit",
     },
     settingsButton: {
-        width: 30,
-        height: 30,
-        padding: 6,
+        width: 42,
+        height: 42,
         borderRadius: 28,
         backgroundColor: colors.white,
         alignItems: "center",

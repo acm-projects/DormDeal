@@ -114,13 +114,28 @@ export default function Calendar() {
     return (
         <View style={styles.card}>
             <View style={styles.header}>
-                <Pressable onPress={() => changeMonth(-1)} hitSlop={10}>
+                <Pressable
+                    onPress={() => changeMonth(-1)}
+                    hitSlop={10}
+                    style={styles.monthButton}
+                    accessibilityLabel="Previous month"
+                >
                     <Text style={styles.arrow}>‹</Text>
                 </Pressable>
-                <Text style={styles.monthTitle}>
+                <Text
+                    style={styles.monthTitle}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.8}
+                >
                     {monthNames[month]} {year}
                 </Text>
-                <Pressable onPress={() => changeMonth(1)} hitSlop={10}>
+                <Pressable
+                    onPress={() => changeMonth(1)}
+                    hitSlop={10}
+                    style={styles.monthButton}
+                    accessibilityLabel="Next month"
+                >
                     <Text style={styles.arrow}>›</Text>
                 </Pressable>
             </View>
@@ -302,21 +317,29 @@ const styles = StyleSheet.create({
     },
     header: {
         flexDirection: "row",
-        justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 10,
     },
+    monthButton: {
+        width: 36,
+        height: 36,
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+    },
     monthTitle: {
+        flex: 1,
         fontFamily: heading,
         fontSize: 22,
+        lineHeight: 30,
         fontWeight: "500",
         color: colors.ink,
+        textAlign: "center",
     },
     arrow: {
         fontFamily: body,
         fontSize: 26,
         color: colors.maroon,
-        paddingHorizontal: 8,
     },
     weekRow: {
         flexDirection: "row",

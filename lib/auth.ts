@@ -4,6 +4,31 @@ import { supabase } from './supabase';
 
 WebBrowser.maybeCompleteAuthSession();
 
+export async function setSessionFromUrl(url: string) {
+  const hashIndex = url.indexOf('#');
+  const queryIndex = url.indexOf('?');
+  const query =
+    queryIndex === -1
+      ? ''
+      : url.slice(queryIndex + 1, hashIndex === -1 ? undefined : hashIndex);
+  const fragment = hashIndex === -1 ? '' : url.slice(hashIndex + 1);
+  const params = new URLSearchParams([query, fragment].filter(Boolean).join('&'));
+  const errorDescription = params.get('error_description');
+
+  if (errorDescription) throw new Error(errorDescription);
+
+  const access_token = params.get('access_token');
+  const refresh_token = params.get('refresh_token');
+  if (!access_token || !refresh_token) return null;
+
+  const { data, error } = await supabase.auth.setSession({
+    access_token,
+    refresh_token,
+  });
+  if (error) throw error;
+  return data.session;
+}
+
 export async function signInWithMicrosoft() {
   const redirectTo = Linking.createURL('/');
   const { data, error } = await supabase.auth.signInWithOAuth({

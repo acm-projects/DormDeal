@@ -1,4 +1,10 @@
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import {
+    useEffect,
+    useEffectEvent,
+    useRef,
+    useState,
+    type ComponentRef,
+} from "react";
 import {
     AccessibilityInfo,
     Animated,
@@ -40,7 +46,9 @@ type Timeline = {
     pause: (ms: number) => Promise<void>;
 };
 
-export async function captureScreen(view: View): Promise<Snapshot> {
+export async function captureScreen(
+    view: ComponentRef<typeof View>,
+): Promise<Snapshot> {
     return captureRef(view, { format: "png", result: "tmpfile" });
 }
 
@@ -412,6 +420,12 @@ export function TransitionSurface({ scene }: { scene: TransitionScene }) {
     const [loaded, setLoaded] = useState(false);
     useEffect(() => {
         let active = true;
+        const subscription = AccessibilityInfo.addEventListener(
+            "reduceMotionChanged",
+            (value) => {
+                if (active) setReduced(value);
+            },
+        );
         void AccessibilityInfo.isReduceMotionEnabled().then(
             (value) => {
                 if (active) setReduced(value);
@@ -422,6 +436,7 @@ export function TransitionSurface({ scene }: { scene: TransitionScene }) {
         );
         return () => {
             active = false;
+            subscription.remove();
         };
     }, []);
     const Effect = reduced ? Fade : nativeEffects[scene.id];

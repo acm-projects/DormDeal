@@ -6,6 +6,7 @@ import {
     Alert,
     FlatList,
     Image,
+    Platform,
     Pressable,
     StyleSheet,
     Text as NativeText,
@@ -20,8 +21,6 @@ import Search_Bar from "../../../src/components/search_bar";
 import TabBar from "../../../src/components/tab_bar";
 import CatalogOptions from "../../../src/components/catalog-options";
 import Shopping_Cart_Image from "../../../assets/images/shopping_cart.png";
-import Filter_Image from "../../../assets/svgs/filter.svg";
-import Sort_Image from "../../../assets/svgs/sort.svg";
 import {
     formatCategory,
     formatListingPrice,
@@ -36,8 +35,11 @@ import {
 const FavoriteHeart = ({ active }) => {
     const scale = useRef(new Animated.Value(1)).current;
     const rotation = useRef(new Animated.Value(0)).current;
+    const previousActive = useRef(active);
 
     useEffect(() => {
+        if (previousActive.current === active) return;
+        previousActive.current = active;
         scale.setValue(1);
         rotation.setValue(0);
         Animated.sequence([
@@ -365,7 +367,7 @@ const Store = () => {
     };
 
     return (
-        <Base>
+        <Base style={styles.screen}>
             <View style={styles.catalog_panel}>
                 <View style={styles.catalog_pin} />
                 <View style={styles.catalog_pin_secondary} />
@@ -435,7 +437,11 @@ const Store = () => {
                     <Search_Bar
                         style={styles.catalog_search}
                         inputStyle={styles.catalog_search_input}
-                        placeholder="Search the catalog"
+                        placeholder={
+                            Platform.OS === "web"
+                                ? "Search the catalog"
+                                : "Search the…"
+                        }
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                         onFocus={() => setSearchFocused(true)}
@@ -453,10 +459,10 @@ const Store = () => {
                         onPress={() => setActivePanel("filter")}
                         accessibilityLabel="Open filter options"
                     >
-                        <Image
-                            source={Filter_Image}
-                            tintColor={colors.maroon}
-                            style={styles.catalog_filter_icon}
+                        <Ionicons
+                            name="funnel-outline"
+                            size={22}
+                            color={colors.maroon}
                         />
                     </Button>
                     <Button
@@ -468,10 +474,10 @@ const Store = () => {
                         onPress={() => setActivePanel("sort")}
                         accessibilityLabel="Open sort options"
                     >
-                        <Image
-                            source={Sort_Image}
-                            tintColor={colors.maroon}
-                            style={styles.catalog_filter_icon}
+                        <Ionicons
+                            name="reorder-three-outline"
+                            size={25}
+                            color={colors.maroon}
                         />
                     </Button>
                 </View>
@@ -615,6 +621,9 @@ const Store = () => {
 export default Store;
 
 const styles = StyleSheet.create({
+    screen: {
+        minHeight: 0,
+    },
     shoppingCart: {
         width: 44,
         height: 44,
@@ -625,6 +634,8 @@ const styles = StyleSheet.create({
     shoppingCartIcon: { width: 25, height: 25 },
     catalog_panel: {
         position: "relative",
+        zIndex: 10,
+        elevation: 10,
         backgroundColor: colors.white,
         padding: 14,
         marginBottom: 14,
@@ -753,10 +764,13 @@ const styles = StyleSheet.create({
     },
     listing_area: {
         flex: 1,
-        overflow: "visible",
+        minHeight: 0,
+        overflow: "hidden",
     },
     listing_flat_list: {
-        overflow: "visible",
+        flex: 1,
+        minHeight: 0,
+        overflow: "hidden",
     },
     search_overlay: {
         position: "absolute",
@@ -829,7 +843,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         paddingBottom: 130,
         gap: 22,
-        overflow: "visible",
     },
     marketplace_listing_row: {
         flexDirection: "row",
@@ -849,7 +862,7 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
     card: {
-        flex: 1,
+        width: "100%",
         backgroundColor: colors.white,
         borderRadius: 0,
         padding: 8,
@@ -857,6 +870,7 @@ const styles = StyleSheet.create({
     },
     card_wrapper: {
         flex: 1,
+        minWidth: 0,
         position: "relative",
         paddingTop: 9,
     },
@@ -878,7 +892,6 @@ const styles = StyleSheet.create({
         backgroundColor: colors.maroon,
         overflow: "hidden",
         position: "relative",
-        padding: 10,
     },
     cardPhotoImage: {
         ...StyleSheet.absoluteFillObject,
