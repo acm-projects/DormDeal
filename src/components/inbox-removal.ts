@@ -4,8 +4,10 @@ function key(userId: string) {
 
 export function readHiddenConversations(userId: string): string[] {
     try {
-        const value = JSON.parse(localStorage.getItem(key(userId)) ?? '[]');
-        return Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : [];
+        const value = JSON.parse(localStorage.getItem(key(userId)) ?? "[]");
+        return Array.isArray(value)
+            ? value.filter((id): id is string => typeof id === "string")
+            : [];
     } catch {
         return [];
     }

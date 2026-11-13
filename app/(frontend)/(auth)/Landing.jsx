@@ -1,195 +1,367 @@
-import { Animated, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useEffect, useRef } from 'react';
-import Svg, { Circle, ClipPath, Defs, G, Path, Text as SvgText } from 'react-native-svg';
-import Base from '../components/base';
-import { colors } from '../../root_styles';
+import {
+    Animated,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
+    useWindowDimensions,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { useEffect, useRef } from "react";
+import Svg, {
+    Circle,
+    ClipPath,
+    Defs,
+    G,
+    Path,
+    Text as SvgText,
+} from "react-native-svg";
+import Base from "../../../src/components/base";
+import { colors } from "../../root_styles";
 export default function Landing() {
     const router = useRouter();
-    const {
-        height
-    } = useWindowDimensions();
-    const globeScale = Math.max(.56, Math.min(.82, (height - 420) / 560));
+    const { height } = useWindowDimensions();
+    const globeScale = Math.max(0.56, Math.min(0.82, (height - 420) / 560));
     const spin = useRef(new Animated.Value(0)).current;
     useEffect(() => {
-        const animation = Animated.loop(Animated.timing(spin, {
-            toValue: 1,
-            duration: 48000,
-            useNativeDriver: true
-        }), {
-            resetBeforeIteration: true
-        });
+        const animation = Animated.loop(
+            Animated.timing(spin, {
+                toValue: 1,
+                duration: 48000,
+                useNativeDriver: false,
+            }),
+            {
+                resetBeforeIteration: true,
+            },
+        );
         animation.start();
         return () => animation.stop();
     }, [spin]);
     const swing = useRef(new Animated.Value(0)).current;
     useEffect(() => {
-        const animation = Animated.loop(Animated.sequence([Animated.timing(swing, {
-            toValue: 1,
-            duration: 3600,
-            useNativeDriver: true
-        }), Animated.timing(swing, {
-            toValue: 0,
-            duration: 3600,
-            useNativeDriver: true
-        })]));
+        const animation = Animated.loop(
+            Animated.sequence([
+                Animated.timing(swing, {
+                    toValue: 1,
+                    duration: 3600,
+                    useNativeDriver: false,
+                }),
+                Animated.timing(swing, {
+                    toValue: 0,
+                    duration: 3600,
+                    useNativeDriver: false,
+                }),
+            ]),
+        );
         animation.start();
         return () => animation.stop();
     }, [swing]);
     const tagRotation = swing.interpolate({
         inputRange: [0, 1],
-        outputRange: ['-5deg', '5deg']
+        outputRange: ["-5deg", "5deg"],
     });
-    return <Base style={landingStyles.base}><View style={landingStyles.screen}>
-        <View style={landingStyles.brand}><View style={landingStyles.hanger} /><Animated.View style={[landingStyles.tagWrap, {
-                        transform: [{
-                            rotate: tagRotation
-                        }]
-                    }]}><DealTag /></Animated.View><Text style={landingStyles.word}>Dorm</Text><Squiggle /></View>
-        <EarthIllustration orbit={spin} scale={globeScale} />
-        <Text style={landingStyles.tagline}>Marketplace for students,{"\n"}by <Text style={landingStyles.hand}>students.</Text></Text>
-        <View style={landingStyles.buttons}><Pressable accessibilityLabel="Log in" onPress={() => router.push('/Login')} style={landingStyles.login}><Text style={landingStyles.loginText}>Log in</Text></Pressable><Pressable accessibilityLabel="Sign up" onPress={() => router.push('/SignUp')} style={landingStyles.signUp}><Text style={landingStyles.signUpText}>Sign up</Text></Pressable></View><Text style={landingStyles.caption}>Join with your school email. Students only.</Text>
-    </View></Base>;
+    return (
+        <Base style={landingStyles.base}>
+            <View style={landingStyles.screen}>
+                <View style={landingStyles.brand}>
+                    <View style={landingStyles.hanger} />
+                    <Animated.View
+                        style={[
+                            landingStyles.tagWrap,
+                            {
+                                transform: [
+                                    {
+                                        rotate: tagRotation,
+                                    },
+                                ],
+                            },
+                        ]}
+                    >
+                        <DealTag />
+                    </Animated.View>
+                    <Text style={landingStyles.word}>Dorm</Text>
+                    <Squiggle />
+                </View>
+                <EarthIllustration orbit={spin} scale={globeScale} />
+                <Text style={landingStyles.tagline}>
+                    Marketplace for students,{"\n"}by{" "}
+                    <Text style={landingStyles.hand}>students.</Text>
+                </Text>
+                <View style={landingStyles.buttons}>
+                    <Pressable
+                        accessibilityLabel="Log in"
+                        onPress={() => router.push("/Login")}
+                        style={landingStyles.login}
+                    >
+                        <Text style={landingStyles.loginText}>Log in</Text>
+                    </Pressable>
+                    <Pressable
+                        accessibilityLabel="Sign up"
+                        onPress={() => router.push("/SignUp")}
+                        style={landingStyles.signUp}
+                    >
+                        <Text style={landingStyles.signUpText}>Sign up</Text>
+                    </Pressable>
+                </View>
+                <Text style={landingStyles.caption}>
+                    Join with your school email. Students only.
+                </Text>
+            </View>
+        </Base>
+    );
 }
 function Squiggle() {
-    return <Svg width={160} height={12}><Path d="M2 7 Q16 1 30 7 T58 7 T86 7 T114 7 T142 6 T158 6" stroke={colors.maroon} strokeWidth={3} fill="none" strokeLinecap="round" /></Svg>;
+    return (
+        <Svg width={160} height={12}>
+            <Path
+                d="M2 7 Q16 1 30 7 T58 7 T86 7 T114 7 T142 6 T158 6"
+                stroke={colors.maroon}
+                strokeWidth={3}
+                fill="none"
+                strokeLinecap="round"
+            />
+        </Svg>
+    );
 }
 function DealTag() {
-    return <Svg width={150} height={74} viewBox="0 0 150 74"><Path d="M25 14 H138 a8 8 0 0 1 8 8 V58 a8 8 0 0 1 -8 8 H25 L5 40 Z" fill={colors.maroon} stroke={colors.maroonDark} strokeWidth={3} /><Circle cx={25} cy={40} r={6} fill={colors.appBg} stroke={colors.maroonDark} strokeWidth={2} /><SvgText x={89} y={52} fill="white" fontFamily="Outfit" fontSize={32} fontWeight="800" textAnchor="middle">Deal</SvgText></Svg>;
+    return (
+        <Svg width={150} height={74} viewBox="0 0 150 74">
+            <Path
+                d="M25 14 H138 a8 8 0 0 1 8 8 V58 a8 8 0 0 1 -8 8 H25 L5 40 Z"
+                fill={colors.maroon}
+                stroke={colors.maroonDark}
+                strokeWidth={3}
+            />
+            <Circle
+                cx={25}
+                cy={40}
+                r={6}
+                fill={colors.appBg}
+                stroke={colors.maroonDark}
+                strokeWidth={2}
+            />
+            <SvgText
+                x={89}
+                y={52}
+                fill="white"
+                fontFamily="Outfit"
+                fontSize={32}
+                fontWeight="800"
+                textAnchor="middle"
+            >
+                Deal
+            </SvgText>
+        </Svg>
+    );
 }
-function Student({
-    x,
-    y,
-    angle
-}) {
-    return <G transform={`translate(${x} ${y}) rotate(${angle})`} stroke={colors.ink} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" fill="none"><Circle cx="0" cy="-47" r="7" fill={colors.cream} /><Path d="M0 -40 V-18 M0 -31 L-15 -39 M0 -31 L15 -37 M0 -18 L-10 0 M0 -18 L10 0" /><Path d="M-5 -39 H5" stroke={colors.maroon} strokeWidth={4} /></G>;
+function Student({ x, y, angle }) {
+    return (
+        <G
+            transform={`translate(${x} ${y}) rotate(${angle})`}
+            stroke={colors.ink}
+            strokeWidth={3}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+        >
+            <Circle cx="0" cy="-47" r="7" fill={colors.cream} />
+            <Path d="M0 -40 V-18 M0 -31 L-15 -39 M0 -31 L15 -37 M0 -18 L-10 0 M0 -18 L10 0" />
+            <Path d="M-5 -39 H5" stroke={colors.maroon} strokeWidth={4} />
+        </G>
+    );
 }
-function EarthIllustration({
-    orbit,
-    scale
-}) {
+function EarthIllustration({ orbit, scale }) {
     const rotate = orbit.interpolate({
         inputRange: [0, 1],
-        outputRange: ['0deg', '360deg']
+        outputRange: ["0deg", "360deg"],
     });
-    return <View accessible accessibilityLabel="Spinning Earth with students standing on its edge" style={[landingStyles.earthWrap, {
-        height: Math.round(424 * scale)
-    }]}><Animated.View style={[landingStyles.orbit, {
-            transform: [{
-                scale
-            }, {
-                rotate
-            }]
-        }]}><Svg width={426} height={424} viewBox="-48 -48 426 424" style={landingStyles.earthCanvas} overflow="visible"><Defs><ClipPath id="earthClip"><Circle cx={165} cy={164} r={112} /></ClipPath></Defs><G clipPath="url(#earthClip)"><Circle cx={165} cy={164} r={112} fill="#CFE3F0" /><Path d="M58 114 C85 75 124 83 130 116 C138 147 105 168 78 154 C60 145 52 130 58 114 Z" fill="#8DBF8B" stroke={colors.ink} strokeWidth={3} /><Path d="M173 112 C199 90 247 105 256 139 C263 174 235 200 207 195 C181 190 164 164 167 140 Z" fill="#8DBF8B" stroke={colors.ink} strokeWidth={3} /><Path d="M142 216 C174 202 213 222 209 249 C203 273 169 282 147 266 C129 253 124 231 142 216 Z" fill="#8DBF8B" stroke={colors.ink} strokeWidth={3} /></G><Circle cx={165} cy={164} r={112} fill="none" stroke={colors.ink} strokeWidth={4} /><Student x={165} y={52} angle={0} /><Student x={262} y={108} angle={60} /><Student x={262} y={220} angle={120} /><Student x={165} y={276} angle={180} /><Student x={68} y={220} angle={240} /><Student x={68} y={108} angle={300} /></Svg></Animated.View></View>;
+    return (
+        <View
+            accessible
+            accessibilityLabel="Spinning Earth with students standing on its edge"
+            style={[
+                landingStyles.earthWrap,
+                {
+                    height: Math.round(424 * scale),
+                },
+            ]}
+        >
+            <Animated.View
+                style={[
+                    landingStyles.orbit,
+                    {
+                        transform: [
+                            {
+                                scale,
+                            },
+                            {
+                                rotate,
+                            },
+                        ],
+                    },
+                ]}
+            >
+                <Svg
+                    width={426}
+                    height={424}
+                    viewBox="-48 -48 426 424"
+                    style={landingStyles.earthCanvas}
+                    overflow="visible"
+                >
+                    <Defs>
+                        <ClipPath id="earthClip">
+                            <Circle cx={165} cy={164} r={112} />
+                        </ClipPath>
+                    </Defs>
+                    <G clipPath="url(#earthClip)">
+                        <Circle cx={165} cy={164} r={112} fill="#CFE3F0" />
+                        <Path
+                            d="M58 114 C85 75 124 83 130 116 C138 147 105 168 78 154 C60 145 52 130 58 114 Z"
+                            fill="#8DBF8B"
+                            stroke={colors.ink}
+                            strokeWidth={3}
+                        />
+                        <Path
+                            d="M173 112 C199 90 247 105 256 139 C263 174 235 200 207 195 C181 190 164 164 167 140 Z"
+                            fill="#8DBF8B"
+                            stroke={colors.ink}
+                            strokeWidth={3}
+                        />
+                        <Path
+                            d="M142 216 C174 202 213 222 209 249 C203 273 169 282 147 266 C129 253 124 231 142 216 Z"
+                            fill="#8DBF8B"
+                            stroke={colors.ink}
+                            strokeWidth={3}
+                        />
+                    </G>
+                    <Circle
+                        cx={165}
+                        cy={164}
+                        r={112}
+                        fill="none"
+                        stroke={colors.ink}
+                        strokeWidth={4}
+                    />
+                    <Student x={165} y={52} angle={0} />
+                    <Student x={262} y={108} angle={60} />
+                    <Student x={262} y={220} angle={120} />
+                    <Student x={165} y={276} angle={180} />
+                    <Student x={68} y={220} angle={240} />
+                    <Student x={68} y={108} angle={300} />
+                </Svg>
+            </Animated.View>
+        </View>
+    );
 }
 const landingStyles = StyleSheet.create({
     base: {
-        paddingHorizontal: 0
+        paddingHorizontal: 0,
     },
     screen: {
         flex: 1,
-        alignItems: 'center',
+        alignItems: "center",
         paddingHorizontal: 24,
         paddingVertical: 4,
-        justifyContent: 'space-between'
+        justifyContent: "space-between",
     },
     brand: {
         height: 210,
-        width: '100%',
-        alignItems: 'center',
-        justifyContent: 'flex-end'
+        width: "100%",
+        alignItems: "center",
+        justifyContent: "flex-end",
     },
     hanger: {
-        position: 'absolute',
+        position: "absolute",
         height: 135,
         top: -20,
-        left: '58%',
+        left: "58%",
         borderLeftWidth: 2,
-        borderColor: colors.ink
+        borderColor: colors.ink,
     },
     tagWrap: {
-        position: 'absolute',
+        position: "absolute",
         top: 82,
-        left: '58%',
+        left: "58%",
         marginLeft: -25,
         zIndex: 10,
         elevation: 10,
-        transformOrigin: '25px 0px'
+        transformOrigin: "25px 0px",
     },
     word: {
         color: colors.ink,
-        fontFamily: 'Outfit',
-        fontWeight: '800',
+        fontFamily: "Outfit",
+        fontWeight: "800",
         fontSize: 68,
-        letterSpacing: -3
+        letterSpacing: -3,
     },
     earthWrap: {
         width: 330,
-        position: 'relative',
-        alignItems: 'center',
-        justifyContent: 'center'
+        position: "relative",
+        alignItems: "center",
+        justifyContent: "center",
     },
     orbit: {
-        position: 'absolute',
+        position: "absolute",
         width: 330,
-        height: 328
+        height: 328,
     },
     earthCanvas: {
-        position: 'absolute',
+        position: "absolute",
         left: -48,
-        top: -48
+        top: -48,
     },
     tagline: {
         color: colors.ink,
-        fontFamily: 'Outfit',
+        fontFamily: "Outfit",
         fontSize: 19,
-        fontWeight: '500',
+        fontWeight: "500",
         lineHeight: 27,
-        textAlign: 'center'
+        textAlign: "center",
     },
     hand: {
-        fontFamily: 'Caveat',
-        fontWeight: '700',
-        fontSize: 28
+        fontFamily: "Caveat",
+        fontWeight: "700",
+        fontSize: 28,
     },
     buttons: {
-        flexDirection: 'row',
-        width: '100%',
-        gap: 14
+        flexDirection: "row",
+        width: "100%",
+        gap: 14,
     },
     login: {
         flex: 1,
         height: 52,
-        borderRadius: 999,
+        borderRadius: 6,
         borderWidth: 2,
         borderColor: colors.maroon,
         backgroundColor: colors.cream,
-        alignItems: 'center',
-        justifyContent: 'center'
+        alignItems: "center",
+        justifyContent: "center",
     },
     signUp: {
         flex: 1,
         height: 52,
-        borderRadius: 999,
+        borderRadius: 6,
         backgroundColor: colors.maroon,
-        alignItems: 'center',
-        justifyContent: 'center'
+        alignItems: "center",
+        justifyContent: "center",
     },
     loginText: {
         color: colors.maroon,
-        fontFamily: 'Caveat',
-        fontWeight: '700',
-        fontSize: 26
+        fontFamily: "Caveat",
+        fontWeight: "700",
+        fontSize: 26,
     },
     signUpText: {
         color: colors.white,
-        fontFamily: 'Caveat',
-        fontWeight: '700',
-        fontSize: 26
+        fontFamily: "Caveat",
+        fontWeight: "700",
+        fontSize: 26,
     },
     caption: {
         color: colors.muted,
-        fontFamily: 'Outfit',
-        fontSize: 12
-    }
+        fontFamily: "Outfit",
+        fontSize: 15,
+        textAlign: "center",
+    },
 });

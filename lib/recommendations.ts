@@ -72,5 +72,6 @@ export function formatListingPrice(price: number | string | null | undefined) {
   if (price === null || price === undefined || price === '') return 'Price unavailable';
 
   const numericPrice = Number(price);
-  return Number.isFinite(numericPrice) ? `$${numericPrice.toFixed(2)}` : 'Price unavailable';
+  if (!Number.isFinite(numericPrice)) return 'Price unavailable';
+  return numericPrice === 0 ? 'Free' : `$${numericPrice.toFixed(2)}`;
 }

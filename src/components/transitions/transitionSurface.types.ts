@@ -1,4 +1,4 @@
-import type { TransitionId } from './pageTransitions';
+import type { TransitionId } from "./pageTransitions";
 
 export type Snapshot = string | HTMLElement;
 
