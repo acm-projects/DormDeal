@@ -322,7 +322,7 @@ const page = StyleSheet.create({
     },
     photo: {
         height: 380,
-        backgroundColor: colors.maroon,
+        backgroundColor: colors.white,
     },
     photoImage: {
         position: "absolute",
