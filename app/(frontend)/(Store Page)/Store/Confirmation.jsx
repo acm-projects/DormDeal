@@ -214,53 +214,6 @@ export default function Confirmation() {
 
     return (
         <Base style={confirmUI.screen}>
-            <View pointerEvents="none" style={confirmUI.screenConfettiLayer}>
-                {CONFETTI.map((piece, index) => {
-                    const fall = confettiFalls[index];
-                    const animationStyle = {
-                        left: piece.left,
-                        backgroundColor: piece.color,
-                        opacity: fall.interpolate({
-                            inputRange: [0, 0.03, 0.92, 1],
-                            outputRange: [0, 1, 1, 0],
-                        }),
-                        transform: [
-                            {
-                                translateY: fall.interpolate({
-                                    inputRange: [0, 1],
-                                    outputRange: [-110, 1180],
-                                }),
-                            },
-                            {
-                                translateX: fall.interpolate({
-                                    inputRange: [0, 0.25, 0.5, 0.75, 1],
-                                    outputRange: [
-                                        0,
-                                        piece.drift,
-                                        -piece.drift * 0.65,
-                                        piece.drift * 0.45,
-                                        0,
-                                    ],
-                                }),
-                            },
-                            {
-                                rotate: fall.interpolate({
-                                    inputRange: [0, 1],
-                                    outputRange: ["0deg", `${piece.turn}deg`],
-                                }),
-                            },
-                        ],
-                    };
-
-                    return (
-                        <Animated.View
-                            key={`${piece.left}-${index}`}
-                            style={[confirmUI.confetti, animationStyle]}
-                        />
-                    );
-                })}
-            </View>
-
             <View style={confirmUI.center}>
                 <View style={confirmUI.hero}>
                     <Animated.View
@@ -363,6 +316,52 @@ export default function Confirmation() {
                         <Text style={confirmUI.items}>1 item</Text>
                     </View>
                 </View>
+            </View>
+            <View pointerEvents="none" style={confirmUI.screenConfettiLayer}>
+                {CONFETTI.map((piece, index) => {
+                    const fall = confettiFalls[index];
+                    const animationStyle = {
+                        left: piece.left,
+                        backgroundColor: piece.color,
+                        opacity: fall.interpolate({
+                            inputRange: [0, 0.03, 0.92, 1],
+                            outputRange: [0, 1, 1, 0],
+                        }),
+                        transform: [
+                            {
+                                translateY: fall.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [-110, 1180],
+                                }),
+                            },
+                            {
+                                translateX: fall.interpolate({
+                                    inputRange: [0, 0.25, 0.5, 0.75, 1],
+                                    outputRange: [
+                                        0,
+                                        piece.drift,
+                                        -piece.drift * 0.65,
+                                        piece.drift * 0.45,
+                                        0,
+                                    ],
+                                }),
+                            },
+                            {
+                                rotate: fall.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: ["0deg", `${piece.turn}deg`],
+                                }),
+                            },
+                        ],
+                    };
+
+                    return (
+                        <Animated.View
+                            key={`${piece.left}-${index}`}
+                            style={[confirmUI.confetti, animationStyle]}
+                        />
+                    );
+                })}
             </View>
             <View style={confirmUI.actions}>
                 <Pressable
