@@ -1,28 +1,296 @@
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { colors } from '../../../root_styles';
-import Text from '../../components/text_styles';
-import Base from '../../components/base';
-import { Squiggle } from '../../components/design';
+import { useState } from "react";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { colors } from "../../../root_styles";
+import Text from "../../../../src/components/text_styles";
+import Base from "../../../../src/components/base";
+import { Squiggle } from "../../../../src/components/design";
 
 const cartItems = [
-    { title: 'Mini fridge, 3.1 cu ft', seller: 'Alex R. · Helix Hall', price: 60, color: colors.maroon },
-    { title: 'Calc II textbook', seller: 'Priya N. · Sciences', price: 25, color: colors.tileRed },
-    { title: 'Desk lamp', seller: 'Sam K. · Oak Hall', price: 12, color: '#6B2A2A' },
+    {
+        title: "Mini fridge, 3.1 cu ft",
+        seller: "Alex R. · Helix Hall",
+        price: 60,
+        color: colors.maroon,
+    },
+    {
+        title: "Calc II textbook",
+        seller: "Priya N. · Sciences",
+        price: 25,
+        color: colors.tileRed,
+    },
+    {
+        title: "Desk lamp",
+        seller: "Sam K. · Oak Hall",
+        price: 12,
+        color: "#6B2A2A",
+    },
 ];
 
 function RedesignedCart() {
     const router = useRouter();
-    const [items, setItems] = useState(cartItems.map((item) => ({ ...item, quantity: 1 })));
-    const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const update = (index, amount) => setItems((current) => current.flatMap((item, itemIndex) => itemIndex !== index
-        ? [item] : item.quantity + amount <= 0 ? [] : [{ ...item, quantity: item.quantity + amount }]));
+    const [items, setItems] = useState(
+        cartItems.map((item) => ({ ...item, quantity: 1 })),
+    );
+    const total = items.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0,
+    );
+    const update = (index, amount) =>
+        setItems((current) =>
+            current.flatMap((item, itemIndex) =>
+                itemIndex !== index
+                    ? [item]
+                    : item.quantity + amount <= 0
+                      ? []
+                      : [{ ...item, quantity: item.quantity + amount }],
+            ),
+        );
 
-    return <Base><View style={modern.top}><Pressable accessibilityLabel="Back to catalog" onPress={() => router.back()} style={modern.back}><Ionicons name="chevron-back" size={30} color={colors.maroon}/></Pressable><Text style={modern.title}>your cart</Text><Squiggle/><Text style={modern.subtitle}>{items.length} items from your campus</Text></View><ScrollView style={modern.list} contentContainerStyle={modern.listContent}>{items.map((item, index) => <View key={item.title} style={modern.item}><View style={[modern.photo, { backgroundColor: item.color }]}><Text selectable={false} style={modern.photoText}>[photo]</Text></View><View style={modern.itemCopy}><Text style={modern.itemTitle}>{item.title}</Text><Text style={modern.seller}>{item.seller}</Text><Text style={modern.price}>${item.price.toFixed(2)}</Text></View><View style={modern.itemActions}><Pressable accessibilityLabel="Remove from cart" onPress={() => update(index, -item.quantity)} style={modern.remove}><Ionicons name="trash-outline" size={24} color={colors.maroon}/></Pressable><View style={modern.quantity}><Pressable accessibilityLabel="Increase quantity" hitSlop={6} onPress={() => update(index, 1)} style={modern.quantityButton}><Text selectable={false} style={modern.quantityText}>+</Text></Pressable><Text selectable={false} style={modern.quantityText}>{item.quantity}</Text><Pressable accessibilityLabel="Decrease quantity" hitSlop={6} onPress={() => update(index, -1)} style={modern.quantityButton}><Text selectable={false} style={modern.quantityText}>−</Text></Pressable></View></View></View>)}</ScrollView><View style={modern.summary}><Text style={modern.summaryTitle}>Order summary</Text><View style={modern.row}><Text>Subtotal</Text><Text>${total.toFixed(2)}</Text></View><View style={modern.row}><Text>Campus pickup</Text><Text>Free</Text></View><View style={modern.dash}/><View style={modern.row}><Text style={modern.total}>Total</Text><Text style={modern.total}>${total.toFixed(2)}</Text></View></View><Pressable onPress={() => router.push('/Store/Checkout')} style={modern.checkout}><Text selectable={false} style={modern.checkoutText}>Checkout</Text></Pressable></Base>;
+    return (
+        <Base>
+            <View style={modern.top}>
+                <Pressable
+                    accessibilityLabel="Back to catalog"
+                    onPress={() => router.back()}
+                    style={modern.back}
+                >
+                    <Ionicons
+                        name="chevron-back"
+                        size={30}
+                        color={colors.maroon}
+                    />
+                </Pressable>
+                <Text style={modern.title}>your cart</Text>
+                <Squiggle />
+                <Text style={modern.subtitle}>
+                    {items.length} items from your campus
+                </Text>
+            </View>
+            <ScrollView
+                style={modern.list}
+                contentContainerStyle={modern.listContent}
+            >
+                {items.map((item, index) => (
+                    <View key={item.title} style={modern.item}>
+                        <View
+                            style={[
+                                modern.photo,
+                                { backgroundColor: item.color },
+                            ]}
+                        >
+                            <Text selectable={false} style={modern.photoText}>
+                                [photo]
+                            </Text>
+                        </View>
+                        <View style={modern.itemCopy}>
+                            <Text style={modern.itemTitle}>{item.title}</Text>
+                            <Text style={modern.seller}>{item.seller}</Text>
+                            <Text style={modern.price}>
+                                ${item.price.toFixed(2)}
+                            </Text>
+                        </View>
+                        <View style={modern.itemActions}>
+                            <Pressable
+                                accessibilityLabel="Remove from cart"
+                                onPress={() => update(index, -item.quantity)}
+                                style={modern.remove}
+                            >
+                                <Ionicons
+                                    name="trash-outline"
+                                    size={24}
+                                    color={colors.maroon}
+                                />
+                            </Pressable>
+                            <View style={modern.quantity}>
+                                <Pressable
+                                    accessibilityLabel="Increase quantity"
+                                    hitSlop={6}
+                                    onPress={() => update(index, 1)}
+                                    style={modern.quantityButton}
+                                >
+                                    <Text
+                                        selectable={false}
+                                        style={modern.quantityText}
+                                    >
+                                        +
+                                    </Text>
+                                </Pressable>
+                                <Text
+                                    selectable={false}
+                                    style={modern.quantityText}
+                                >
+                                    {item.quantity}
+                                </Text>
+                                <Pressable
+                                    accessibilityLabel="Decrease quantity"
+                                    hitSlop={6}
+                                    onPress={() => update(index, -1)}
+                                    style={modern.quantityButton}
+                                >
+                                    <Text
+                                        selectable={false}
+                                        style={modern.quantityText}
+                                    >
+                                        −
+                                    </Text>
+                                </Pressable>
+                            </View>
+                        </View>
+                    </View>
+                ))}
+            </ScrollView>
+            <View style={modern.summary}>
+                <Text style={modern.summaryTitle}>Order summary</Text>
+                <View style={modern.row}>
+                    <Text>Subtotal</Text>
+                    <Text>${total.toFixed(2)}</Text>
+                </View>
+                <View style={modern.row}>
+                    <Text>Campus pickup</Text>
+                    <Text>Free</Text>
+                </View>
+                <View style={modern.dash} />
+                <View style={modern.row}>
+                    <Text style={modern.total}>Total</Text>
+                    <Text style={modern.total}>${total.toFixed(2)}</Text>
+                </View>
+            </View>
+            <Pressable
+                onPress={() => router.push("/Store/Checkout")}
+                style={modern.checkout}
+            >
+                <Text selectable={false} style={modern.checkoutText}>
+                    Checkout
+                </Text>
+            </Pressable>
+        </Base>
+    );
 }
 
-const modern = StyleSheet.create({ top: { gap: 4 }, back: { width: 56, height: 56, backgroundColor: colors.cream, alignItems: 'center', justifyContent: 'center', borderRadius: 0, shadowColor: '#000', shadowOpacity: .15, shadowRadius: 4, elevation: 3 }, title: { fontFamily: 'Outfit', fontWeight: '700', fontSize: 52, color: colors.maroon, letterSpacing: -1.5, marginTop: 22 }, subtitle: { fontFamily: 'Caveat', fontWeight: '700', fontSize: 24, color: colors.muted }, list: { flex: 1, marginTop: 18, marginHorizontal: -8 }, listContent: { gap: 14, paddingHorizontal: 8, paddingBottom: 12 }, item: { minHeight: 98, backgroundColor: colors.white, borderRadius: 2, flexDirection: 'row', padding: 12, gap: 12, shadowColor: '#000', shadowOpacity: .14, shadowRadius: 4, elevation: 3 }, photo: { width: 74, height: 74, borderRadius: 2, alignItems: 'center', justifyContent: 'center' }, photoText: { fontFamily: 'Caveat', fontSize: 18, color: colors.rose }, itemCopy: { flex: 1 }, itemTitle: { fontFamily: 'Outfit', fontWeight: '700', fontSize: 17, color: colors.ink }, seller: { fontFamily: 'Outfit', fontSize: 13, color: colors.muted, marginTop: 3 }, price: { fontFamily: 'Outfit', fontWeight: '800', fontSize: 18, color: colors.maroon, marginTop: 4 }, itemActions: { alignItems: 'flex-end', justifyContent: 'space-between' }, remove: { width: 40, height: 40, borderRadius: 2, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.rose }, quantity: { height: 28, minWidth: 70, paddingHorizontal: 2, borderRadius: 2, backgroundColor: colors.maroon, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, quantityButton: { width: 22, height: 24, alignItems: 'center', justifyContent: 'center' }, quantityText: { fontFamily: 'Outfit', fontWeight: '700', color: colors.white, fontSize: 15 }, summary: { backgroundColor: colors.white, borderRadius: 2, padding: 16, gap: 9, shadowColor: '#000', shadowOpacity: .15, shadowRadius: 4, elevation: 3 }, summaryTitle: { fontFamily: 'Caveat', fontWeight: '700', fontSize: 26, color: colors.maroon }, row: { flexDirection: 'row', justifyContent: 'space-between' }, dash: { borderTopWidth: 2, borderStyle: 'dashed', borderColor: '#C58C8C' }, total: { fontFamily: 'Outfit', fontWeight: '800', fontSize: 19 }, checkout: { height: 52, marginTop: 16, backgroundColor: colors.maroon, alignItems: 'center', justifyContent: 'center' }, checkoutText: { fontFamily: 'Outfit', fontWeight: '700', fontSize: 19, color: colors.white } });
+const modern = StyleSheet.create({
+    top: { gap: 4 },
+    back: {
+        width: 56,
+        height: 56,
+        backgroundColor: colors.cream,
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: 0,
+        boxShadow: `0px 1px 2px rgba(0, 0, 0, 0.08)`,
+    },
+    title: {
+        fontFamily: "Outfit",
+        fontWeight: "700",
+        fontSize: 52,
+        color: colors.maroon,
+        letterSpacing: -1.5,
+        marginTop: 22,
+    },
+    subtitle: {
+        fontFamily: "Caveat",
+        fontWeight: "700",
+        fontSize: 24,
+        color: colors.muted,
+    },
+    list: { flex: 1, marginTop: 18, marginHorizontal: -8 },
+    listContent: { gap: 14, paddingHorizontal: 8, paddingBottom: 12 },
+    item: {
+        minHeight: 98,
+        backgroundColor: colors.white,
+        borderRadius: 2,
+        flexDirection: "row",
+        padding: 12,
+        gap: 12,
+    },
+    photo: {
+        width: 74,
+        height: 74,
+        borderRadius: 2,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    photoText: { fontFamily: "Caveat", fontSize: 18, color: colors.rose },
+    itemCopy: { flex: 1 },
+    itemTitle: {
+        fontFamily: "Outfit",
+        fontWeight: "700",
+        fontSize: 17,
+        color: colors.ink,
+    },
+    seller: {
+        fontFamily: "Outfit",
+        fontSize: 13,
+        color: colors.muted,
+        marginTop: 3,
+    },
+    price: {
+        fontFamily: "Outfit",
+        fontWeight: "800",
+        fontSize: 18,
+        color: colors.maroon,
+        marginTop: 4,
+    },
+    itemActions: { alignItems: "flex-end", justifyContent: "space-between" },
+    remove: {
+        width: 40,
+        height: 40,
+        borderRadius: 2,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: colors.rose,
+    },
+    quantity: {
+        height: 28,
+        minWidth: 70,
+        paddingHorizontal: 2,
+        borderRadius: 2,
+        backgroundColor: colors.maroon,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+    },
+    quantityButton: {
+        width: 22,
+        height: 24,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    quantityText: {
+        fontFamily: "Outfit",
+        fontWeight: "700",
+        color: colors.white,
+        fontSize: 15,
+    },
+    summary: {
+        backgroundColor: colors.white,
+        borderRadius: 2,
+        padding: 16,
+        gap: 9,
+    },
+    summaryTitle: {
+        fontFamily: "Caveat",
+        fontWeight: "700",
+        fontSize: 26,
+        color: colors.maroon,
+    },
+    row: { flexDirection: "row", justifyContent: "space-between" },
+    dash: { borderTopWidth: 2, borderStyle: "dashed", borderColor: "#C58C8C" },
+    total: { fontFamily: "Outfit", fontWeight: "800", fontSize: 19 },
+    checkout: {
+        height: 52,
+        marginTop: 16,
+        backgroundColor: colors.maroon,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    checkoutText: {
+        fontFamily: "Outfit",
+        fontWeight: "700",
+        fontSize: 19,
+        color: colors.white,
+    },
+});
 
 export default RedesignedCart;

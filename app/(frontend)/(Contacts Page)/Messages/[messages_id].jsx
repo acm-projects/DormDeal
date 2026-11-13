@@ -1,20 +1,27 @@
-import { StyleSheet, ScrollView, View, Image, Pressable, TextInput } from 'react-native';
-import { useEffect, useRef, useState } from 'react';
-import { useLocalSearchParams } from 'expo-router';
-import Svg, { Path } from 'react-native-svg';
-import Other_Message_Box from '../../components/message_box_pink'
-import You_Message_Box from '../../components/message_box_red'
-import Back_Button from '../../components/back_button'
-import Button from '../../components/button'
-import Base from '../../components/base'
-import Text from '../../components/text_styles'
-import { colors } from '../../../root_styles';
-import avatar_test from '../../../../assets/svgs/avatar_sample.svg'
-import menu_icon from '../../../../assets/svgs/menu.svg'
-import arrow from '../../../../assets/svgs/white_arrow.svg'
-import { supabase } from '../../../../lib/supabase';
+import {
+    StyleSheet,
+    ScrollView,
+    View,
+    Image,
+    Pressable,
+    TextInput,
+} from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { useLocalSearchParams } from "expo-router";
+import Svg, { Path } from "react-native-svg";
+import Other_Message_Box from "../../../../src/components/message_box_pink";
+import You_Message_Box from "../../../../src/components/message_box_red";
+import Back_Button from "../../../../src/components/back_button";
+import Button from "../../../../src/components/button";
+import Base from "../../../../src/components/base";
+import Text from "../../../../src/components/text_styles";
+import { colors } from "../../../root_styles";
+import avatar_test from "../../../../assets/svgs/avatar_sample.svg";
+import menu_icon from "../../../../assets/svgs/menu.svg";
+import arrow from "../../../../assets/svgs/white_arrow.svg";
+import { supabase } from "../../../../lib/supabase";
 
-const PaperclipIcon = ({ color = '#8F969E', size = 28 }) => (
+const PaperclipIcon = ({ color = "#8F969E", size = 28 }) => (
     <Svg width={size} height={size * 1.4} viewBox="0 0 24 34">
         <Path
             d="M7 13 4.5 10.3a4.2 4.2 0 0 1 6.2-5.7l9.1 9.9a5.8 5.8 0 0 1-8.5 7.9L3.8 13.2a3.8 3.8 0 0 1 5.6-5.2l8.4 9.1"
@@ -29,15 +36,18 @@ const PaperclipIcon = ({ color = '#8F969E', size = 28 }) => (
 
 const time_ago = (iso) => {
     // DB timestamps have no timezone but are UTC, so mark them as UTC
-    const t = /Z|[+-]\d\d:?\d\d$/.test(iso) ? iso : iso + 'Z';
-    const s = Math.max(0, Math.floor((Date.now() - new Date(t).getTime()) / 1000));
-    if (s < 60) return 'just now';
+    const t = /Z|[+-]\d\d:?\d\d$/.test(iso) ? iso : iso + "Z";
+    const s = Math.max(
+        0,
+        Math.floor((Date.now() - new Date(t).getTime()) / 1000),
+    );
+    if (s < 60) return "just now";
     const m = Math.floor(s / 60);
-    if (m < 60) return `${m} minute${m === 1 ? '' : 's'} ago`;
+    if (m < 60) return `${m} minute${m === 1 ? "" : "s"} ago`;
     const h = Math.floor(m / 60);
-    if (h < 24) return `${h} hour${h === 1 ? '' : 's'} ago`;
+    if (h < 24) return `${h} hour${h === 1 ? "" : "s"} ago`;
     const d = Math.floor(h / 24);
-    return `${d} day${d === 1 ? '' : 's'} ago`;
+    return `${d} day${d === 1 ? "" : "s"} ago`;
 };
 
 const Messages = () => {
@@ -46,10 +56,10 @@ const Messages = () => {
 
     const [user_id, set_user_id] = useState(null);
     const [messages, set_messages] = useState([]);
-    const [text, set_text] = useState('');
-    const [chat_title, set_chat_title] = useState('Chat');
-    const [listing_title, set_listing_title] = useState('Starbucks Cup');
-    const [send_error, set_send_error] = useState('');
+    const [text, set_text] = useState("");
+    const [chat_title, set_chat_title] = useState("Chat");
+    const [listing_title, set_listing_title] = useState("Starbucks Cup");
+    const [send_error, set_send_error] = useState("");
 
     const scroll_view_ref = useRef(null);
     const scroll_to_end_func = () => {
@@ -58,7 +68,9 @@ const Messages = () => {
 
     // who am I?
     useEffect(() => {
-        supabase.auth.getUser().then(({ data }) => set_user_id(data.user?.id ?? null));
+        supabase.auth
+            .getUser()
+            .then(({ data }) => set_user_id(data.user?.id ?? null));
     }, []);
 
     // header title (the other person's name)
@@ -66,19 +78,20 @@ const Messages = () => {
         if (!user_id || Number.isNaN(conversation_id)) return;
         const load_title = async () => {
             const { data: convo } = await supabase
-                .from('conversations')
-                .select('buyer_id, seller_id, listings(title)')
-                .eq('conversation_id', conversation_id)
+                .from("conversations")
+                .select("buyer_id, seller_id, listings(title)")
+                .eq("conversation_id", conversation_id)
                 .maybeSingle();
             if (!convo) return;
-            const other_id = convo.buyer_id === user_id ? convo.seller_id : convo.buyer_id;
+            const other_id =
+                convo.buyer_id === user_id ? convo.seller_id : convo.buyer_id;
             const { data: other } = await supabase
-                .from('app-users')
-                .select('name')
-                .eq('user_id', other_id)
+                .from("app-users")
+                .select("name")
+                .eq("user_id", other_id)
                 .maybeSingle();
             set_chat_title(other?.name ?? `Chat ${conversation_id}`);
-            set_listing_title(convo.listings?.title ?? 'Starbucks Cup');
+            set_listing_title(convo.listings?.title ?? "Starbucks Cup");
         };
         load_title();
     }, [user_id, conversation_id]);
@@ -89,10 +102,10 @@ const Messages = () => {
 
         const load = async () => {
             const { data, error } = await supabase
-                .from('messages')
-                .select('*')
-                .eq('conversation_id', conversation_id)
-                .order('sent_at', { ascending: true });
+                .from("messages")
+                .select("*")
+                .eq("conversation_id", conversation_id)
+                .order("sent_at", { ascending: true });
             if (error) console.error(error);
             set_messages(data ?? []);
         };
@@ -101,19 +114,21 @@ const Messages = () => {
         const channel = supabase
             .channel(`conversation-${conversation_id}`)
             .on(
-                'postgres_changes',
+                "postgres_changes",
                 {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'messages',
+                    event: "INSERT",
+                    schema: "public",
+                    table: "messages",
                     filter: `conversation_id=eq.${conversation_id}`,
                 },
                 (payload) => {
                     const msg = payload.new;
                     set_messages((prev) =>
-                        prev.some((m) => m.message_id === msg.message_id) ? prev : [...prev, msg]
+                        prev.some((m) => m.message_id === msg.message_id)
+                            ? prev
+                            : [...prev, msg],
                     );
-                }
+                },
             )
             .subscribe();
 
@@ -125,9 +140,9 @@ const Messages = () => {
     const send_message = async () => {
         if (!text.trim() || !user_id) return;
         const content = text;
-        set_text('');
+        set_text("");
         const { data, error } = await supabase
-            .from('messages')
+            .from("messages")
             .insert({ conversation_id, sender_id: user_id, content })
             .select()
             .single();
@@ -137,21 +152,25 @@ const Messages = () => {
             set_text(content);
             return;
         }
-        set_send_error('');
+        set_send_error("");
         set_messages((prev) =>
-            prev.some((m) => m.message_id === data.message_id) ? prev : [...prev, data]
+            prev.some((m) => m.message_id === data.message_id)
+                ? prev
+                : [...prev, data],
         );
     };
 
     return (
-        <Base style={{paddingLeft: 0, paddingRight: 0, paddingBottom: 0}}>
+        <Base style={{ paddingLeft: 0, paddingRight: 0, paddingBottom: 0 }}>
             <View style={styles.header_container}>
-                <Back_Button href="/Contacts" style={styles.back_button}/>
+                <Back_Button href="/Contacts" style={styles.back_button} />
                 <View style={styles.header_quick_info}>
-                    <Image source={avatar_test}/>
+                    <Image source={avatar_test} />
                     <View style={styles.text_info}>
                         <Text style={styles.header_name}>{chat_title}</Text>
-                        <Text style={styles.header_subtitle}>Verified student · Helix Hall</Text>
+                        <Text style={styles.header_subtitle}>
+                            Verified student · Helix Hall
+                        </Text>
                     </View>
                 </View>
                 <Button style={styles.menu_button}>
@@ -165,8 +184,16 @@ const Messages = () => {
                 </View>
                 <View style={styles.listing_thumbnail} />
                 <View style={styles.listing_info}>
-                    <Text style={styles.listing_subject} numberOfLines={1} ellipsizeMode="tail">re: {listing_title}</Text>
-                    <Text style={styles.listing_detail}>$8 · pickup at Library lobby</Text>
+                    <Text
+                        style={styles.listing_subject}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                    >
+                        re: {listing_title}
+                    </Text>
+                    <Text style={styles.listing_detail}>
+                        $8 · pickup at Library lobby
+                    </Text>
                 </View>
                 <Pressable style={styles.listing_view}>
                     <Text style={styles.listing_view_text}>View</Text>
@@ -182,18 +209,26 @@ const Messages = () => {
             >
                 <View style={styles.tip_note}>
                     <View style={styles.tip_top} />
-                    <Text style={styles.tip_text}>Tip: meet in a busy campus spot, like the Library lobby.</Text>
+                    <Text style={styles.tip_text}>
+                        Tip: meet in a busy campus spot, like the Library lobby.
+                    </Text>
                 </View>
                 {messages.map((m) =>
                     m.sender_id === user_id ? (
-                        <You_Message_Box key={m.message_id} status={time_ago(m.sent_at)}>
+                        <You_Message_Box
+                            key={m.message_id}
+                            status={time_ago(m.sent_at)}
+                        >
                             {m.content}
                         </You_Message_Box>
                     ) : (
-                        <Other_Message_Box key={m.message_id} status={time_ago(m.sent_at)}>
+                        <Other_Message_Box
+                            key={m.message_id}
+                            status={time_ago(m.sent_at)}
+                        >
                             {m.content}
                         </Other_Message_Box>
-                    )
+                    ),
                 )}
             </ScrollView>
 
@@ -218,22 +253,26 @@ const Messages = () => {
                         onPress={send_message}
                         style={styles.upload_button}
                     >
-                        <Image source={arrow} style={styles.send_icon}></Image>
+                        <Image
+                            source={arrow}
+                            tintColor={colors.white}
+                            style={styles.send_icon}
+                        ></Image>
                     </Pressable>
                 </View>
             </View>
         </Base>
     );
-}
+};
 
-export default Messages
+export default Messages;
 
 const styles = StyleSheet.create({
     header_container: {
-        flexDirection: 'row',
+        flexDirection: "row",
         paddingHorizontal: 14,
         gap: 8,
-        alignItems: 'center',
+        alignItems: "center",
         marginBottom: 20,
     },
     back_button: {
@@ -241,11 +280,12 @@ const styles = StyleSheet.create({
         height: 56,
         backgroundColor: colors.cream,
         borderRadius: 0,
-        boxShadow: '0px 3px 8px rgba(31,20,20,0.12)',
+        boxShadow: "0px 1px 4px rgba(31,20,20,0.12)",
+        boxShadow: `0px 1px 2px rgba(0, 0, 0, 0.08)`,
     },
     messages_container: {
         flexGrow: 1,
-        justifyContent: 'flex-end',
+        justifyContent: "flex-end",
         gap: 5,
         paddingLeft: 20,
         paddingRight: 20,
@@ -260,43 +300,43 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingHorizontal: 12,
         backgroundColor: colors.cream,
-        alignItems: 'center',
-        flexDirection: 'row',
-        width: '100%',
+        alignItems: "center",
+        flexDirection: "row",
+        width: "100%",
         borderRadius: 0,
         height: 45,
-        boxShadow: '0px 3px 8px rgba(31,20,20,0.12)',
+        boxShadow: "0px 3px 8px rgba(31,20,20,0.12)",
     },
     text_info: {
         flex: 1,
-        textAlign: 'left',
-        justifyContent: 'flex-start',
-        alignItems: 'flex-start',
+        textAlign: "left",
+        justifyContent: "flex-start",
+        alignItems: "flex-start",
         marginLeft: 8,
     },
     header_name: {
         fontSize: 16,
-        fontWeight: '700',
+        fontWeight: "700",
         color: colors.ink,
-        fontFamily: 'Outfit',
+        fontFamily: "Outfit",
     },
     header_subtitle: {
         fontSize: 11,
         color: colors.muted,
-        fontFamily: 'Outfit',
+        fontFamily: "Outfit",
     },
     menu_button: {
         width: 45,
         height: 45,
         backgroundColor: colors.cream,
         borderRadius: 0,
-        alignItems: 'center',
-        justifyContent: 'center',
-        boxShadow: '0px 3px 8px rgba(31,20,20,0.12)',
+        alignItems: "center",
+        justifyContent: "center",
+        boxShadow: "0px 3px 8px rgba(31,20,20,0.12)",
     },
     listing_card: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
         minHeight: 64,
         marginHorizontal: 18,
         marginBottom: 4,
@@ -304,10 +344,10 @@ const styles = StyleSheet.create({
         paddingLeft: 12,
         paddingRight: 12,
         backgroundColor: colors.cream,
-        boxShadow: '0px 3px 8px rgba(31,20,20,0.12)',
+        boxShadow: "0px 3px 8px rgba(31,20,20,0.12)",
     },
     paperclip: {
-        position: 'absolute',
+        position: "absolute",
         left: -15,
         top: -18,
         zIndex: 2,
@@ -324,16 +364,16 @@ const styles = StyleSheet.create({
     },
     listing_subject: {
         color: colors.maroon,
-        fontWeight: '700',
-        fontFamily: 'Outfit',
+        fontWeight: "700",
+        fontFamily: "Outfit",
         fontSize: 14,
-        textAlign: 'left',
+        textAlign: "left",
     },
     listing_detail: {
         color: colors.ink,
-        fontFamily: 'Outfit',
+        fontFamily: "Outfit",
         fontSize: 12,
-        textAlign: 'left',
+        textAlign: "left",
     },
     listing_view: {
         paddingLeft: 8,
@@ -341,12 +381,12 @@ const styles = StyleSheet.create({
     },
     listing_view_text: {
         color: colors.maroon,
-        fontFamily: 'Outfit',
-        fontWeight: '700',
-        textDecorationLine: 'underline',
+        fontFamily: "Outfit",
+        fontWeight: "700",
+        textDecorationLine: "underline",
     },
     tip_note: {
-        alignSelf: 'center',
+        alignSelf: "center",
         width: 250,
         minHeight: 88,
         marginTop: 220,
@@ -354,20 +394,20 @@ const styles = StyleSheet.create({
         padding: 18,
         paddingTop: 24,
         paddingRight: 24,
-        backgroundColor: '#FFE45E',
-        boxShadow: '0px 4px 8px rgba(31,20,20,0.18)',
+        backgroundColor: "#FFE45E",
+        boxShadow: "0px 4px 8px rgba(31,20,20,0.18)",
     },
     tip_top: {
-        position: 'absolute',
+        position: "absolute",
         top: 0,
         left: 0,
         right: 0,
         height: 9,
-        backgroundColor: '#F7D83F',
+        backgroundColor: "#F7D83F",
     },
     tip_text: {
         color: colors.ink,
-        fontFamily: 'Caveat',
+        fontFamily: "Caveat",
         fontSize: 18,
         lineHeight: 24,
     },
@@ -381,18 +421,18 @@ const styles = StyleSheet.create({
         width: 46,
         height: 46,
         backgroundColor: colors.maroon,
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
         borderRadius: 0,
     },
     messages_functionality: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        position: 'absolute',
+        flexDirection: "row",
+        alignItems: "center",
+        position: "absolute",
         bottom: 0,
-        alignContent: 'flex-end',
+        alignContent: "flex-end",
         backgroundColor: colors.blush,
-        width: '100%',
+        width: "100%",
         height: 86,
         borderTopWidth: 2,
         borderTopColor: colors.maroon,
@@ -402,10 +442,10 @@ const styles = StyleSheet.create({
     attachment_button: {
         width: 38,
         height: 46,
-        backgroundColor: 'transparent',
-        alignItems: 'center',
-        justifyContent: 'center',
-        boxShadow: 'none',
+        backgroundColor: "transparent",
+        alignItems: "center",
+        justifyContent: "center",
+        boxShadow: "none",
     },
     attachment_icon: {
         opacity: 1,
@@ -413,8 +453,8 @@ const styles = StyleSheet.create({
     text_input_container: {
         flex: 1,
         minWidth: 0,
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
         marginLeft: 10,
         backgroundColor: colors.white,
         borderWidth: 2,
@@ -428,17 +468,16 @@ const styles = StyleSheet.create({
         flex: 1,
         minWidth: 0,
         color: colors.ink,
-        height: '100%',
+        height: "100%",
         borderWidth: 0,
-        outlineStyle: 'none',
-        fontFamily: 'Outfit',
+        outlineStyle: "none",
+        fontFamily: "Outfit",
         fontSize: 16,
     },
     send_icon: {
         width: 24,
         height: 24,
         opacity: 1,
-        tintColor: colors.white,
-        transform: [{rotate: '90deg'}],
-    }
-})
+        transform: [{ rotate: "90deg" }],
+    },
+});

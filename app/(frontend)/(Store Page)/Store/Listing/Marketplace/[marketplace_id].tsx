@@ -1,12 +1,25 @@
-import { useEffect, useState } from 'react';
-import { Text, View, StyleSheet, ScrollView, Pressable, ActivityIndicator, Image } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../../../../root_styles';
-import { items } from '../../../../../../data/items';
-import { supabase } from '../../../../../../lib/supabase';
-import { getListing } from '../../../../../../lib/api/listings';
-import { formatCategory, formatListingPrice, formatSellerName, recordListingInteraction } from '../../../../../../lib/recommendations';
+import { useEffect, useState } from "react";
+import {
+    Text,
+    View,
+    StyleSheet,
+    ScrollView,
+    Pressable,
+    ActivityIndicator,
+    Image,
+} from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { colors } from "../../../../../root_styles";
+import { items } from "../../../../../../data/items";
+import { supabase } from "../../../../../../lib/supabase";
+import { getListing } from "../../../../../../lib/api/listings";
+import {
+    formatCategory,
+    formatListingPrice,
+    formatSellerName,
+    recordListingInteraction,
+} from "../../../../../../lib/recommendations";
 
 type DisplayItem = {
     id: string;
@@ -26,32 +39,51 @@ type DisplayItem = {
     imageUrl?: string | null;
 };
 
-const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'];
+const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+];
 
 // 'YYYY-MM-DD' -> 'Nov 3'
 function prettyDate(key?: string) {
-    if (!key) return 'Not set';
-    const [, m, d] = key.split('-').map(Number);
+    if (!key) return "Not set";
+    const [, m, d] = key.split("-").map(Number);
     return `${monthNames[m - 1].slice(0, 3)} ${d}`;
 }
 
 const Marketplace_Listing = () => {
-    const { marketplace_id } = useLocalSearchParams<{ marketplace_id: string }>(); // the number at the end of the address
+    const { marketplace_id } = useLocalSearchParams<{
+        marketplace_id: string;
+    }>(); // the number at the end of the address
     const router = useRouter();
-    const parsedLiveListingId = marketplace_id?.startsWith('live-')
-        ? Number(marketplace_id.slice('live-'.length))
+    const parsedLiveListingId = marketplace_id?.startsWith("live-")
+        ? Number(marketplace_id.slice("live-".length))
         : null;
-    const liveListingId = parsedLiveListingId !== null
-        && Number.isInteger(parsedLiveListingId)
-        && parsedLiveListingId > 0
-        ? parsedLiveListingId
-        : null;
-    const demoItem = liveListingId ? undefined : items.find((candidate) => candidate.id === marketplace_id);
-    const [item, setItem] = useState<DisplayItem | null>(demoItem ? { ...demoItem, isLive: false } : null);
+    const liveListingId =
+        parsedLiveListingId !== null &&
+        Number.isInteger(parsedLiveListingId) &&
+        parsedLiveListingId > 0
+            ? parsedLiveListingId
+            : null;
+    const demoItem = liveListingId
+        ? undefined
+        : items.find((candidate) => candidate.id === marketplace_id);
+    const [item, setItem] = useState<DisplayItem | null>(
+        demoItem ? { ...demoItem, isLive: false } : null,
+    );
     const [loading, setLoading] = useState(Boolean(liveListingId && !demoItem));
     const [messaging, setMessaging] = useState(false);
-    const [messageError, setMessageError] = useState('');
+    const [messageError, setMessageError] = useState("");
 
     useEffect(() => {
         if (!liveListingId || demoItem) return;
@@ -65,12 +97,16 @@ const Marketplace_Listing = () => {
                 if (!active) return;
 
                 const { data: sellerData } = await supabase
-                    .from('app-users')
-                    .select('name')
-                    .eq('user_id', data.seller_id)
+                    .from("app-users")
+                    .select("name")
+                    .eq("user_id", data.seller_id)
                     .maybeSingle();
                 const seller = formatSellerName(sellerData?.name);
-                const initials = seller.split(/\s+/).slice(0, 2).map((word: string) => word[0]?.toUpperCase()).join('');
+                const initials = seller
+                    .split(/\s+/)
+                    .slice(0, 2)
+                    .map((word: string) => word[0]?.toUpperCase())
+                    .join("");
 
                 setItem({
                     id: String(data.listing_id),
@@ -79,16 +115,18 @@ const Marketplace_Listing = () => {
                     seller,
                     initials,
                     price: formatListingPrice(data.price),
-                    condition: 'Available',
+                    condition: "Available",
                     category: formatCategory(data.category),
-                    description: data.description ?? 'No description provided.',
-                    pickup: 'Arrange with seller',
+                    description: data.description ?? "No description provided.",
+                    pickup: "Arrange with seller",
                     posted: new Date(data.created_at).toLocaleDateString(),
                     isLive: true,
                     imageUrl: data.image_url,
                 });
 
-                recordListingInteraction(data.listing_id, 'view').catch(() => undefined);
+                recordListingInteraction(data.listing_id, "view").catch(
+                    () => undefined,
+                );
             } catch {
                 if (active) setItem(null);
             }
@@ -97,7 +135,9 @@ const Marketplace_Listing = () => {
         };
 
         loadListing();
-        return () => { active = false; };
+        return () => {
+            active = false;
+        };
     }, [demoItem, liveListingId]);
 
     // open (or create) a chat with this listing's seller, then go to it
@@ -106,14 +146,19 @@ const Marketplace_Listing = () => {
             setMessageError("This listing can't be messaged yet.");
             return;
         }
-        setMessageError('');
+        setMessageError("");
         setMessaging(true);
 
-        recordListingInteraction(item.liveListingId, 'message').catch(() => undefined);
+        recordListingInteraction(item.liveListingId, "message").catch(
+            () => undefined,
+        );
 
-        const { data: conversationId, error } = await supabase.rpc('start_conversation', {
-            p_listing_id: item.liveListingId,
-        });
+        const { data: conversationId, error } = await supabase.rpc(
+            "start_conversation",
+            {
+                p_listing_id: item.liveListingId,
+            },
+        );
 
         setMessaging(false);
 
@@ -148,14 +193,25 @@ const Marketplace_Listing = () => {
     return (
         <View style={page.screen}>
             <ScrollView contentContainerStyle={page.content}>
-
                 {/* listing photo with a placeholder color when none was uploaded */}
                 <View style={page.photo}>
                     {item.imageUrl && (
-                        <Image source={{ uri: item.imageUrl }} style={page.photoImage} resizeMode="cover" />
+                        <Image
+                            source={{ uri: item.imageUrl }}
+                            style={page.photoImage}
+                            resizeMode="cover"
+                        />
                     )}
-                    <Pressable style={page.backButton} onPress={() => router.back()} accessibilityLabel="Go back">
-                        <Ionicons name="chevron-back" size={22} color={colors.ink} />
+                    <Pressable
+                        style={page.backButton}
+                        onPress={() => router.back()}
+                        accessibilityLabel="Go back"
+                    >
+                        <Ionicons
+                            name="chevron-back"
+                            size={30}
+                            color={colors.maroon}
+                        />
                     </Pressable>
                 </View>
 
@@ -163,7 +219,9 @@ const Marketplace_Listing = () => {
                     {/* seller */}
                     <View style={page.sellerCard}>
                         <View style={page.sellerAvatar}>
-                            <Text style={page.sellerInitials}>{item.initials}</Text>
+                            <Text style={page.sellerInitials}>
+                                {item.initials}
+                            </Text>
                         </View>
                         <View style={page.sellerInfo}>
                             <Text style={page.sellerName}>{item.seller}</Text>
@@ -178,7 +236,9 @@ const Marketplace_Listing = () => {
                     {/* tags */}
                     <View style={page.tags}>
                         <View style={[page.tag, page.tagMain]}>
-                            <Text style={[page.tagText, page.tagTextMain]}>{item.condition}</Text>
+                            <Text style={[page.tagText, page.tagTextMain]}>
+                                {item.condition}
+                            </Text>
                         </View>
                         <View style={page.tag}>
                             <Text style={page.tagText}>{item.category}</Text>
@@ -192,7 +252,9 @@ const Marketplace_Listing = () => {
                     <View style={page.details}>
                         <View style={page.detailRow}>
                             <Text style={page.detailLabel}>Condition</Text>
-                            <Text style={page.detailValue}>{item.condition}</Text>
+                            <Text style={page.detailValue}>
+                                {item.condition}
+                            </Text>
                         </View>
                         <View style={page.detailRow}>
                             <Text style={page.detailLabel}>Pickup</Text>
@@ -201,7 +263,8 @@ const Marketplace_Listing = () => {
                         <View style={page.detailRow}>
                             <Text style={page.detailLabel}>Pickup date</Text>
                             <Text style={page.detailValue}>
-                                {prettyDate(item.pickupDate)}{item.pickupTime ? ` · ${item.pickupTime}` : ''}
+                                {prettyDate(item.pickupDate)}
+                                {item.pickupTime ? ` · ${item.pickupTime}` : ""}
                             </Text>
                         </View>
                         <View style={[page.detailRow, page.detailRowLast]}>
@@ -214,18 +277,32 @@ const Marketplace_Listing = () => {
 
             {/* buttons stuck to the bottom */}
             <View style={page.actionBar}>
-                {messageError ? <Text style={page.errorText}>{messageError}</Text> : null}
+                {messageError ? (
+                    <Text style={page.errorText}>{messageError}</Text>
+                ) : null}
                 <View style={page.actionRow}>
                     <Pressable
-                        style={[page.messageButton, messaging && { opacity: 0.6 }]}
+                        style={[
+                            page.messageButton,
+                            messaging && { opacity: 0.6 },
+                        ]}
                         onPress={messageSeller}
                         disabled={messaging}
                     >
-                        <Text style={page.messageText}>{messaging ? 'Opening…' : 'Message'}</Text>
+                        <Text style={page.messageText}>
+                            {messaging ? "Opening…" : "Message"}
+                        </Text>
                     </Pressable>
-                    <Pressable style={page.buyButton} onPress={() => {
-                        if (item.liveListingId) recordListingInteraction(item.liveListingId, 'purchase').catch(() => undefined);
-                    }}>
+                    <Pressable
+                        style={page.buyButton}
+                        onPress={() => {
+                            if (item.liveListingId)
+                                recordListingInteraction(
+                                    item.liveListingId,
+                                    "purchase",
+                                ).catch(() => undefined);
+                        }}
+                    >
                         <Text style={page.buyText}>Add to cart</Text>
                     </Pressable>
                 </View>
@@ -237,7 +314,8 @@ const Marketplace_Listing = () => {
 const page = StyleSheet.create({
     screen: {
         flex: 1,
-        width: '100%',
+        width: "100%",
+        backgroundColor: colors.white,
     },
     content: {
         paddingBottom: 140, // room for the button bar
@@ -247,32 +325,33 @@ const page = StyleSheet.create({
         backgroundColor: colors.maroon,
     },
     photoImage: {
-        position: 'absolute',
+        position: "absolute",
         top: 0,
         right: 0,
         bottom: 0,
         left: 0,
-        width: '100%',
-        height: '100%',
+        width: "100%",
+        height: "100%",
     },
     backButton: {
-        position: 'absolute',
-        top: 56,
-        left: 20,
-        width: 44,
-        height: 44,
+        position: "absolute",
+        top: 24,
+        left: 24,
+        width: 56,
+        height: 56,
         borderRadius: 0,
-        backgroundColor: colors.white,
-        alignItems: 'center',
-        justifyContent: 'center',
+        backgroundColor: colors.cream,
+        alignItems: "center",
+        justifyContent: "center",
+        boxShadow: `0px 1px 2px rgba(0, 0, 0, 0.08)`,
     },
     body: {
         padding: 20,
         gap: 14,
     },
     sellerCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
         gap: 12,
         backgroundColor: colors.white,
         borderRadius: 20,
@@ -283,14 +362,14 @@ const page = StyleSheet.create({
         height: 44,
         borderRadius: 22,
         backgroundColor: colors.blush,
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
     },
     sellerInitials: {
         fontSize: 15,
-        fontWeight: '700',
+        fontWeight: "700",
         color: colors.maroon,
-        fontFamily: 'Outfit',
+        fontFamily: "Outfit",
     },
     sellerInfo: {
         gap: 2,
@@ -298,31 +377,31 @@ const page = StyleSheet.create({
     },
     sellerName: {
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: "600",
         color: colors.ink,
-        fontFamily: 'Outfit',
+        fontFamily: "Outfit",
     },
     verified: {
         fontSize: 14,
         color: colors.muted,
-        fontFamily: 'Outfit',
+        fontFamily: "Outfit",
     },
     title: {
         fontSize: 30,
-        fontWeight: '700',
+        fontWeight: "700",
         color: colors.ink,
-        fontFamily: 'Outfit',
+        fontFamily: "Outfit",
     },
     price: {
         fontSize: 30,
-        fontWeight: '700',
+        fontWeight: "700",
         color: colors.maroon,
-        fontFamily: 'Outfit',
+        fontFamily: "Outfit",
         marginTop: -6,
     },
     tags: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
+        flexDirection: "row",
+        flexWrap: "wrap",
         gap: 8,
     },
     tag: {
@@ -336,9 +415,9 @@ const page = StyleSheet.create({
     },
     tagText: {
         fontSize: 15,
-        fontWeight: '600',
+        fontWeight: "600",
         color: colors.ink,
-        fontFamily: 'Outfit',
+        fontFamily: "Outfit",
     },
     tagTextMain: {
         color: colors.white,
@@ -347,7 +426,7 @@ const page = StyleSheet.create({
         fontSize: 17,
         lineHeight: 25,
         color: colors.ink,
-        fontFamily: 'Outfit',
+        fontFamily: "Outfit",
     },
     details: {
         backgroundColor: colors.white,
@@ -355,8 +434,8 @@ const page = StyleSheet.create({
         paddingHorizontal: 16,
     },
     detailRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+        flexDirection: "row",
+        justifyContent: "space-between",
         gap: 12,
         paddingVertical: 13,
         borderBottomWidth: 1,
@@ -368,18 +447,18 @@ const page = StyleSheet.create({
     detailLabel: {
         fontSize: 16,
         color: colors.muted,
-        fontFamily: 'Outfit',
+        fontFamily: "Outfit",
     },
     detailValue: {
         flexShrink: 1,
-        textAlign: 'right',
+        textAlign: "right",
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: "600",
         color: colors.ink,
-        fontFamily: 'Outfit',
+        fontFamily: "Outfit",
     },
     actionBar: {
-        position: 'absolute', // stuck to the bottom
+        position: "absolute", // stuck to the bottom
         left: 0,
         right: 0,
         bottom: 0,
@@ -392,14 +471,14 @@ const page = StyleSheet.create({
         borderTopRightRadius: 28,
     },
     actionRow: {
-        flexDirection: 'row',
+        flexDirection: "row",
         gap: 10,
     },
     errorText: {
         fontSize: 13,
-        color: '#B00020',
-        fontFamily: 'Outfit',
-        textAlign: 'center',
+        color: "#B00020",
+        fontFamily: "Outfit",
+        textAlign: "center",
     },
     messageButton: {
         flex: 1,
@@ -407,47 +486,47 @@ const page = StyleSheet.create({
         borderRadius: 26,
         borderWidth: 1.5,
         borderColor: colors.maroon,
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
     },
     messageText: {
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: "600",
         color: colors.maroon,
-        fontFamily: 'Outfit',
+        fontFamily: "Outfit",
     },
     buyButton: {
         flex: 1,
         height: 52,
         borderRadius: 26,
         backgroundColor: colors.maroon,
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
     },
     buyText: {
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: "600",
         color: colors.white,
-        fontFamily: 'Outfit',
+        fontFamily: "Outfit",
     },
     notFound: {
         flex: 1,
-        width: '100%',
-        alignItems: 'center',
-        justifyContent: 'center',
+        width: "100%",
+        alignItems: "center",
+        justifyContent: "center",
         gap: 12,
         backgroundColor: colors.cream,
     },
     notFoundText: {
         fontSize: 18,
         color: colors.ink,
-        fontFamily: 'Outfit',
+        fontFamily: "Outfit",
     },
     link: {
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: "600",
         color: colors.maroon,
-        fontFamily: 'Outfit',
+        fontFamily: "Outfit",
     },
 });
 
