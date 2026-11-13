@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -13,11 +13,12 @@ import {
     FormMotion,
 } from "../../../src/components/form-motion";
 import { colors } from "../../root_styles";
+import { JoinedDormDealLogo } from "../../../src/components/joined-dormdeal-logo";
 
 const homes = [
-    ["dorm", "Dorm room", "tiny space, big storage needs"],
+    ["dorm", "Dorm room", "tiny space with many dreams"],
     ["shared", "Shared apartment", "split the big stuff with roommates"],
-    ["studio", "Studio of my own", "furnish it all, your way"],
+    ["studio", "Studio of my own", "your home, all your way."],
     ["commuter", "Commuting from home", "just the campus essentials"],
 ];
 const needs = [
@@ -45,7 +46,7 @@ const deals = [
 const questions = [
     "where are you living this year?",
     "what do you need most?",
-    "which deals should we flag?",
+    "which deals do you care about?",
 ];
 const topics = ["Your space", "What you need", "Deals to flag"];
 
@@ -60,11 +61,10 @@ export default function Joined() {
     const [skippedFrom, setSkippedFrom] = useState(null);
     const [message, setMessage] = useState("");
     const [nameShake, setNameShake] = useState(0);
-    const question = step >= 2 && step <= 4;
-    const skipped = skippedFrom !== null;
+    const question = step >= 3 && step <= 5;
     const displayName = name.trim() || "friend";
-    const livingLabel = homes.find(([id]) => id === living)?.[1];
     const validation = [
+        "",
         name.trim() ? "" : "Tell us your name first.",
         "",
         living ? "" : "Pick one to continue.",
@@ -111,9 +111,16 @@ export default function Joined() {
         else router.replace("/home");
     }
 
+    useEffect(() => {
+        if (step !== 0) return;
+        const timer = setTimeout(() => setStep(1), 1800);
+        return () => clearTimeout(timer);
+    }, [step]);
+
     return (
         <PaperForm
             pageKey={step}
+            stageVariant={step === 1 ? "slide" : "fade"}
             header={
                 <View style={styles.top}>
                     <FormBack
@@ -124,7 +131,7 @@ export default function Joined() {
                     {question && (
                         <View style={styles.progress}>
                             <View style={styles.row}>
-                                {[2, 3, 4].map((value) => (
+                                {[3, 4, 5].map((value) => (
                                     <View key={value} style={styles.tick}>
                                         <FormColorFade
                                             visible={value <= step}
@@ -138,13 +145,14 @@ export default function Joined() {
                                 ))}
                             </View>
                             <Text style={styles.progressText}>
-                                question {step - 1} of 3
+                                question {step - 2} of 3
                             </Text>
                         </View>
                     )}
                 </View>
             }
             footer={
+                step !== 0 && (
                 <>
                     {!!message && (
                         <Text
@@ -155,21 +163,22 @@ export default function Joined() {
                         </Text>
                     )}
                     <FormAction
-                        pulse={step === 5}
+                        pulse={step === 6}
                         muted={Boolean(validation[step])}
                         onPress={() => {
-                            if (step === 5) leave();
+                            if (step === 6) leave();
                             else if (validation[step]) {
                                 setMessage(validation[step]);
-                                if (step === 0)
+                                if (step === 1)
                                     setNameShake((count) => count + 1);
                             } else goTo(step + 1);
                         }}
                     >
                         {
                             [
-                                "Next!",
                                 "Let’s go!",
+                                "Next!",
+                                "Let's go!",
                                 "Next!",
                                 "Next!",
                                 "Complete Quiz",
@@ -177,7 +186,7 @@ export default function Joined() {
                             ][step]
                         }
                     </FormAction>
-                    {step < 5 && (
+                    {step > 0 && step < 6 && (
                         <Pressable
                             accessibilityRole="button"
                             onPress={skip}
@@ -187,15 +196,35 @@ export default function Joined() {
                         </Pressable>
                     )}
                 </>
+                )
             }
         >
             {step === 0 && (
+                <View style={styles.welcome}>
+                    <FormMotion variant="stamp" delay={100}>
+                        <JoinedDormDealLogo />
+                    </FormMotion>
+                    <FormMotion variant="wiggle" delay={350}>
+                        <Text
+                            accessibilityRole="header"
+                            style={[paperFormStyles.heading, styles.center]}
+                        >
+                            your campus, your way.
+                        </Text>
+                    </FormMotion>
+                </View>
+            )}
+            {step === 1 && (
                 <View style={styles.intro}>
                     <Text
                         accessibilityRole="header"
-                        style={[paperFormStyles.heading, styles.center]}
+                        style={[
+                            paperFormStyles.heading,
+                            styles.center,
+                            styles.introHeading,
+                        ]}
                     >
-                        {"first,\nwhat’s your\nname?"}
+                        first, what's your name?
                     </Text>
                     <FormMotion
                         variant="shake"
@@ -220,14 +249,13 @@ export default function Joined() {
                     </FormMotion>
                 </View>
             )}
-            {step === 1 && (
+            {step === 2 && (
                 <View style={styles.intro}>
                     <Text
                         accessibilityRole="header"
-                        style={paperFormStyles.heading}
+                        style={[paperFormStyles.heading, styles.introHeading]}
                     >
-                        nice to meet you,{"\n"}
-                        {displayName}.
+                        {"nice to meet you, " + displayName + "."}
                     </Text>
                     <FormMotion delay={250}>
                         <View style={[paperFormStyles.note, styles.introNote]}>
@@ -255,14 +283,14 @@ export default function Joined() {
                 </View>
             )}
             {question && (
-                <Text
-                    accessibilityRole="header"
-                    style={[paperFormStyles.heading, styles.question]}
-                >
-                    {questions[step - 2]}
-                </Text>
-            )}
-            {step === 2 && (
+                <View style={styles.questionStep}>
+                    <Text
+                        accessibilityRole="header"
+                        style={[paperFormStyles.heading, styles.question]}
+                    >
+                        {questions[step - 3]}
+                    </Text>
+                    {step === 3 && (
                 <View accessibilityRole="radiogroup" style={styles.options}>
                     {homes.map(([id, label, note], index) => {
                         const selected = living === id;
@@ -307,8 +335,8 @@ export default function Joined() {
                         );
                     })}
                 </View>
-            )}
-            {step === 3 && (
+                    )}
+                    {step === 4 && (
                 <View style={styles.needGrid}>
                     {needRows.map((row, rowIndex) => (
                         <View key={row[0]} style={styles.needRow}>
@@ -368,8 +396,8 @@ export default function Joined() {
                         </View>
                     ))}
                 </View>
-            )}
-            {step === 4 && (
+                    )}
+                    {step === 5 && (
                 <View style={styles.options}>
                     <View style={styles.dealHeader}>
                         <Text style={styles.count}>
@@ -434,8 +462,10 @@ export default function Joined() {
                         );
                     })}
                 </View>
+                    )}
+                </View>
             )}
-            {step === 5 && (
+            {step === 6 && (
                 <View style={styles.done}>
                     <View
                         style={styles.doorFrame}
@@ -456,22 +486,14 @@ export default function Joined() {
                             accessibilityRole="header"
                             style={[paperFormStyles.heading, styles.center]}
                         >
-                            ready to join a trusted community?
+                            welcome home!
                         </Text>
                     </FormMotion>
                     <FormMotion delay={1300}>
                         <Text style={[paperFormStyles.body, styles.center]}>
-                            {skipped
-                                ? "No quiz, no problem, " +
-                                  displayName +
-                                  ". Head back to the board whenever you’re ready."
-                                : "Thanks, " +
-                                  displayName +
-                                  ". Your picks for " +
-                                  livingLabel.toLowerCase() +
-                                  " are " +
-                                  picks.join(", ") +
-                                  "."}
+                            {"ready to joined a trusted community, " +
+                                displayName +
+                                "?"}
                         </Text>
                     </FormMotion>
                     <FormMotion delay={1500} style={paperFormStyles.note}>
@@ -504,7 +526,14 @@ const styles = StyleSheet.create({
         color: colors.maroon,
         fontWeight: "700",
     },
-    intro: { gap: 20, paddingTop: 18 },
+    welcome: {
+        flexGrow: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 24,
+    },
+    intro: { flexGrow: 1, justifyContent: "center", gap: 20 },
+    introHeading: { width: "100%", textAlign: "center" },
     introNote: { transform: [{ rotate: "-0.5deg" }], marginBottom: 8 },
     nameField: { marginTop: 8 },
     nameInput: {
@@ -523,7 +552,8 @@ const styles = StyleSheet.create({
         borderRadius: 2,
         backgroundColor: colors.ink,
     },
-    question: { fontSize: 42, lineHeight: 43, marginBottom: 20 },
+    questionStep: { flexGrow: 1, justifyContent: "center", gap: 20 },
+    question: { fontSize: 42, lineHeight: 43 },
     options: { gap: 10 },
     topic: {
         flexDirection: "row",
