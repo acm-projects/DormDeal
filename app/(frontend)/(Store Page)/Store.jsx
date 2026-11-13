@@ -1,7 +1,8 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFocusEffect, useRouter } from "expo-router";
 import {
     ActivityIndicator,
+    Animated,
     Alert,
     FlatList,
     Image,
@@ -31,6 +32,64 @@ import {
     getFavoriteListingIds,
     setListingFavorite,
 } from "../../../lib/api/favorites";
+
+const FavoriteHeart = ({ active }) => {
+    const scale = useRef(new Animated.Value(1)).current;
+    const rotation = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        scale.setValue(1);
+        rotation.setValue(0);
+        Animated.sequence([
+            Animated.parallel([
+                Animated.timing(scale, {
+                    toValue: 1.3,
+                    duration: 130,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(rotation, {
+                    toValue: 1,
+                    duration: 130,
+                    useNativeDriver: true,
+                }),
+            ]),
+            Animated.parallel([
+                Animated.timing(scale, {
+                    toValue: 1,
+                    duration: 160,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(rotation, {
+                    toValue: 0,
+                    duration: 160,
+                    useNativeDriver: true,
+                }),
+            ]),
+        ]).start();
+    }, [active, rotation, scale]);
+
+    return (
+        <Animated.View
+            style={{
+                transform: [
+                    { scale },
+                    {
+                        rotate: rotation.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: ["0deg", "-10deg"],
+                        }),
+                    },
+                ],
+            }}
+        >
+            <Ionicons
+                name={active ? "heart" : "heart-outline"}
+                size={16}
+                color={active ? colors.maroon : colors.ink}
+            />
+        </Animated.View>
+    );
+};
 
 const Listing_Card = (props) => {
     const router = useRouter();
@@ -83,13 +142,7 @@ const Listing_Card = (props) => {
                                 : "Add listing to favorites"
                         }
                     >
-                        <Ionicons
-                            name={props.isFavorite ? "heart" : "heart-outline"}
-                            size={16}
-                            color={
-                                props.isFavorite ? colors.maroon : colors.ink
-                            }
-                        />
+                        <FavoriteHeart active={props.isFavorite} />
                     </Button>
                 </View>
                 <View style={styles.cardInfo}>

@@ -1,5 +1,12 @@
-import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+    Animated,
+    LayoutAnimation,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    View,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { colors } from "../../../root_styles";
@@ -28,6 +35,55 @@ const cartItems = [
     },
 ];
 
+function AnimatedPrice({ value, style }) {
+    const progress = useRef(new Animated.Value(1)).current;
+    const previous = useRef(value);
+    const [display, setDisplay] = useState(value);
+
+    useEffect(() => {
+        const from = previous.current;
+        previous.current = value;
+        progress.setValue(0);
+        const listener = progress.addListener(({ value: current }) => {
+            setDisplay(from + (value - from) * current);
+        });
+        const animation = Animated.timing(progress, {
+            toValue: 1,
+            duration: 220,
+            useNativeDriver: false,
+        });
+        animation.start();
+        return () => {
+            progress.removeListener(listener);
+            animation.stop();
+        };
+    }, [progress, value]);
+
+    return <Text style={style}>${display.toFixed(2)}</Text>;
+}
+
+function CartRow({ index, children }) {
+    const position = useRef(index);
+    const translateY = useRef(new Animated.Value(0)).current;
+
+    useLayoutEffect(() => {
+        if (position.current === index) return;
+        translateY.setValue((position.current - index) * 112);
+        position.current = index;
+        Animated.timing(translateY, {
+            toValue: 0,
+            duration: 125,
+            useNativeDriver: true,
+        }).start();
+    }, [index, translateY]);
+
+    return (
+        <Animated.View style={{ transform: [{ translateY }] }}>
+            {children}
+        </Animated.View>
+    );
+}
+
 function RedesignedCart() {
     const router = useRouter();
     const [items, setItems] = useState(
@@ -37,7 +93,13 @@ function RedesignedCart() {
         (sum, item) => sum + item.price * item.quantity,
         0,
     );
-    const update = (index, amount) =>
+    const update = (index, amount) => {
+        LayoutAnimation.configureNext({
+            duration: 280,
+            create: { type: LayoutAnimation.Types.easeInEaseOut },
+            update: { type: LayoutAnimation.Types.easeInEaseOut },
+            delete: { type: LayoutAnimation.Types.easeInEaseOut },
+        });
         setItems((current) =>
             current.flatMap((item, itemIndex) =>
                 itemIndex !== index
@@ -47,6 +109,7 @@ function RedesignedCart() {
                       : [{ ...item, quantity: item.quantity + amount }],
             ),
         );
+    };
 
     return (
         <Base>
@@ -73,7 +136,8 @@ function RedesignedCart() {
                 contentContainerStyle={modern.listContent}
             >
                 {items.map((item, index) => (
-                    <View key={item.title} style={modern.item}>
+                    <CartRow key={item.title} index={index}>
+                    <View style={modern.item}>
                         <View
                             style={[
                                 modern.photo,
@@ -139,13 +203,14 @@ function RedesignedCart() {
                             </View>
                         </View>
                     </View>
+                    </CartRow>
                 ))}
             </ScrollView>
             <View style={modern.summary}>
                 <Text style={modern.summaryTitle}>Order summary</Text>
                 <View style={modern.row}>
                     <Text>Subtotal</Text>
-                    <Text>${total.toFixed(2)}</Text>
+                    <AnimatedPrice value={total} />
                 </View>
                 <View style={modern.row}>
                     <Text>Campus pickup</Text>
@@ -154,7 +219,7 @@ function RedesignedCart() {
                 <View style={modern.dash} />
                 <View style={modern.row}>
                     <Text style={modern.total}>Total</Text>
-                    <Text style={modern.total}>${total.toFixed(2)}</Text>
+                    <AnimatedPrice style={modern.total} value={total} />
                 </View>
             </View>
             <Pressable

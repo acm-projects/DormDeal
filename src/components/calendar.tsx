@@ -1,5 +1,12 @@
-import { useState } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import {
+    Animated,
+    LayoutAnimation,
+    View,
+    Text,
+    Pressable,
+    StyleSheet,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { colors } from "../../app/root_styles";
 import { events } from "../../data/events";
@@ -55,6 +62,8 @@ export default function Calendar() {
     );
     // picked = the day tapped (starts on today)
     const [picked, setPicked] = useState(todayKey);
+    const monthMotion = useRef(new Animated.Value(0)).current;
+    const eventMotion = useRef(new Animated.Value(1)).current;
     const year = shown.getFullYear();
     const month = shown.getMonth();
 
@@ -75,8 +84,33 @@ export default function Calendar() {
     const pickedLabel = `${monthNames[pm - 1]} ${pd}`;
     const dayEvents = allEvents.filter((e) => e.date === picked);
     function changeMonth(step: number) {
+        LayoutAnimation.configureNext({
+            duration: 260,
+            update: { type: LayoutAnimation.Types.easeInEaseOut },
+        });
         setShown(new Date(year, month + step, 1));
+        monthMotion.setValue(step > 0 ? 28 : -28);
+        Animated.timing(monthMotion, {
+            toValue: 0,
+            duration: 260,
+            useNativeDriver: true,
+        }).start();
     }
+    function pickDay(key: string) {
+        LayoutAnimation.configureNext({
+            duration: 220,
+            update: { type: LayoutAnimation.Types.easeInEaseOut },
+        });
+        setPicked(key);
+    }
+    useEffect(() => {
+        eventMotion.setValue(0);
+        Animated.timing(eventMotion, {
+            toValue: 1,
+            duration: 220,
+            useNativeDriver: true,
+        }).start();
+    }, [eventMotion, picked]);
     return (
         <View style={styles.card}>
             <View style={styles.header}>
@@ -91,17 +125,26 @@ export default function Calendar() {
                 </Pressable>
             </View>
 
-            <View style={styles.weekRow}>
-                {weekdays.map((w, i) => (
-                    <Text key={i} style={styles.weekday}>
-                        {w}
-                    </Text>
-                ))}
-            </View>
+            <Animated.View
+                style={{
+                    opacity: monthMotion.interpolate({
+                        inputRange: [-28, 0, 28],
+                        outputRange: [0, 1, 0],
+                    }),
+                    transform: [{ translateX: monthMotion }],
+                }}
+            >
+                <View style={styles.weekRow}>
+                    {weekdays.map((w, i) => (
+                        <Text key={i} style={styles.weekday}>
+                            {w}
+                        </Text>
+                    ))}
+                </View>
 
-            {weeks.map((week, wi) => (
-                <View key={wi} style={styles.weekRow}>
-                    {week.map((day, di) => {
+                {weeks.map((week, wi) => (
+                    <View key={wi} style={styles.weekRow}>
+                        {week.map((day, di) => {
                         if (day === null)
                             return <View key={di} style={styles.cell} />;
                         const key = toKey(year, month, day);
@@ -115,7 +158,7 @@ export default function Calendar() {
                         return (
                             <Pressable
                                 key={di}
-                                onPress={() => setPicked(key)}
+                                onPress={() => pickDay(key)}
                                 style={styles.cell}
                             >
                                 <View
@@ -160,9 +203,10 @@ export default function Calendar() {
                                 </View>
                             </Pressable>
                         );
-                    })}
-                </View>
-            ))}
+                        })}
+                    </View>
+                ))}
+            </Animated.View>
 
             {/* legend */}
             <View style={styles.legend}>
@@ -192,6 +236,19 @@ export default function Calendar() {
 
             {/* info panel for the picked day */}
             <View style={styles.dayPanel}>
+                <Animated.View
+                    style={{
+                        opacity: eventMotion,
+                        transform: [
+                            {
+                                translateY: eventMotion.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [8, 0],
+                                }),
+                            },
+                        ],
+                    }}
+                >
                 <Text style={styles.panelTitle}>{pickedLabel}</Text>
 
                 {dayEvents.length === 0 ? (
@@ -229,6 +286,7 @@ export default function Calendar() {
                         </View>
                     ))
                 )}
+                </Animated.View>
             </View>
         </View>
     );

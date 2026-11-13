@@ -8,6 +8,7 @@ import {
     Animated,
     PanResponder,
     ActivityIndicator,
+    LayoutAnimation,
     useWindowDimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -692,8 +693,24 @@ const Home = () => {
     const userName = "Maya"; // swap for real name once login works
     const initials = "MR"; // same, comes from login later
     const [mode, setMode] = useState<"buy" | "sell">("buy"); // which tab is picked
+    const pickupMotion = useRef(new Animated.Value(0)).current;
     const shown = pickups.filter((p) => p.type === mode); // only the matching pickups
     const router = useRouter();
+
+    const selectPickupMode = (nextMode: "buy" | "sell") => {
+        if (nextMode === mode) return;
+        LayoutAnimation.configureNext({
+            duration: 260,
+            update: { type: LayoutAnimation.Types.easeInEaseOut },
+        });
+        pickupMotion.setValue(nextMode === "sell" ? 28 : -28);
+        setMode(nextMode);
+        Animated.timing(pickupMotion, {
+            toValue: 0,
+            duration: 240,
+            useNativeDriver: true,
+        }).start();
+    };
 
     // recommended cards: start with the demo items, swap in real ones once they load
     const [listings, setListings] = useState<FeedListing[]>(fallbackListings);
@@ -796,7 +813,7 @@ const Home = () => {
 
                     <View style={home.toggle}>
                         <Pressable
-                            onPress={() => setMode("buy")}
+                            onPress={() => selectPickupMode("buy")}
                             style={[
                                 home.toggleOption,
                                 mode === "buy" && home.toggleActive,
@@ -812,7 +829,7 @@ const Home = () => {
                             </Text>
                         </Pressable>
                         <Pressable
-                            onPress={() => setMode("sell")}
+                            onPress={() => selectPickupMode("sell")}
                             style={[
                                 home.toggleOption,
                                 mode === "sell" && home.toggleActive,
@@ -830,14 +847,25 @@ const Home = () => {
                     </View>
                 </View>
 
-                <View style={home.pickupList}>
+                <Animated.View
+                    style={[
+                        home.pickupList,
+                        {
+                            opacity: pickupMotion.interpolate({
+                                inputRange: [-28, 0, 28],
+                                outputRange: [0, 1, 0],
+                            }),
+                            transform: [{ translateX: pickupMotion }],
+                        },
+                    ]}
+                >
                     {shown.map((p) => (
                         <PickupCard key={p.id} pickup={p} />
                     ))}
                     {shown.length === 0 && (
                         <Text style={home.emptyText}>No pickups yet!</Text>
                     )}
-                </View>
+                </Animated.View>
 
                 <View style={[home.sectionRow, home.calendarHeader]}>
                     <Text style={home.sectionTitle}>Your calendar</Text>
