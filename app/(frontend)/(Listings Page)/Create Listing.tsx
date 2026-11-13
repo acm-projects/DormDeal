@@ -657,14 +657,17 @@ export default function CreateListing() {
                             Replies will land in your messages.
                         </Text>
                     </FormMotion>
-                    <FormMotion
-                        variant="wiggle"
-                        delay={500}
-                        style={paperFormStyles.note}
-                    >
-                        <Text style={paperFormStyles.noteText}>
-                            Arrange a meetup somewhere public and busy.
-                        </Text>
+                    <FormMotion delay={500}>
+                        <View
+                            style={[
+                                paperFormStyles.note,
+                                styles.safetyNote,
+                            ]}
+                        >
+                            <Text style={paperFormStyles.noteText}>
+                                Arrange a meetup somewhere public and busy.
+                            </Text>
+                        </View>
                     </FormMotion>
                     {!!message && (
                         <Text
@@ -685,13 +688,14 @@ export default function CreateListing() {
                             See it on the board!
                         </FormAction>
                     </FormMotion>
-                    <Pressable
-                        accessibilityRole="button"
-                        onPress={reset}
-                        style={styles.linkButton}
-                    >
-                        <Text style={paperFormStyles.link}>Post another</Text>
-                    </Pressable>
+                    <FormMotion delay={725}>
+                        <FormAction onPress={() => router.replace("/home")}>
+                            Go home
+                        </FormAction>
+                    </FormMotion>
+                    <FormMotion delay={800}>
+                        <FormAction onPress={reset}>Post another</FormAction>
+                    </FormMotion>
                 </View>
             ) : (
                 <View style={styles.form}>
@@ -810,7 +814,7 @@ export default function CreateListing() {
                     )}
                     {step === 1 && (
                         <>
-                            <Text style={styles.section}>Photo</Text>
+                            <Text style={styles.section}>photo</Text>
                             <View style={styles.photoBlock}>
                                 {image ? (
                                     <FormMotion
@@ -864,7 +868,7 @@ export default function CreateListing() {
                                     {fieldErrors.photo}
                                 </Text>
                             )}
-                            <Text style={styles.section}>give it a title</Text>
+                            <Text style={styles.section}>title</Text>
                             <TextInput
                                 accessibilityLabel="Listing title"
                                 style={[
@@ -896,11 +900,7 @@ export default function CreateListing() {
                                     {fieldErrors.title}
                                 </Text>
                             )}
-                            <Text style={styles.section}>
-                                {service
-                                    ? "describe your service"
-                                    : "give a description!"}
-                            </Text>
+                            <Text style={styles.section}>description</Text>
                             <TextInput
                                 accessibilityLabel="Listing description"
                                 style={[
@@ -933,7 +933,8 @@ export default function CreateListing() {
                                     {fieldErrors.description}
                                 </Text>
                             )}
-                            <Text style={styles.section}>pick a category</Text>
+                            <Text style={styles.section}>category</Text>
+                            <Text style={styles.copy}>choose one</Text>
                             <View
                                 style={[
                                     styles.chips,
@@ -963,7 +964,7 @@ export default function CreateListing() {
                             {!service && (
                                 <>
                                     <Text style={styles.section}>
-                                        what condition is it in?
+                                        condition
                                     </Text>
                                     <View style={styles.chips}>
                                         {conditions.map((value) => (
@@ -1086,12 +1087,12 @@ export default function CreateListing() {
                                     color={colors.maroon}
                                 />
                                 <Text style={styles.flexCopy}>
-                                    Payment is settled in chat when you meet.
-                                    DormDeal doesn’t handle money.
+                                    Payment is handled privately. DormDeal
+                                    doesn’t handle money.
                                 </Text>
                             </View>
                             <Text style={styles.section}>
-                                pick a meetup spot
+                                where to meet?
                             </Text>
                             <MeetupMap
                                 selected={customMeetup ? "" : meetup}
@@ -1205,7 +1206,7 @@ export default function CreateListing() {
                             <Text style={styles.copy}>
                                 {dates.length
                                     ? dates.map(displayDate).join(", ")
-                                    : "Tap the days you can meet."}
+                                    : "tap the days you can meet."}
                             </Text>
                             <Text style={[styles.section, styles.center]}>
                                 what times work?
@@ -1702,5 +1703,5 @@ const styles = StyleSheet.create({
     done: { flex: 1, justifyContent: "center", gap: 21, paddingVertical: 15 },
     doneHeading: { fontSize: 38, lineHeight: 41, textAlign: "center" },
     center: { textAlign: "center" },
-    linkButton: { minHeight: 42, justifyContent: "center" },
+    safetyNote: { transform: [{ rotate: "0.75deg" }] },
 });

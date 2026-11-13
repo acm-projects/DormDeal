@@ -193,12 +193,9 @@ export default function Joined() {
                 <View style={styles.intro}>
                     <Text
                         accessibilityRole="header"
-                        style={paperFormStyles.heading}
+                        style={[paperFormStyles.heading, styles.center]}
                     >
                         {"first,\nwhat’s your\nname?"}
-                    </Text>
-                    <Text style={paperFormStyles.body}>
-                        So the board can say hi properly.
                     </Text>
                     <FormMotion
                         variant="shake"
@@ -459,7 +456,7 @@ export default function Joined() {
                             accessibilityRole="header"
                             style={[paperFormStyles.heading, styles.center]}
                         >
-                            ready to join?
+                            ready to join a trusted community?
                         </Text>
                     </FormMotion>
                     <FormMotion delay={1300}>
