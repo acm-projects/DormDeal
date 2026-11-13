@@ -19,11 +19,13 @@ export function PaperForm({
     header,
     footer,
     pageKey,
+    stageVariant = "fade",
 }: {
     children: ReactNode;
     header?: ReactNode;
     footer?: ReactNode;
     pageKey?: string | number;
+    stageVariant?: "fade" | "slide";
 }) {
     const insets = useSafeAreaInsets();
     const gutters = {
@@ -43,7 +45,9 @@ export function PaperForm({
                         contentContainerStyle={[styles.content, gutters]}
                         keyboardShouldPersistTaps="handled"
                     >
-                        <FormMotion style={styles.stage}>{children}</FormMotion>
+                        <FormMotion variant={stageVariant} style={styles.stage}>
+                            {children}
+                        </FormMotion>
                     </ScrollView>
                     {footer && (
                         <View style={[styles.footer, gutters]}>{footer}</View>
