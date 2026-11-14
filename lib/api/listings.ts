@@ -87,6 +87,7 @@ export async function getMyListings(): Promise<ListingWithImage[]> {
     .from('listings')
     .select(LISTING_COLUMNS)
     .eq('seller_id', authData.user.id)
+    .neq('status', 'removed')
     .order('created_at', { ascending: false });
 
   if (error) throw new ApiError('Could not load your listings.', error.code, error);
@@ -255,7 +256,7 @@ export async function deleteListing(id: number): Promise<void> {
 
   const { data, error } = await supabase
     .from('listings')
-    .delete()
+    .update({ status: 'removed' })
     .eq('listing_id', id)
     .select('listing_id')
     .maybeSingle();

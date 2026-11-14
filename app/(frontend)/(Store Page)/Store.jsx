@@ -889,7 +889,7 @@ const styles = StyleSheet.create({
     cardPhoto: {
         height: 150,
         borderRadius: 0,
-        backgroundColor: colors.maroon,
+        backgroundColor: colors.white,
         overflow: "hidden",
         position: "relative",
     },
