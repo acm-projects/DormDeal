@@ -28,6 +28,7 @@ import {
     getMarketplaceListings,
     type MarketplaceListing,
 } from "../../../lib/api/listings";
+import { supabase } from "../../../lib/supabase";
 
 // what one pickup looks like
 type Pickup = {
@@ -704,14 +705,47 @@ const PickupCard = (props: { pickup: Pickup }) => {
     );
 };
 const Home = () => {
-    const userName = "Alex R."; // swap for real name once login works
-    const initials = "AR"; // same, comes from login later
+    const [userName, setUserName] = useState("Student");
+    const initials =
+        userName
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((part) => part[0]?.toUpperCase())
+            .join("") || "?";
     const [mode, setMode] = useState<"buy" | "sell">("buy"); // which tab is picked
     const pickupMotion = useRef(new Animated.Value(0)).current;
     const pickupOpacity = useRef(new Animated.Value(1)).current;
     const pickupTransitionRunning = useRef(false);
     const shown = pickups.filter((p) => p.type === mode); // only the matching pickups
     const router = useRouter();
+
+    useEffect(() => {
+        let active = true;
+
+        async function loadUserName() {
+            const { data } = await supabase.auth.getUser();
+            if (!data.user) return;
+
+            const { data: profile } = await supabase
+                .from("app-users")
+                .select("name")
+                .eq("user_id", data.user.id)
+                .maybeSingle();
+
+            const name =
+                profile?.name?.trim() ||
+                String(data.user.user_metadata?.name ?? "").trim() ||
+                data.user.email?.split("@")[0] ||
+                "Student";
+            if (active) setUserName(name);
+        }
+
+        void loadUserName();
+        return () => {
+            active = false;
+        };
+    }, []);
 
     const selectPickupMode = (nextMode: "buy" | "sell") => {
         if (nextMode === mode || pickupTransitionRunning.current) return;
