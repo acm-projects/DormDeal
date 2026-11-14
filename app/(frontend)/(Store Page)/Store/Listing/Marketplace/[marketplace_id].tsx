@@ -7,6 +7,7 @@ import {
     Pressable,
     ActivityIndicator,
     Image,
+    TextInput,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -14,6 +15,11 @@ import { colors } from "../../../../../root_styles";
 import { items } from "../../../../../../data/items";
 import { supabase } from "../../../../../../lib/supabase";
 import { getListing } from "../../../../../../lib/api/listings";
+import {
+    getListingReviewData,
+    saveListingReview,
+    type ListingReviewData,
+} from "../../../../../../lib/api/reviews";
 import {
     formatCategory,
     formatListingPrice,
@@ -24,6 +30,7 @@ import {
 type DisplayItem = {
     id: string;
     liveListingId?: number;
+    sellerId?: string;
     title: string;
     seller: string;
     initials: string;
@@ -38,6 +45,35 @@ type DisplayItem = {
     isLive: boolean;
     imageUrl?: string | null;
 };
+
+const StarRating = ({
+    value,
+    onChange,
+    size = 24,
+}: {
+    value: number;
+    onChange?: (rating: number) => void;
+    size?: number;
+}) => (
+    <View style={page.stars}>
+        {[1, 2, 3, 4, 5].map((star) => (
+            <Pressable
+                key={star}
+                disabled={!onChange}
+                onPress={() => onChange?.(star)}
+                accessibilityRole={onChange ? "button" : undefined}
+                accessibilityLabel={`${star} star${star === 1 ? "" : "s"}`}
+                hitSlop={6}
+            >
+                <Ionicons
+                    name={star <= Math.round(value) ? "star" : "star-outline"}
+                    size={size}
+                    color={colors.gold}
+                />
+            </Pressable>
+        ))}
+    </View>
+);
 
 const monthNames = [
     "January",
@@ -84,6 +120,12 @@ const Marketplace_Listing = () => {
     const [loading, setLoading] = useState(Boolean(liveListingId && !demoItem));
     const [messaging, setMessaging] = useState(false);
     const [messageError, setMessageError] = useState("");
+    const [reviewData, setReviewData] = useState<ListingReviewData | null>(null);
+    const [selectedRating, setSelectedRating] = useState(0);
+    const [reviewText, setReviewText] = useState("");
+    const [savingReview, setSavingReview] = useState(false);
+    const [reviewError, setReviewError] = useState("");
+    const [reviewNotice, setReviewNotice] = useState("");
 
     useEffect(() => {
         if (!liveListingId || demoItem) return;
@@ -111,6 +153,7 @@ const Marketplace_Listing = () => {
                 setItem({
                     id: String(data.listing_id),
                     liveListingId: data.listing_id,
+                    sellerId: data.seller_id,
                     title: data.title,
                     seller,
                     initials,
@@ -123,6 +166,28 @@ const Marketplace_Listing = () => {
                     isLive: true,
                     imageUrl: data.image_url,
                 });
+
+                try {
+                    const reviews = await getListingReviewData(
+                        data.listing_id,
+                        data.seller_id,
+                    );
+                    if (active) {
+                        setReviewData(reviews);
+                        setSelectedRating(reviews.currentUserReview?.rating ?? 0);
+                        setReviewText(
+                            reviews.currentUserReview?.review_text ?? "",
+                        );
+                    }
+                } catch (reviewLoadError) {
+                    if (active) {
+                        setReviewError(
+                            reviewLoadError instanceof Error
+                                ? reviewLoadError.message
+                                : "Could not load reviews.",
+                        );
+                    }
+                }
 
                 recordListingInteraction(data.listing_id, "view").catch(
                     () => undefined,
@@ -169,6 +234,37 @@ const Marketplace_Listing = () => {
         router.push(`/Messages/${conversationId}`);
     };
 
+    const submitReview = async () => {
+        if (!item?.liveListingId || !item.sellerId) return;
+
+        setSavingReview(true);
+        setReviewError("");
+        setReviewNotice("");
+        try {
+            await saveListingReview(
+                item.liveListingId,
+                selectedRating,
+                reviewText,
+            );
+            const reviews = await getListingReviewData(
+                item.liveListingId,
+                item.sellerId,
+            );
+            setReviewData(reviews);
+            setSelectedRating(reviews.currentUserReview?.rating ?? 0);
+            setReviewText(reviews.currentUserReview?.review_text ?? "");
+            setReviewNotice("Your review has been saved.");
+        } catch (saveError) {
+            setReviewError(
+                saveError instanceof Error
+                    ? saveError.message
+                    : "Could not save your review.",
+            );
+        } finally {
+            setSavingReview(false);
+        }
+    };
+
     if (loading) {
         return (
             <View style={page.notFound}>
@@ -192,7 +288,10 @@ const Marketplace_Listing = () => {
 
     return (
         <View style={page.screen}>
-            <ScrollView contentContainerStyle={page.content}>
+            <ScrollView
+                contentContainerStyle={page.content}
+                keyboardShouldPersistTaps="handled"
+            >
                 {/* listing photo with a placeholder color when none was uploaded */}
                 <View style={page.photo}>
                     {item.imageUrl && (
@@ -227,6 +326,24 @@ const Marketplace_Listing = () => {
                             <Text style={page.sellerName}>{item.seller}</Text>
                             <Text style={page.verified}>Verified student</Text>
                         </View>
+                        {reviewData ? (
+                            <View style={page.sellerRating}>
+                                <View style={page.ratingSummaryRow}>
+                                    <Ionicons
+                                        name="star"
+                                        size={17}
+                                        color={colors.gold}
+                                    />
+                                    <Text style={page.ratingSummaryText}>
+                                        {reviewData.averageRating?.toFixed(1) ?? "New"}
+                                    </Text>
+                                </View>
+                                <Text style={page.ratingCountText}>
+                                    {reviewData.ratingCount} rating
+                                    {reviewData.ratingCount === 1 ? "" : "s"}
+                                </Text>
+                            </View>
+                        ) : null}
                     </View>
 
                     {/* title + price */}
@@ -272,6 +389,135 @@ const Marketplace_Listing = () => {
                             <Text style={page.detailValue}>{item.posted}</Text>
                         </View>
                     </View>
+
+                    {item.isLive ? (
+                        <View style={page.reviewsSection}>
+                            <View style={page.reviewsHeadingRow}>
+                                <View>
+                                    <Text style={page.reviewsTitle}>
+                                        Ratings & reviews
+                                    </Text>
+                                    <Text style={page.reviewsNote}>
+                                        share your experience
+                                    </Text>
+                                </View>
+                                {reviewData?.averageRating ? (
+                                    <View style={page.averageRating}>
+                                        <Text style={page.averageRatingValue}>
+                                            {reviewData.averageRating.toFixed(1)}
+                                        </Text>
+                                        <StarRating
+                                            value={reviewData.averageRating}
+                                            size={16}
+                                        />
+                                    </View>
+                                ) : null}
+                            </View>
+
+                            {reviewData?.canReview ? (
+                                <View style={page.reviewForm}>
+                                    <Text style={page.reviewFormTitle}>
+                                        {reviewData.currentUserReview
+                                            ? "Update your review"
+                                            : "Rate this seller"}
+                                    </Text>
+                                    <StarRating
+                                        value={selectedRating}
+                                        onChange={setSelectedRating}
+                                        size={30}
+                                    />
+                                    <TextInput
+                                        style={page.reviewInput}
+                                        value={reviewText}
+                                        onChangeText={setReviewText}
+                                        placeholder="How was your experience with this seller?"
+                                        placeholderTextColor={colors.mutedLight}
+                                        multiline
+                                        maxLength={1000}
+                                        textAlignVertical="top"
+                                    />
+                                    {reviewError ? (
+                                        <Text style={page.reviewError}>
+                                            {reviewError}
+                                        </Text>
+                                    ) : null}
+                                    {reviewNotice ? (
+                                        <Text style={page.reviewNotice}>
+                                            {reviewNotice}
+                                        </Text>
+                                    ) : null}
+                                    <Pressable
+                                        style={[
+                                            page.reviewButton,
+                                            savingReview && page.buttonDisabled,
+                                        ]}
+                                        onPress={submitReview}
+                                        disabled={savingReview}
+                                    >
+                                        {savingReview ? (
+                                            <ActivityIndicator
+                                                color={colors.white}
+                                            />
+                                        ) : (
+                                            <Text style={page.reviewButtonText}>
+                                                Save review
+                                            </Text>
+                                        )}
+                                    </Pressable>
+                                </View>
+                            ) : reviewData ? (
+                                <Text style={page.ownListingNote}>
+                                    Sellers cannot review their own listings.
+                                </Text>
+                            ) : reviewError ? (
+                                <Text style={page.reviewError}>{reviewError}</Text>
+                            ) : (
+                                <ActivityIndicator color={colors.maroon} />
+                            )}
+
+                            <View style={page.reviewList}>
+                                <Text style={page.reviewListTitle}>
+                                    Reviews on this listing
+                                </Text>
+                                {reviewData?.reviews.length ? (
+                                    reviewData.reviews.map((review) => (
+                                        <View
+                                            key={review.review_id}
+                                            style={page.reviewCard}
+                                        >
+                                            <View style={page.reviewCardHeader}>
+                                                <View>
+                                                    <Text
+                                                        style={page.reviewerName}
+                                                    >
+                                                        {review.reviewer_name}
+                                                    </Text>
+                                                    <Text
+                                                        style={page.reviewDate}
+                                                    >
+                                                        {new Date(
+                                                            review.created_at,
+                                                        ).toLocaleDateString()}
+                                                    </Text>
+                                                </View>
+                                                <StarRating
+                                                    value={review.rating}
+                                                    size={16}
+                                                />
+                                            </View>
+                                            <Text style={page.reviewBody}>
+                                                {review.review_text}
+                                            </Text>
+                                        </View>
+                                    ))
+                                ) : reviewData ? (
+                                    <Text style={page.noReviews}>
+                                        No reviews yet. Be the first to leave one.
+                                    </Text>
+                                ) : null}
+                            </View>
+                        </View>
+                    ) : null}
                 </View>
             </ScrollView>
 
@@ -373,7 +619,7 @@ const page = StyleSheet.create({
     },
     sellerInfo: {
         gap: 2,
-        flexShrink: 1,
+        flex: 1,
     },
     sellerName: {
         fontSize: 16,
@@ -385,6 +631,26 @@ const page = StyleSheet.create({
         fontSize: 14,
         color: colors.muted,
         fontFamily: "Outfit",
+    },
+    sellerRating: {
+        alignItems: "flex-end",
+        gap: 1,
+    },
+    ratingSummaryRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+    },
+    ratingSummaryText: {
+        color: colors.maroon,
+        fontFamily: "Outfit",
+        fontSize: 16,
+        fontWeight: "700",
+    },
+    ratingCountText: {
+        color: colors.muted,
+        fontFamily: "Outfit",
+        fontSize: 12,
     },
     title: {
         fontSize: 30,
@@ -456,6 +722,149 @@ const page = StyleSheet.create({
         fontWeight: "600",
         color: colors.ink,
         fontFamily: "Outfit",
+    },
+    reviewsSection: {
+        gap: 14,
+        marginTop: 8,
+    },
+    reviewsHeadingRow: {
+        flexDirection: "row",
+        alignItems: "flex-end",
+        justifyContent: "space-between",
+        gap: 12,
+    },
+    reviewsTitle: {
+        color: colors.ink,
+        fontFamily: "Outfit",
+        fontSize: 24,
+        fontWeight: "700",
+    },
+    reviewsNote: {
+        color: colors.maroon,
+        fontFamily: "Caveat",
+        fontSize: 19,
+        marginTop: -2,
+    },
+    averageRating: {
+        alignItems: "flex-end",
+        gap: 2,
+    },
+    averageRatingValue: {
+        color: colors.maroon,
+        fontFamily: "Outfit",
+        fontSize: 26,
+        fontWeight: "700",
+    },
+    stars: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 3,
+    },
+    reviewForm: {
+        backgroundColor: colors.cream,
+        borderColor: colors.blush,
+        borderWidth: 1,
+        gap: 12,
+        padding: 16,
+    },
+    reviewFormTitle: {
+        color: colors.maroon,
+        fontFamily: "Outfit",
+        fontSize: 17,
+        fontWeight: "700",
+    },
+    reviewInput: {
+        minHeight: 108,
+        backgroundColor: colors.white,
+        borderColor: colors.blush,
+        borderWidth: 1,
+        color: colors.ink,
+        fontFamily: "Outfit",
+        fontSize: 16,
+        lineHeight: 22,
+        padding: 12,
+    },
+    reviewButton: {
+        alignItems: "center",
+        alignSelf: "flex-start",
+        backgroundColor: colors.maroon,
+        height: 44,
+        justifyContent: "center",
+        minWidth: 132,
+        paddingHorizontal: 18,
+    },
+    reviewButtonText: {
+        color: colors.white,
+        fontFamily: "Outfit",
+        fontSize: 15,
+        fontWeight: "700",
+    },
+    buttonDisabled: {
+        opacity: 0.6,
+    },
+    reviewError: {
+        color: "#B00020",
+        fontFamily: "Outfit",
+        fontSize: 13,
+    },
+    reviewNotice: {
+        color: colors.activeGreen,
+        fontFamily: "Outfit",
+        fontSize: 13,
+        fontWeight: "600",
+    },
+    ownListingNote: {
+        backgroundColor: colors.cream,
+        color: colors.muted,
+        fontFamily: "Outfit",
+        fontSize: 14,
+        padding: 14,
+    },
+    reviewList: {
+        gap: 10,
+    },
+    reviewListTitle: {
+        color: colors.ink,
+        fontFamily: "Outfit",
+        fontSize: 17,
+        fontWeight: "700",
+    },
+    reviewCard: {
+        backgroundColor: colors.white,
+        borderBottomColor: colors.blush,
+        borderBottomWidth: 1,
+        gap: 9,
+        paddingVertical: 12,
+    },
+    reviewCardHeader: {
+        alignItems: "flex-start",
+        flexDirection: "row",
+        justifyContent: "space-between",
+        gap: 12,
+    },
+    reviewerName: {
+        color: colors.ink,
+        fontFamily: "Outfit",
+        fontSize: 15,
+        fontWeight: "700",
+    },
+    reviewDate: {
+        color: colors.muted,
+        fontFamily: "Outfit",
+        fontSize: 12,
+        marginTop: 2,
+    },
+    reviewBody: {
+        color: colors.ink,
+        fontFamily: "Outfit",
+        fontSize: 15,
+        lineHeight: 22,
+    },
+    noReviews: {
+        color: colors.muted,
+        fontFamily: "Outfit",
+        fontSize: 14,
+        paddingVertical: 8,
     },
     actionBar: {
         position: "absolute", // stuck to the bottom
