@@ -119,6 +119,10 @@ const Listing_Card = (props) => {
                         <Text style={styles.photo_placeholder}>[photo]</Text>
                     )}
                     <View
+                        pointerEvents="none"
+                        style={styles.cardPhotoShadow}
+                    />
+                    <View
                         style={[
                             styles.cardPhotoHeader,
                             !props.status &&
@@ -741,6 +745,7 @@ const styles = StyleSheet.create({
         paddingLeft: 12,
         paddingRight: 8,
         marginRight: 0,
+        borderRadius: 0,
         fontFamily: "Outfit",
         fontWeight: "400",
         color: colors.ink,
@@ -783,7 +788,7 @@ const styles = StyleSheet.create({
     search_suggestions: {
         marginTop: 6,
         marginHorizontal: 4,
-        borderRadius: 16,
+        borderRadius: 3,
         backgroundColor: colors.white,
         overflow: "hidden",
         boxShadow: `0px 5px 12px rgba(42, 42, 42, 0.14)`,
@@ -897,6 +902,18 @@ const styles = StyleSheet.create({
         ...StyleSheet.absoluteFillObject,
         width: "100%",
         height: "100%",
+    },
+    cardPhotoShadow: {
+        ...StyleSheet.absoluteFillObject,
+        boxShadow: [
+            {
+                offsetX: 0,
+                offsetY: 0,
+                blurRadius: 8,
+                color: "rgba(31,20,20,0.18)",
+                inset: true,
+            },
+        ],
     },
     cardPhotoHeader: {
         flexDirection: "row",

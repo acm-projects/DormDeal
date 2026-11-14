@@ -103,6 +103,7 @@ const RecCard = (props: RecCardProps) => {
                         [item photo]
                     </Text>
                 )}
+                <View pointerEvents="none" style={home.cardPhotoShadow} />
             </View>
             <View style={home.categoryBadge}>
                 <Text selectable={false} style={home.categoryBadgeText}>
@@ -1137,16 +1138,22 @@ const home = StyleSheet.create({
         height: 250,
         borderRadius: 4,
         backgroundColor: colors.white,
-        borderWidth: 3,
-        borderColor: colors.maroon,
         alignItems: "center",
         justifyContent: "center",
+    },
+    cardPhotoShadow: {
+        position: "absolute",
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        borderRadius: 4,
         boxShadow: [
             {
                 offsetX: 0,
                 offsetY: 0,
-                blurRadius: 5,
-                color: "rgba(31,20,20,0.16)",
+                blurRadius: 8,
+                color: "rgba(31,20,20,0.18)",
                 inset: true,
             },
         ],

@@ -1,4 +1,4 @@
-import { d, easeIO, pick, rnd, sleep } from "./pageTransitions";
+import { d, easeIO, pick, rnd, sleep, stickyNoteColors } from "./pageTransitions";
 
 export async function runBrowserTransition(stage, a, b, id) {
     const doc = stage.ownerDocument;
@@ -46,13 +46,6 @@ export async function runBrowserTransition(stage, a, b, id) {
             b.style.zIndex = 1;
             const cw = W / 5,
                 ch = H / 9;
-            const palette = [
-                "#fff08a",
-                "#ffb3c7",
-                "#a8e0ff",
-                "#b9f2b0",
-                "#ffd29a",
-            ];
             const words = [
                 "pickup 5pm",
                 "textbooks $20",
@@ -75,7 +68,7 @@ export async function runBrowserTransition(stage, a, b, id) {
                         "sticky",
                         Math.random() < 0.35 ? pick(words) : "",
                     );
-                    note.style.cssText += `left:${col * cw - 8}px;top:${row * ch - 8}px;width:${cw + 16}px;height:${ch + 16}px;background:${pick(palette)}`;
+                    note.style.cssText += `left:${col * cw - 8}px;top:${row * ch - 8}px;width:${cw + 16}px;height:${ch + 16}px;background:${pick(stickyNoteColors)}`;
                     notes.push({ note, rotation: rnd(-7, 7) });
                 }
             await Promise.all(

@@ -36,6 +36,8 @@ import {
     formatListingPrice,
 } from "../../../lib/recommendations";
 
+const cardStackRadius = 3;
+
 const ActionReveal = ({
     children,
     exiting = false,
@@ -588,6 +590,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 5,
         backgroundColor: colors.maroon,
+        borderRadius: cardStackRadius,
         paddingHorizontal: 16,
         height: 48,
     },
@@ -607,6 +610,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 12,
         paddingHorizontal: 16,
+        borderRadius: cardStackRadius,
     },
     searchInput: {
         flex: 1,
@@ -616,7 +620,7 @@ const styles = StyleSheet.create({
     },
     messageCard: {
         backgroundColor: colors.white,
-        borderRadius: 20,
+        borderRadius: cardStackRadius,
         padding: 24,
         alignItems: "center",
         gap: 8,

@@ -27,7 +27,14 @@ import Svg, {
     Rect,
     Stop,
 } from "react-native-svg";
-import { d, easeIO, pick, rnd, sleep } from "./pageTransitions";
+import {
+    d,
+    easeIO,
+    pick,
+    rnd,
+    sleep,
+    stickyNoteColors,
+} from "./pageTransitions";
 import type { Snapshot, TransitionScene } from "./transitionSurface.types";
 
 type NativeScene = TransitionScene & { from: string; to: string };
@@ -117,7 +124,6 @@ function useTimeline(
 const maroon = "#7a0000";
 const overshoot = Easing.bezier(0.2, 0.9, 0.3, 1.3);
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
-const noteColors = ["#fff08a", "#ffb3c7", "#a8e0ff", "#b9f2b0", "#ffd29a"];
 const noteWords = [
     "pickup 5pm",
     "textbooks $20",
@@ -170,7 +176,7 @@ function Sticky({ scene }: { scene: NativeScene }) {
     const [notes] = useState(() =>
         Array.from({ length: 45 }, () => ({
             word: Math.random() < 0.35 ? pick(noteWords) : "",
-            color: pick(noteColors),
+            color: pick(stickyNoteColors),
             rotation: rnd(-7, 7),
             slap: new Animated.Value(0),
             peel: new Animated.Value(0),
