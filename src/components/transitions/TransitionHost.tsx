@@ -3,6 +3,7 @@ import {
     useLayoutEffect,
     useRef,
     useState,
+    type ComponentRef,
     type ReactNode,
 } from "react";
 import { usePathname, useRouter, type Href } from "expo-router";
@@ -64,7 +65,7 @@ export function TransitionHost({
 }) {
     const router = useRouter();
     const pathname = usePathname();
-    const screen = useRef<View>(null);
+    const screen = useRef<ComponentRef<typeof View>>(null);
     const destination = useRef<{ path: string; resolve: () => void } | null>(
         null,
     );

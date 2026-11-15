@@ -4,12 +4,14 @@ import {
     KeyboardAvoidingView,
     Platform,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
     View,
 } from "react-native";
 import { useRouter } from "expo-router";
+import * as Linking from "expo-linking";
 import Base from "../../../src/components/base";
 import { BackButton } from "../../../src/components/design";
 import { colors } from "../../root_styles";
@@ -49,7 +51,7 @@ export default function Login() {
                 redirectTo:
                     Platform.OS === "web"
                         ? `${window.location.origin}/ResetPassword`
-                        : undefined,
+                        : Linking.createURL("/ResetPassword"),
             },
         );
         setMessage(
@@ -64,7 +66,10 @@ export default function Login() {
                 style={styles.flex}
                 behavior={Platform.OS === "ios" ? "padding" : undefined}
             >
-                <View style={styles.content}>
+                <ScrollView
+                    contentContainerStyle={styles.content}
+                    keyboardShouldPersistTaps="handled"
+                >
                     <View style={styles.back}>
                         <BackButton
                             onPress={() => router.replace("/Landing")}
@@ -88,6 +93,9 @@ export default function Login() {
                                     accessibilityLabel="Password"
                                     value={password}
                                     onChangeText={setPassword}
+                                    onSubmitEditing={login}
+                                    returnKeyType="done"
+                                    blurOnSubmit
                                     secureTextEntry={!show}
                                     placeholder="Password"
                                     placeholderTextColor="#777"
@@ -148,20 +156,20 @@ export default function Login() {
                             <Text style={styles.link}>Sign up</Text>
                         </Pressable>
                     </View>
-                </View>
+                </ScrollView>
             </KeyboardAvoidingView>
         </Base>
     );
 }
-function Field(props: any) {
+function Field({ label, style, ...inputProps }: any) {
     return (
         <>
             <TextInput
-                accessibilityLabel={props.label}
-                placeholder={props.label}
+                accessibilityLabel={label}
+                placeholder={label}
                 placeholderTextColor="#777"
-                style={styles.input}
-                {...props}
+                style={[styles.input, style]}
+                {...inputProps}
             />
             <View style={styles.line} />
         </>
@@ -172,7 +180,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     content: {
-        flex: 1,
+        flexGrow: 1,
         paddingHorizontal: 14,
         paddingBottom: 8,
     },
@@ -202,7 +210,6 @@ const styles = StyleSheet.create({
     },
     input: {
         height: 46,
-        flex: 1,
         minWidth: 0,
         paddingHorizontal: 8,
         fontFamily: "Outfit",
@@ -210,7 +217,8 @@ const styles = StyleSheet.create({
         color: colors.ink,
     },
     passwordInput: {
-        flexShrink: 1,
+        flex: 1,
+        minWidth: 0,
     },
     line: {
         height: 3,

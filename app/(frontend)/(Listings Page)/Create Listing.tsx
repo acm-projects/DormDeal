@@ -1640,9 +1640,8 @@ const styles = StyleSheet.create({
     },
     weekday: { fontFamily: "Outfit", color: colors.muted, fontSize: 12 },
     day: {
-        width: "98%",
-        maxWidth: 40,
-        aspectRatio: 1,
+        width: 40,
+        height: 40,
         borderRadius: 20,
         justifyContent: "center",
         alignItems: "center",

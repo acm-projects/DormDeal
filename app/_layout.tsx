@@ -1,9 +1,11 @@
 import { Slot, useRouter, useSegments } from "expo-router";
+import * as Linking from "expo-linking";
 import { useFonts } from "expo-font";
 import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import PaperBackground from "../src/components/paper-background";
 import { TransitionHost } from "../src/components/transitions/TransitionHost";
+import { setSessionFromUrl } from "../lib/auth";
 import { supabase } from "../lib/supabase";
 import { colors } from "./root_styles";
 
@@ -44,10 +46,27 @@ const RootLayout = () => {
         const isPublicPage = PUBLIC_PAGES.includes(current);
         if (!signedIn && !isPublicPage) {
             router.replace(LANDING_ROUTE);
-        } else if (signedIn && isPublicPage) {
+        } else if (signedIn && isPublicPage && current !== "resetpassword") {
             router.replace(HOME_ROUTE);
         }
     }, [checked, signedIn, segments, router]);
+    useEffect(() => {
+        const handleUrl = async (url: string) => {
+            const session = await setSessionFromUrl(url);
+            const parsed = Linking.parse(url);
+            const destination = (parsed.path ?? parsed.hostname ?? "").toLowerCase();
+            if (session && destination === "resetpassword") {
+                router.replace("/ResetPassword");
+            }
+        };
+        const subscription = Linking.addEventListener("url", ({ url }) => {
+            void handleUrl(url).catch(console.warn);
+        });
+        void Linking.getInitialURL().then((url) => {
+            if (url) void handleUrl(url).catch(console.warn);
+        });
+        return () => subscription.remove();
+    }, [router]);
     return (
         <View style={styles.screen}>
             <TransitionHost fontsReady={loaded}>

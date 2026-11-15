@@ -108,6 +108,9 @@ const SignUp = () => {
                         <Field
                             value={confirm}
                             onChangeText={setConfirm}
+                                onSubmitEditing={submit}
+                                returnKeyType="done"
+                                blurOnSubmit
                             placeholder="Confirm Password"
                             secureTextEntry={!showPassword}
                             highlightPink
@@ -151,6 +154,9 @@ const Field = ({
     keyboardType,
     noLine,
     highlightPink,
+    onSubmitEditing,
+    returnKeyType,
+    blurOnSubmit,
 }: any) => (
     <>
         <TextInput
@@ -160,6 +166,9 @@ const Field = ({
             placeholderTextColor="#777"
             secureTextEntry={secureTextEntry}
             keyboardType={keyboardType}
+            onSubmitEditing={onSubmitEditing}
+            returnKeyType={returnKeyType}
+            blurOnSubmit={blurOnSubmit}
             style={[
                 styles.input,
                 noLine && styles.passwordInput,
