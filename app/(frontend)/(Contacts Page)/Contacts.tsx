@@ -30,6 +30,7 @@ type Chat = {
     initials: string;
     item: string;
     lastMessage: string;
+    searchText: string;
     time: string;
     unread: boolean;
 };
@@ -305,9 +306,19 @@ const Contacts = () => {
 
                 // newest message per conversation (messages arrive newest first)
                 const last_msg = new Map<number, any>();
+                const messagesByConversation = new Map<number, string[]>();
                 (msgs ?? []).forEach((m: any) => {
                     if (!last_msg.has(m.conversation_id))
                         last_msg.set(m.conversation_id, m);
+                    const content = m.content?.trim();
+                    if (!content) return;
+                    const conversationMessages =
+                        messagesByConversation.get(m.conversation_id) ?? [];
+                    conversationMessages.push(content);
+                    messagesByConversation.set(
+                        m.conversation_id,
+                        conversationMessages,
+                    );
                 });
 
                 setChats(
@@ -321,6 +332,11 @@ const Contacts = () => {
                             initials: get_initials(name),
                             item: r.listings?.title ?? "a listing",
                             lastMessage: last?.content ?? "No messages yet",
+                            searchText: (
+                                messagesByConversation.get(
+                                    r.conversation_id,
+                                ) ?? []
+                            ).join(" "),
                             time: stamp ? time_ago(stamp) : "",
                             unread: Boolean(last && last.sender_id !== me),
                         };
@@ -341,10 +357,14 @@ const Contacts = () => {
         }, [flush, motion]),
     );
 
-    // only chats whose name matches the search
+    // Search the participant, listing, and every loaded message in the chat.
     const inbox = chats.filter((chat) => !hidden.includes(String(chat.id)));
-    const shown = inbox.filter((c) =>
-        c.name.toLowerCase().includes(query.toLowerCase()),
+    const normalizedQuery = query.trim().toLocaleLowerCase();
+    const shown = inbox.filter((chat) =>
+        !normalizedQuery ||
+        `${chat.name} ${chat.item} ${chat.searchText}`
+            .toLocaleLowerCase()
+            .includes(normalizedQuery),
     );
 
     return (
