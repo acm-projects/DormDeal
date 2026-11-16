@@ -51,38 +51,26 @@ const time_ago = (iso) => {
     return `${d} day${d === 1 ? "" : "s"} ago`;
 };
 
-const MessagePop = ({ children }) => {
-    const progress = useRef(new Animated.Value(0)).current;
+const MessagePop = ({ children, delay = 0 }) => {
+    const [progress] = useState(() => new Animated.Value(0));
 
     useEffect(() => {
+        progress.setValue(0);
         const animation = Animated.timing(progress, {
             toValue: 1,
-            duration: 220,
+            duration: 600,
+            delay,
             easing: Easing.out(Easing.cubic),
             useNativeDriver: true,
         });
         animation.start();
         return () => animation.stop();
-    }, [progress]);
+    }, [delay, progress]);
 
     return (
         <Animated.View
             style={{
                 opacity: progress,
-                transform: [
-                    {
-                        translateY: progress.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [12, 0],
-                        }),
-                    },
-                    {
-                        scale: progress.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [0.94, 1],
-                        }),
-                    },
-                ],
             }}
         >
             {children}
@@ -98,8 +86,8 @@ const Messages = () => {
 
     const [user_id, set_user_id] = useState(null);
     const [messages, set_messages] = useState([]);
-    const [revealedMessageIds, setRevealedMessageIds] = useState(
-        () => new Set(),
+    const [historyAnimationDelays, setHistoryAnimationDelays] = useState(
+        () => new Map(),
     );
     const [text, set_text] = useState("");
     const [chat_title, set_chat_title] = useState("Chat");
@@ -108,28 +96,25 @@ const Messages = () => {
 
     const scroll_view_ref = useRef(null);
     const shouldAnimateScroll = useRef(false);
-    const messageRevealTimers = useRef([]);
+    const needsInitialScroll = useRef(true);
+    const initialScrollFrame = useRef(null);
     const scroll_to_end_func = () => {
-        scroll_view_ref.current?.scrollToEnd({
-            animated: shouldAnimateScroll.current,
-        });
-        shouldAnimateScroll.current = false;
-    };
-    const clearMessageRevealTimers = () => {
-        messageRevealTimers.current.forEach(clearTimeout);
-        messageRevealTimers.current = [];
-    };
-    const revealMessage = (messageId, animateLayout = false) => {
-        if (animateLayout)
-            LayoutAnimation.configureNext({
-                duration: 180,
-                create: { type: LayoutAnimation.Types.easeInEaseOut },
-                update: { type: LayoutAnimation.Types.easeInEaseOut },
+        const shouldScrollInitialHistory =
+            needsInitialScroll.current && messages.length > 0;
+        if (shouldScrollInitialHistory) {
+            needsInitialScroll.current = false;
+            // onLayout is dispatched before the new dimensions are painted.
+            // Waiting one frame makes scrollToEnd use the final thread height.
+            initialScrollFrame.current = requestAnimationFrame(() => {
+                scroll_view_ref.current?.scrollToEnd({ animated: false });
+                initialScrollFrame.current = null;
             });
-        setRevealedMessageIds((current) => {
-            if (current.has(messageId)) return current;
-            return new Set([...current, messageId]);
-        });
+        } else if (shouldAnimateScroll.current) {
+            scroll_view_ref.current?.scrollToEnd({
+                animated: true,
+            });
+        }
+        shouldAnimateScroll.current = false;
     };
     const closeConversation = () => {
         if (isClosing) return;
@@ -184,15 +169,20 @@ const Messages = () => {
                 .order("sent_at", { ascending: true });
             if (error) console.error(error);
             const history = data ?? [];
-            clearMessageRevealTimers();
+            // The tip can finish its initial layout before history arrives.
+            // Re-arm the initial scroll so the fetched thread opens at newest.
+            needsInitialScroll.current = true;
             set_messages(history);
-            setRevealedMessageIds(new Set());
-            history.forEach((message, index) => {
-                const timer = setTimeout(() => {
-                    revealMessage(message.message_id, index > 0);
-                }, index * 75);
-                messageRevealTimers.current.push(timer);
-            });
+            // Mount the whole history at once to avoid a layout/scroll jump
+            // for each bubble, then reveal it newest-to-oldest.
+            setHistoryAnimationDelays(
+                new Map(
+                    history.map((message, index) => [
+                        message.message_id,
+                        (history.length - index - 1) * 60,
+                    ]),
+                ),
+            );
         };
         load();
 
@@ -213,13 +203,14 @@ const Messages = () => {
                             ? prev
                             : [...prev, msg],
                     );
-                    revealMessage(msg.message_id, true);
                 },
             )
             .subscribe();
 
         return () => {
-            clearMessageRevealTimers();
+            if (initialScrollFrame.current !== null) {
+                cancelAnimationFrame(initialScrollFrame.current);
+            }
             supabase.removeChannel(channel);
         };
     }, [user_id, conversation_id]);
@@ -251,7 +242,6 @@ const Messages = () => {
                 ? prev
                 : [...prev, data],
         );
-        revealMessage(data.message_id);
     };
 
     return (
@@ -313,34 +303,43 @@ const Messages = () => {
 
             <ScrollView
                 ref={scroll_view_ref}
-                onContentSizeChange={scroll_to_end_func}
                 style={styles.messages_scroll_view}
                 contentContainerStyle={styles.messages_container}
                 showsVerticalScrollIndicator={false}
             >
-                <View style={styles.tip_note}>
-                    <View style={styles.tip_top} />
-                    <Text style={styles.tip_text}>
-                        Tip: meet in a busy campus spot, like the Library lobby.
-                    </Text>
+                <View onLayout={scroll_to_end_func}>
+                    <View style={styles.tip_note}>
+                        <View style={styles.tip_top} />
+                        <Text style={styles.tip_text}>
+                            Tip: meet in a busy campus spot, like the Library lobby.
+                        </Text>
+                    </View>
+                    {messages.map((m) =>
+                        m.sender_id === user_id ? (
+                            <MessagePop
+                                key={m.message_id}
+                                delay={
+                                    historyAnimationDelays.get(m.message_id) ?? 0
+                                }
+                            >
+                                <You_Message_Box status={time_ago(m.sent_at)}>
+                                    {m.content}
+                                </You_Message_Box>
+                            </MessagePop>
+                        ) : (
+                            <MessagePop
+                                key={m.message_id}
+                                delay={
+                                    historyAnimationDelays.get(m.message_id) ?? 0
+                                }
+                            >
+                                <Other_Message_Box status={time_ago(m.sent_at)}>
+                                    {m.content}
+                                </Other_Message_Box>
+                            </MessagePop>
+                        ),
+                    )}
                 </View>
-                {messages
-                    .filter((m) => revealedMessageIds.has(m.message_id))
-                    .map((m) =>
-                    m.sender_id === user_id ? (
-                        <MessagePop key={m.message_id}>
-                            <You_Message_Box status={time_ago(m.sent_at)}>
-                                {m.content}
-                            </You_Message_Box>
-                        </MessagePop>
-                    ) : (
-                        <MessagePop key={m.message_id}>
-                            <Other_Message_Box status={time_ago(m.sent_at)}>
-                                {m.content}
-                            </Other_Message_Box>
-                        </MessagePop>
-                    ),
-                )}
             </ScrollView>
 
             {send_error ? (
