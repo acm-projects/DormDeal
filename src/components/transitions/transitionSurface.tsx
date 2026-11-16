@@ -168,6 +168,64 @@ function Fade({ scene }: { scene: NativeScene }) {
     );
 }
 
+function Slide({ scene }: { scene: NativeScene }) {
+    const [progress] = useState(() => new Animated.Value(0));
+    useTimeline(scene, ({ animate }) =>
+        animate(progress, 320, { easing: Easing.out(Easing.cubic) }),
+    );
+    return (
+        <>
+            <ScreenImage uri={scene.from} scene={scene} />
+            <Animated.View
+                style={[
+                    StyleSheet.absoluteFill,
+                    {
+                        transform: [
+                            {
+                                translateX: progress.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [scene.width, 0],
+                                }),
+                            },
+                        ],
+                    },
+                ]}
+            >
+                <ScreenImage uri={scene.to} scene={scene} />
+            </Animated.View>
+        </>
+    );
+}
+
+function SlideOut({ scene }: { scene: NativeScene }) {
+    const [progress] = useState(() => new Animated.Value(0));
+    useTimeline(scene, ({ animate }) =>
+        animate(progress, 400, { easing: Easing.out(Easing.cubic) }),
+    );
+    return (
+        <>
+            <ScreenImage uri={scene.to} scene={scene} />
+            <Animated.View
+                style={[
+                    StyleSheet.absoluteFill,
+                    {
+                        transform: [
+                            {
+                                translateX: progress.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [0, scene.width],
+                                }),
+                            },
+                        ],
+                    },
+                ]}
+            >
+                <ScreenImage uri={scene.from} scene={scene} />
+            </Animated.View>
+        </>
+    );
+}
+
 function Sticky({ scene }: { scene: NativeScene }) {
     const height = scene.height - scene.bottom,
         cellWidth = scene.width / 5,
@@ -419,7 +477,12 @@ function Plane({ scene }: { scene: NativeScene }) {
     );
 }
 
-const nativeEffects = { sticky: Sticky, plane: Plane };
+const nativeEffects = {
+    sticky: Sticky,
+    plane: Plane,
+    slide: Slide,
+    "slide-out": SlideOut,
+};
 
 export function TransitionSurface({ scene }: { scene: TransitionScene }) {
     const [reduced, setReduced] = useState<boolean | null>(null);

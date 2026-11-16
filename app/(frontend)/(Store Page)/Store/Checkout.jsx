@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
     Animated,
+    Easing,
     Image,
     LayoutAnimation,
     Pressable,
@@ -38,36 +39,39 @@ const PaymentIcon = ({ method }) =>
 
 const PaymentOption = ({ method, selected, onPress }) => {
     const dotScale = useRef(new Animated.Value(selected ? 1 : 0)).current;
-    const fade = useRef(new Animated.Value(1)).current;
+    const selectionFade = useRef(
+        new Animated.Value(selected ? 1 : 0),
+    ).current;
 
     useEffect(() => {
-        fade.setValue(0.45);
         Animated.parallel([
-            Animated.timing(fade, {
-                toValue: 1,
-                duration: 180,
-                useNativeDriver: true,
-            }),
             Animated.spring(dotScale, {
                 toValue: selected ? 1 : 0,
                 friction: 5,
                 tension: 120,
                 useNativeDriver: true,
             }),
+            Animated.timing(selectionFade, {
+                toValue: selected ? 1 : 0,
+                duration: 180,
+                useNativeDriver: true,
+            }),
         ]).start();
-    }, [dotScale, fade, selected]);
+    }, [dotScale, selected, selectionFade]);
 
     return (
         <Pressable
             onPress={onPress}
-            style={[
-                checkoutUI.payRow,
-                selected && checkoutUI.paySelected,
-            ]}
+            style={checkoutUI.payRow}
         >
             <Animated.View
-                style={[checkoutUI.payContent, { opacity: fade }]}
-            >
+                pointerEvents="none"
+                style={[
+                    checkoutUI.paySelectionFill,
+                    { opacity: selectionFade },
+                ]}
+            />
+            <View style={checkoutUI.payContent}>
                 <PaymentIcon method={method} />
                 <Text style={checkoutUI.payLabel}>{method}</Text>
                 <View style={checkoutUI.radio}>
@@ -78,7 +82,7 @@ const PaymentOption = ({ method, selected, onPress }) => {
                         ]}
                     />
                 </View>
-            </Animated.View>
+            </View>
         </Pressable>
     );
 };
@@ -88,6 +92,12 @@ function RedesignedCheckout() {
     const [open, setOpen] = useState(false);
     const [payment, setPayment] = useState("Visa *6767");
     const itemReveal = useRef(new Animated.Value(0)).current;
+    const pageExit = useRef(new Animated.Value(1)).current;
+    const cartFlight = useRef(new Animated.Value(0)).current;
+    const flagKnockout = useRef(new Animated.Value(0)).current;
+    const finishReveal = useRef(new Animated.Value(0)).current;
+    const [finishStageWidth, setFinishStageWidth] = useState(0);
+    const [isConfirming, setIsConfirming] = useState(false);
     const methods = ["Visa *6767", "Zelle", "Cash at pickup"];
     const toggleItems = () => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -105,8 +115,59 @@ function RedesignedCheckout() {
             return next;
         });
     };
+    const confirmPurchase = () => {
+        if (isConfirming) return;
+
+        setIsConfirming(true);
+        Animated.parallel([
+            Animated.sequence([
+                Animated.timing(cartFlight, {
+                    toValue: 1,
+                    duration: 320,
+                    easing: Easing.in(Easing.cubic),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(cartFlight, {
+                    toValue: 2,
+                    duration: 260,
+                    easing: Easing.out(Easing.cubic),
+                    useNativeDriver: true,
+                }),
+            ]),
+            Animated.sequence([
+                Animated.delay(320),
+                Animated.timing(flagKnockout, {
+                    toValue: 1,
+                    duration: 180,
+                    easing: Easing.out(Easing.cubic),
+                    useNativeDriver: true,
+                }),
+            ]),
+            Animated.sequence([
+                Animated.delay(320),
+                Animated.timing(finishReveal, {
+                    toValue: 1,
+                    duration: 170,
+                    easing: Easing.out(Easing.cubic),
+                    useNativeDriver: true,
+                }),
+            ]),
+            Animated.sequence([
+                Animated.delay(500),
+                Animated.timing(pageExit, {
+                    toValue: 0,
+                    duration: 420,
+                    easing: Easing.out(Easing.cubic),
+                    useNativeDriver: true,
+                }),
+            ]),
+        ]).start(({ finished }) => {
+            if (finished) router.push("/Store/Confirmation");
+        });
+    };
     return (
         <Base>
+            <Animated.View style={[checkoutUI.page, { opacity: pageExit }]}>
             <Pressable onPress={() => router.back()} style={checkoutUI.close}>
                 <Ionicons name="close" size={30} color={colors.maroon} />
             </Pressable>
@@ -191,17 +252,111 @@ function RedesignedCheckout() {
                     </View>
                 </View>
             </ScrollView>
+            <View
+                pointerEvents="none"
+                style={checkoutUI.finishStage}
+                onLayout={({ nativeEvent }) =>
+                    setFinishStageWidth(nativeEvent.layout.width)
+                }
+            >
+                <Animated.View
+                    style={[
+                        checkoutUI.finishCart,
+                        {
+                            transform: [
+                                {
+                                    translateX: cartFlight.interpolate({
+                                        inputRange: [0, 1, 2],
+                                        outputRange: [
+                                            0,
+                                            Math.max(finishStageWidth - 100, 0),
+                                            finishStageWidth + 80,
+                                        ],
+                                    }),
+                                },
+                            ],
+                        },
+                    ]}
+                >
+                    <Ionicons
+                        name="cart-outline"
+                        size={54}
+                        color={colors.maroon}
+                    />
+                </Animated.View>
+                <Animated.View
+                    style={[
+                        checkoutUI.finishFlag,
+                        {
+                            opacity: flagKnockout.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [1, 0],
+                            }),
+                            transform: [
+                                {
+                                    translateX: flagKnockout.interpolate({
+                                        inputRange: [0, 1],
+                                        outputRange: [0, 28],
+                                    }),
+                                },
+                                {
+                                    translateY: flagKnockout.interpolate({
+                                        inputRange: [0, 1],
+                                        outputRange: [0, -22],
+                                    }),
+                                },
+                                {
+                                    rotate: flagKnockout.interpolate({
+                                        inputRange: [0, 1],
+                                        outputRange: ["0deg", "28deg"],
+                                    }),
+                                },
+                            ],
+                        },
+                    ]}
+                >
+                    <View style={checkoutUI.finishFlagPole} />
+                    <Ionicons name="flag" size={28} color={colors.gold} />
+                </Animated.View>
+                <Animated.Text
+                    style={[
+                        checkoutUI.finishText,
+                        {
+                            opacity: finishReveal,
+                            transform: [
+                                {
+                                    scale: finishReveal.interpolate({
+                                        inputRange: [0, 1],
+                                        outputRange: [0.55, 1],
+                                    }),
+                                },
+                                {
+                                    translateY: finishReveal.interpolate({
+                                        inputRange: [0, 1],
+                                        outputRange: [8, -10],
+                                    }),
+                                },
+                            ],
+                        },
+                    ]}
+                >
+                    FINISH!
+                </Animated.Text>
+            </View>
             <Pressable
-                onPress={() => router.push("/Store/Confirmation")}
+                disabled={isConfirming}
+                onPress={confirmPurchase}
                 style={checkoutUI.checkout}
             >
                 <Text style={checkoutUI.checkoutText}>Confirm Purchase</Text>
             </Pressable>
+            </Animated.View>
         </Base>
     );
 }
 
 const checkoutUI = StyleSheet.create({
+    page: { flex: 1 },
     close: {
         width: 56,
         height: 56,
@@ -270,13 +425,20 @@ const checkoutUI = StyleSheet.create({
     payRow: {
         minHeight: 54,
         paddingHorizontal: 10,
+        position: "relative",
+        overflow: "hidden",
         flexDirection: "row",
         alignItems: "center",
         gap: 12,
     },
-    paySelected: { backgroundColor: colors.roseSelected },
+    paySelectionFill: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: colors.roseSelected,
+    },
     payContent: {
         flex: 1,
+        position: "relative",
+        zIndex: 1,
         flexDirection: "row",
         alignItems: "center",
         gap: 12,
@@ -317,13 +479,50 @@ const checkoutUI = StyleSheet.create({
     total: { fontFamily: "Outfit", fontWeight: "800", fontSize: 19 },
     checkout: {
         position: "absolute",
-        left: 20,
-        right: 20,
-        bottom: 16,
+        left: 0,
+        right: 0,
+        bottom: 0,
         height: 52,
         backgroundColor: colors.maroon,
         alignItems: "center",
         justifyContent: "center",
+    },
+    finishStage: {
+        position: "absolute",
+        left: 20,
+        right: 20,
+        bottom: 46,
+        height: 58,
+        overflow: "visible",
+    },
+    finishCart: {
+        position: "absolute",
+        top: 2,
+        left: 18,
+    },
+    finishFlag: {
+        position: "absolute",
+        top: 13,
+        right: 18,
+        flexDirection: "row",
+        alignItems: "flex-start",
+    },
+    finishFlagPole: {
+        width: 3,
+        height: 34,
+        marginTop: 1,
+        backgroundColor: colors.maroon,
+    },
+    finishText: {
+        position: "absolute",
+        top: 3,
+        right: 5,
+        zIndex: 2,
+        color: colors.maroon,
+        fontFamily: "Outfit",
+        fontSize: 13,
+        fontWeight: "400",
+        letterSpacing: 0.4,
     },
     checkoutText: {
         fontFamily: "Outfit",

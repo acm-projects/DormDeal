@@ -142,6 +142,7 @@ const iconPopStyle = (progress, startX, startY, rotation) => ({
 
 export default function Confirmation() {
     const router = useRouter();
+    const screenFade = useRef(new Animated.Value(0)).current;
     const checkProgress = useRef(new Animated.Value(0)).current;
     const detailsIn = useRef(new Animated.Value(0)).current;
     const iconPops = useRef([
@@ -191,14 +192,21 @@ export default function Confirmation() {
                 ),
             ),
         ]);
+        const screenAnimation = Animated.timing(screenFade, {
+            toValue: 1,
+            duration: 320,
+            useNativeDriver: true,
+        });
         primaryAnimation.start();
         detailsAnimation.start();
+        screenAnimation.start();
 
         return () => {
             primaryAnimation.stop();
             detailsAnimation.stop();
+            screenAnimation.stop();
         };
-    }, [checkProgress, confettiFalls, detailsIn, iconPops]);
+    }, [checkProgress, confettiFalls, detailsIn, iconPops, screenFade]);
 
     const detailStyle = {
         opacity: detailsIn,
@@ -214,6 +222,7 @@ export default function Confirmation() {
 
     return (
         <Base style={confirmUI.screen}>
+            <Animated.View style={[confirmUI.page, { opacity: screenFade }]}>
             <View style={confirmUI.center}>
                 <View style={confirmUI.hero}>
                     <Animated.View
@@ -389,11 +398,13 @@ export default function Confirmation() {
                     </Pressable>
                 </View>
             </View>
+            </Animated.View>
         </Base>
     );
 }
 const confirmUI = StyleSheet.create({
     screen: { overflow: "hidden" },
+    page: { flex: 1 },
     center: { flex: 1, alignItems: "center", justifyContent: "center" },
     lightShadow: {},
     screenConfettiLayer: {

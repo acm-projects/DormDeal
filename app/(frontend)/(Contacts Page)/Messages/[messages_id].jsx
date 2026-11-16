@@ -1,4 +1,7 @@
 import {
+    Animated,
+    Easing,
+    LayoutAnimation,
     StyleSheet,
     ScrollView,
     View,
@@ -6,7 +9,7 @@ import {
     TextInput,
 } from "react-native";
 import { useEffect, useRef, useState } from "react";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, usePathname } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Path } from "react-native-svg";
 import Other_Message_Box from "../../../../src/components/message_box_pink";
@@ -17,6 +20,7 @@ import Base from "../../../../src/components/base";
 import Text from "../../../../src/components/text_styles";
 import { colors } from "../../../root_styles";
 import { supabase } from "../../../../lib/supabase";
+import { navigateWithTransition } from "../../../../src/components/transitions/pageTransitions";
 
 const PaperclipIcon = ({ color = "#8F969E", size = 28 }) => (
     <Svg width={size} height={size * 1.4} viewBox="0 0 24 34">
@@ -47,20 +51,95 @@ const time_ago = (iso) => {
     return `${d} day${d === 1 ? "" : "s"} ago`;
 };
 
+const MessagePop = ({ children }) => {
+    const progress = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        const animation = Animated.timing(progress, {
+            toValue: 1,
+            duration: 220,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+        });
+        animation.start();
+        return () => animation.stop();
+    }, [progress]);
+
+    return (
+        <Animated.View
+            style={{
+                opacity: progress,
+                transform: [
+                    {
+                        translateY: progress.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [12, 0],
+                        }),
+                    },
+                    {
+                        scale: progress.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.94, 1],
+                        }),
+                    },
+                ],
+            }}
+        >
+            {children}
+        </Animated.View>
+    );
+};
+
 const Messages = () => {
     const { messages_id } = useLocalSearchParams();
     const conversation_id = Number(messages_id);
+    const pathname = usePathname();
+    const [isClosing, setIsClosing] = useState(false);
 
     const [user_id, set_user_id] = useState(null);
     const [messages, set_messages] = useState([]);
+    const [revealedMessageIds, setRevealedMessageIds] = useState(
+        () => new Set(),
+    );
     const [text, set_text] = useState("");
     const [chat_title, set_chat_title] = useState("Chat");
     const [listing_title, set_listing_title] = useState("Starbucks Cup");
     const [send_error, set_send_error] = useState("");
 
     const scroll_view_ref = useRef(null);
+    const shouldAnimateScroll = useRef(false);
+    const messageRevealTimers = useRef([]);
     const scroll_to_end_func = () => {
-        scroll_view_ref.current?.scrollToEnd({ animated: false });
+        scroll_view_ref.current?.scrollToEnd({
+            animated: shouldAnimateScroll.current,
+        });
+        shouldAnimateScroll.current = false;
+    };
+    const clearMessageRevealTimers = () => {
+        messageRevealTimers.current.forEach(clearTimeout);
+        messageRevealTimers.current = [];
+    };
+    const revealMessage = (messageId, animateLayout = false) => {
+        if (animateLayout)
+            LayoutAnimation.configureNext({
+                duration: 180,
+                create: { type: LayoutAnimation.Types.easeInEaseOut },
+                update: { type: LayoutAnimation.Types.easeInEaseOut },
+            });
+        setRevealedMessageIds((current) => {
+            if (current.has(messageId)) return current;
+            return new Set([...current, messageId]);
+        });
+    };
+    const closeConversation = () => {
+        if (isClosing) return;
+
+        setIsClosing(true);
+        void navigateWithTransition(
+            { pathname },
+            "/Contacts",
+            "slide-out",
+        );
     };
 
     // who am I?
@@ -104,7 +183,16 @@ const Messages = () => {
                 .eq("conversation_id", conversation_id)
                 .order("sent_at", { ascending: true });
             if (error) console.error(error);
-            set_messages(data ?? []);
+            const history = data ?? [];
+            clearMessageRevealTimers();
+            set_messages(history);
+            setRevealedMessageIds(new Set());
+            history.forEach((message, index) => {
+                const timer = setTimeout(() => {
+                    revealMessage(message.message_id, index > 0);
+                }, index * 75);
+                messageRevealTimers.current.push(timer);
+            });
         };
         load();
 
@@ -125,11 +213,13 @@ const Messages = () => {
                             ? prev
                             : [...prev, msg],
                     );
+                    revealMessage(msg.message_id, true);
                 },
             )
             .subscribe();
 
         return () => {
+            clearMessageRevealTimers();
             supabase.removeChannel(channel);
         };
     }, [user_id, conversation_id]);
@@ -150,17 +240,28 @@ const Messages = () => {
             return;
         }
         set_send_error("");
+        shouldAnimateScroll.current = true;
+        LayoutAnimation.configureNext({
+            duration: 240,
+            create: { type: LayoutAnimation.Types.easeInEaseOut },
+            update: { type: LayoutAnimation.Types.easeInEaseOut },
+        });
         set_messages((prev) =>
             prev.some((m) => m.message_id === data.message_id)
                 ? prev
                 : [...prev, data],
         );
+        revealMessage(data.message_id);
     };
 
     return (
         <Base style={{ paddingLeft: 0, paddingRight: 0, paddingBottom: 0 }}>
             <View style={styles.header_container}>
-                <Back_Button href="/Contacts" style={styles.back_button} />
+                <Back_Button
+                    disabled={isClosing}
+                    onPress={closeConversation}
+                    style={styles.back_button}
+                />
                 <View style={styles.header_quick_info}>
                     <View style={styles.profile_avatar}>
                         <Ionicons
@@ -223,21 +324,21 @@ const Messages = () => {
                         Tip: meet in a busy campus spot, like the Library lobby.
                     </Text>
                 </View>
-                {messages.map((m) =>
+                {messages
+                    .filter((m) => revealedMessageIds.has(m.message_id))
+                    .map((m) =>
                     m.sender_id === user_id ? (
-                        <You_Message_Box
-                            key={m.message_id}
-                            status={time_ago(m.sent_at)}
-                        >
-                            {m.content}
-                        </You_Message_Box>
+                        <MessagePop key={m.message_id}>
+                            <You_Message_Box status={time_ago(m.sent_at)}>
+                                {m.content}
+                            </You_Message_Box>
+                        </MessagePop>
                     ) : (
-                        <Other_Message_Box
-                            key={m.message_id}
-                            status={time_ago(m.sent_at)}
-                        >
-                            {m.content}
-                        </Other_Message_Box>
+                        <MessagePop key={m.message_id}>
+                            <Other_Message_Box status={time_ago(m.sent_at)}>
+                                {m.content}
+                            </Other_Message_Box>
+                        </MessagePop>
                     ),
                 )}
             </ScrollView>

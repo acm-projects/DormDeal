@@ -866,9 +866,13 @@ const Home = () => {
                                 color={colors.ink}
                             />
                         </Pressable>
-                        <View style={home.avatar}>
+                        <Pressable
+                            style={home.avatar}
+                            onPress={() => router.push("/Profile/me")}
+                            accessibilityLabel="Open my profile"
+                        >
                             <Text style={home.avatarText}>{initials}</Text>
-                        </View>
+                        </Pressable>
                     </View>
                 </View>
 

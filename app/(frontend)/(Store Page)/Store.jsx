@@ -176,6 +176,98 @@ const Listing_Card = (props) => {
     );
 };
 
+const SearchSuggestions = ({ listings, visible, onSelect }) => {
+    const entrance = useRef(new Animated.Value(0)).current;
+    const [shouldRender, setShouldRender] = useState(visible);
+    const lastVisibleListings = useRef(listings);
+
+    if (visible) lastVisibleListings.current = listings;
+
+    useEffect(() => {
+        if (visible) {
+            setShouldRender(true);
+            entrance.setValue(0);
+            const animation = Animated.spring(entrance, {
+                toValue: 1,
+                friction: 9,
+                tension: 105,
+                useNativeDriver: true,
+            });
+            animation.start();
+            return () => animation.stop();
+        }
+
+        if (!shouldRender) return;
+        const animation = Animated.timing(entrance, {
+            toValue: 0,
+            duration: 150,
+            useNativeDriver: true,
+        });
+        animation.start(({ finished }) => {
+            if (finished) setShouldRender(false);
+        });
+        return () => animation.stop();
+    }, [entrance, shouldRender, visible]);
+
+    if (!shouldRender) return null;
+    const displayedListings = visible ? listings : lastVisibleListings.current;
+
+    return (
+        <Animated.View
+            style={[
+                styles.search_suggestions,
+                {
+                    opacity: entrance,
+                    transform: [
+                        {
+                            translateY: entrance.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [-10, 0],
+                            }),
+                        },
+                        {
+                            scale: entrance.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0.98, 1],
+                            }),
+                        },
+                    ],
+                },
+            ]}
+        >
+            {displayedListings.map((listing, index) => (
+                <Pressable
+                    key={listing.listing_id}
+                    style={[
+                        styles.search_suggestion,
+                        index < displayedListings.length - 1 &&
+                            styles.search_suggestion_border,
+                    ]}
+                    onPress={() => onSelect(listing.listing_id)}
+                    accessibilityLabel={`Open ${listing.title}`}
+                >
+                    <Ionicons name="search" size={17} color={colors.muted} />
+                    <View style={styles.search_suggestion_text}>
+                        <NativeText
+                            style={styles.search_suggestion_title}
+                            numberOfLines={1}
+                        >
+                            {listing.title}
+                        </NativeText>
+                        <NativeText
+                            style={styles.search_suggestion_category}
+                            numberOfLines={1}
+                        >
+                            {formatCategory(listing.category)} · {" "}
+                            {formatListingPrice(listing.price)}
+                        </NativeText>
+                    </View>
+                </Pressable>
+            ))}
+        </Animated.View>
+    );
+};
+
 const Store = () => {
     const [enabledFilters, setEnabledFilters] = useState({
         "Under $25": false,
@@ -487,49 +579,15 @@ const Store = () => {
                 </View>
             </View>
             <View style={styles.listing_area}>
-                {searchSuggestions.length > 0 && (
-                    <View style={styles.search_suggestions}>
-                        {searchSuggestions.map((listing, index) => (
-                            <Pressable
-                                key={listing.listing_id}
-                                style={[
-                                    styles.search_suggestion,
-                                    index < searchSuggestions.length - 1 &&
-                                        styles.search_suggestion_border,
-                                ]}
-                                onPressIn={() =>
-                                    router.push(
-                                        `/Store/Listing/Marketplace/live-${listing.listing_id}`,
-                                    )
-                                }
-                                accessibilityLabel={`Open ${listing.title}`}
-                            >
-                                <Ionicons
-                                    name="search"
-                                    size={17}
-                                    color={colors.muted}
-                                />
-                                <View style={styles.search_suggestion_text}>
-                                    <NativeText
-                                        style={styles.search_suggestion_title}
-                                        numberOfLines={1}
-                                    >
-                                        {listing.title}
-                                    </NativeText>
-                                    <NativeText
-                                        style={
-                                            styles.search_suggestion_category
-                                        }
-                                        numberOfLines={1}
-                                    >
-                                        {formatCategory(listing.category)} ·{" "}
-                                        {formatListingPrice(listing.price)}
-                                    </NativeText>
-                                </View>
-                            </Pressable>
-                        ))}
-                    </View>
-                )}
+                <SearchSuggestions
+                    listings={searchSuggestions}
+                    visible={searchSuggestions.length > 0}
+                    onSelect={(listingId) =>
+                        router.push(
+                            `/Store/Listing/Marketplace/live-${listingId}`,
+                        )
+                    }
+                />
                 <FlatList
                     style={styles.listing_flat_list}
                     contentContainerStyle={styles.marketplace_listing_container}

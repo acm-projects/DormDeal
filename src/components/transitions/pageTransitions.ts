@@ -1,6 +1,6 @@
 import { colors } from "../../../app/root_styles";
 
-export type TransitionId = "sticky" | "plane";
+export type TransitionId = "sticky" | "plane" | "slide" | "slide-out";
 export type TransitionSource = { pathname: string; stageBottom?: number };
 
 type TransitionHost = (

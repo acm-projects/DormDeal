@@ -12,7 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Text, { Header1 } from "../../../src/components/text_styles";
-import { useRouter, useFocusEffect } from "expo-router";
+import { useRouter, useFocusEffect, usePathname } from "expo-router";
 import { colors } from "../../root_styles";
 import TabBar from "../../../src/components/tab_bar";
 import { supabase } from "../../../lib/supabase";
@@ -23,6 +23,7 @@ import {
     hideConversations,
     readHiddenConversations,
 } from "../../../src/components/inbox-removal";
+import { navigateWithTransition } from "../../../src/components/transitions/pageTransitions";
 
 type Chat = {
     id: number;
@@ -147,6 +148,7 @@ const ChatRow = (props: {
 
 const Contacts = () => {
     const router = useRouter();
+    const pathname = usePathname();
     const insets = useSafeAreaInsets();
     const [query, setQuery] = useState(""); // what's typed in the search bar
     const [chats, setChats] = useState<Chat[]>([]);
@@ -166,6 +168,13 @@ const Contacts = () => {
         timer?: ReturnType<typeof setTimeout>;
     } | null>(null);
     const dismissConfirm = useCallback(() => setConfirm(false), []);
+    const openConversation = (id: number) => {
+        void navigateWithTransition(
+            { pathname },
+            `/Messages/${id}`,
+            "slide",
+        );
+    };
 
     const flush = useCallback(() => {
         const deletion = pending.current;
@@ -440,7 +449,7 @@ const Contacts = () => {
                             <Pressable
                                 key={c.id}
                                 style={contacts.recentPerson}
-                                onPress={() => router.push(`/Messages/${c.id}`)}
+                                onPress={() => openConversation(c.id)}
                             >
                                 <View style={contacts.recentAvatarWrap}>
                                     <View style={contacts.recentAvatar}>
@@ -493,8 +502,7 @@ const Contacts = () => {
                                 selected={selected.includes(c.id)}
                                 onPress={() => {
                                     if (removing.length) return;
-                                    if (!editing)
-                                        router.push(`/Messages/${c.id}`);
+                                    if (!editing) openConversation(c.id);
                                     else
                                         setSelected((current) =>
                                             current.includes(c.id)

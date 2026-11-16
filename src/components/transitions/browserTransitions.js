@@ -168,6 +168,32 @@ export async function runBrowserTransition(stage, a, b, id) {
                 duration: d(250),
             });
         },
+        slide: async () => {
+            const { W } = dims();
+            a.style.zIndex = 1;
+            b.style.zIndex = 2;
+            await animate(
+                b,
+                [
+                    { transform: `translateX(${W}px)` },
+                    { transform: "translateX(0)" },
+                ],
+                { duration: d(320), easing: "cubic-bezier(.22,.61,.36,1)" },
+            );
+        },
+        "slide-out": async () => {
+            const { W } = dims();
+            a.style.zIndex = 2;
+            b.style.zIndex = 1;
+            await animate(
+                a,
+                [
+                    { transform: "translateX(0)" },
+                    { transform: `translateX(${W}px)` },
+                ],
+                { duration: d(400), easing: "cubic-bezier(.22,.61,.36,1)" },
+            );
+        },
     };
     a.classList.add("anim");
     b.classList.add("anim");
