@@ -484,6 +484,9 @@ function Availability({
 export default function CreateListing() {
     const router = useRouter();
     const [step, setStep] = useState(0);
+    const [pageDirection, setPageDirection] = useState<"forward" | "back">(
+        "forward",
+    );
     const [kind, setKind] = useState<ListingKind | null>(null);
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
@@ -574,6 +577,7 @@ export default function CreateListing() {
         } else {
             setMessage("");
             setFieldErrors({});
+            setPageDirection("forward");
             setStep(step + 1);
         }
     }
@@ -621,6 +625,7 @@ export default function CreateListing() {
     }
 
     function reset() {
+        setPageDirection("forward");
         setStep(0);
         setKind(null);
         setTitle("");
@@ -648,6 +653,7 @@ export default function CreateListing() {
             else router.replace("/Listings");
         } else {
             setMessage("");
+            setPageDirection("back");
             setStep(step - 1);
         }
     }
@@ -663,6 +669,13 @@ export default function CreateListing() {
     return (
         <PaperForm
             pageKey={postedId ? "posted" : step}
+            stageVariant={
+                postedId
+                    ? "fade"
+                    : pageDirection === "forward"
+                      ? "notebookForward"
+                      : "notebookBack"
+            }
             header={
                 !postedId && (
                     <View style={styles.top}>
@@ -756,12 +769,24 @@ export default function CreateListing() {
                     </FormMotion>
                 </View>
             ) : (
-                <View style={styles.form}>
+                <View style={styles.notebook}>
+                    <View pointerEvents="none" style={styles.notebookMargin} />
+                    <View pointerEvents="none" style={styles.notebookRings}>
+                        {Array.from({ length: 8 }, (_, index) => (
+                            <View key={index} style={styles.notebookRing} />
+                        ))}
+                    </View>
+                    <View pointerEvents="none" style={styles.notebookRules}>
+                        {Array.from({ length: 14 }, (_, index) => (
+                            <View key={index} style={styles.notebookRule} />
+                        ))}
+                    </View>
+                    <View style={styles.form}>
                     <Text
                         accessibilityRole="header"
                         style={[paperFormStyles.heading, styles.heading]}
                     >
-                        new post
+                        {step === 0 ? "new listing notebook" : "new post"}
                     </Text>
                     {step === 0 && (
                         <>
@@ -1385,6 +1410,7 @@ export default function CreateListing() {
                             </View>
                         </StepSequence>
                     )}
+                    </View>
                 </View>
             )}
         </PaperForm>
@@ -1409,6 +1435,51 @@ const styles = StyleSheet.create({
         overflow: "hidden",
     },
     dotFill: { height: "100%", backgroundColor: colors.maroon },
+    notebook: {
+        position: "relative",
+        minHeight: "100%",
+        overflow: "hidden",
+        backgroundColor: "#FFFDF7",
+        borderWidth: 1,
+        borderColor: "#E5DDD0",
+        boxShadow: "0px 3px 8px rgba(48, 31, 20, 0.12)",
+        paddingTop: 22,
+        paddingRight: 18,
+        paddingBottom: 26,
+        paddingLeft: 42,
+    },
+    notebookMargin: {
+        position: "absolute",
+        top: 0,
+        bottom: 0,
+        left: 29,
+        width: 2,
+        backgroundColor: "#E7A7A7",
+    },
+    notebookRings: {
+        position: "absolute",
+        top: 22,
+        bottom: 18,
+        left: -8,
+        justifyContent: "space-between",
+    },
+    notebookRing: {
+        width: 24,
+        height: 12,
+        borderWidth: 3,
+        borderColor: colors.ink,
+        borderRadius: 6,
+        backgroundColor: colors.cream,
+    },
+    notebookRules: {
+        position: "absolute",
+        top: 76,
+        right: 0,
+        bottom: 14,
+        left: 32,
+        justifyContent: "space-between",
+    },
+    notebookRule: { height: 1, backgroundColor: "#DDE9F2" },
     form: { gap: 13 },
     heading: { fontSize: 46, lineHeight: 49 },
     section: {

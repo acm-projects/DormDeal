@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
     KeyboardAvoidingView,
     Platform,
@@ -25,9 +25,52 @@ export function PaperForm({
     header?: ReactNode;
     footer?: ReactNode;
     pageKey?: string | number;
-    stageVariant?: "fade" | "slide";
+    stageVariant?:
+        | "fade"
+        | "slide"
+        | "notebookForward"
+        | "notebookBack";
 }) {
     const insets = useSafeAreaInsets();
+    const previousStage = useRef<{
+        pageKey: string | number | undefined;
+        children: ReactNode;
+    } | null>(null);
+    const clearTurnTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [turningPage, setTurningPage] = useState<ReactNode | null>(null);
+    const [pageIsChanging, setPageIsChanging] = useState(false);
+    const notebookStage =
+        stageVariant === "notebookForward" || stageVariant === "notebookBack";
+
+    useEffect(() => {
+        const previous = previousStage.current;
+        if (
+            notebookStage &&
+            previous !== null &&
+            previous.pageKey !== pageKey
+        ) {
+            if (clearTurnTimer.current !== null) {
+                clearTimeout(clearTurnTimer.current);
+            }
+            setTurningPage(previous.children);
+            setPageIsChanging(true);
+            clearTurnTimer.current = setTimeout(() => {
+                setTurningPage(null);
+                setPageIsChanging(false);
+                clearTurnTimer.current = null;
+            }, 560);
+        }
+        previousStage.current = { pageKey, children };
+    }, [children, notebookStage, pageKey]);
+
+    useEffect(
+        () => () => {
+            if (clearTurnTimer.current !== null) {
+                clearTimeout(clearTurnTimer.current);
+            }
+        },
+        [],
+    );
     const gutters = {
         paddingLeft: Math.max(20, insets.left),
         paddingRight: Math.max(20, insets.right),
@@ -41,13 +84,26 @@ export function PaperForm({
                 >
                     {header && <View style={gutters}>{header}</View>}
                     <ScrollView
-                        key={pageKey}
                         contentContainerStyle={[styles.content, gutters]}
                         keyboardShouldPersistTaps="handled"
                     >
-                        <FormMotion variant={stageVariant} style={styles.stage}>
-                            {children}
-                        </FormMotion>
+                        <View style={styles.stageShell}>
+                            <FormMotion
+                                variant={stageVariant}
+                                trigger={pageIsChanging ? 0 : undefined}
+                                style={styles.stage}
+                            >
+                                {children}
+                            </FormMotion>
+                            {turningPage !== null && (
+                                <FormMotion
+                                    variant="notebookExitLeft"
+                                    style={[styles.stage, styles.turningStage]}
+                                >
+                                    {turningPage}
+                                </FormMotion>
+                            )}
+                        </View>
                     </ScrollView>
                     {footer && (
                         <View style={[styles.footer, gutters]}>{footer}</View>
@@ -192,7 +248,16 @@ export const paperFormStyles = StyleSheet.create({
 const styles = StyleSheet.create({
     base: { paddingLeft: 0, paddingRight: 0 },
     page: { flex: 1, width: "100%" },
+    stageShell: { flexGrow: 1, position: "relative" },
     stage: { flexGrow: 1 },
+    turningStage: {
+        position: "absolute",
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        zIndex: 1,
+    },
     content: { flexGrow: 1, paddingTop: 22, paddingBottom: 18 },
     footer: { gap: 8, paddingTop: 8, paddingBottom: 4 },
     back: {

@@ -97,24 +97,13 @@ const Messages = () => {
     const scroll_view_ref = useRef(null);
     const shouldAnimateScroll = useRef(false);
     const needsInitialScroll = useRef(true);
-    const initialScrollFrame = useRef(null);
-    const scroll_to_end_func = () => {
-        const shouldScrollInitialHistory =
-            needsInitialScroll.current && messages.length > 0;
-        if (shouldScrollInitialHistory) {
-            needsInitialScroll.current = false;
-            // onLayout is dispatched before the new dimensions are painted.
-            // Waiting one frame makes scrollToEnd use the final thread height.
-            initialScrollFrame.current = requestAnimationFrame(() => {
-                scroll_view_ref.current?.scrollToEnd({ animated: false });
-                initialScrollFrame.current = null;
-            });
-        } else if (shouldAnimateScroll.current) {
+    const handleContentSizeChange = () => {
+        if (shouldAnimateScroll.current) {
             scroll_view_ref.current?.scrollToEnd({
                 animated: true,
             });
+            shouldAnimateScroll.current = false;
         }
-        shouldAnimateScroll.current = false;
     };
     const closeConversation = () => {
         if (isClosing) return;
@@ -208,12 +197,29 @@ const Messages = () => {
             .subscribe();
 
         return () => {
-            if (initialScrollFrame.current !== null) {
-                cancelAnimationFrame(initialScrollFrame.current);
-            }
             supabase.removeChannel(channel);
         };
     }, [user_id, conversation_id]);
+
+    // Run after the fetched history has committed, rather than from an early
+    // child-layout callback. A second frame covers web's deferred text layout.
+    useEffect(() => {
+        if (!needsInitialScroll.current || messages.length === 0) return;
+
+        needsInitialScroll.current = false;
+        let secondFrame = null;
+        const firstFrame = requestAnimationFrame(() => {
+            scroll_view_ref.current?.scrollToEnd({ animated: false });
+            secondFrame = requestAnimationFrame(() => {
+                scroll_view_ref.current?.scrollToEnd({ animated: false });
+            });
+        });
+
+        return () => {
+            cancelAnimationFrame(firstFrame);
+            if (secondFrame !== null) cancelAnimationFrame(secondFrame);
+        };
+    }, [messages]);
 
     const send_message = async () => {
         if (!text.trim() || !user_id) return;
@@ -303,11 +309,12 @@ const Messages = () => {
 
             <ScrollView
                 ref={scroll_view_ref}
+                onContentSizeChange={handleContentSizeChange}
                 style={styles.messages_scroll_view}
                 contentContainerStyle={styles.messages_container}
                 showsVerticalScrollIndicator={false}
             >
-                <View onLayout={scroll_to_end_func}>
+                <View>
                     <View style={styles.tip_note}>
                         <View style={styles.tip_top} />
                         <Text style={styles.tip_text}>
@@ -400,7 +407,7 @@ const styles = StyleSheet.create({
         paddingLeft: 20,
         paddingRight: 20,
         paddingHorizontal: 20,
-        paddingBottom: 106,
+        paddingBottom: 20,
     },
     messages_scroll_view: {
         flex: 1,
@@ -532,7 +539,7 @@ const styles = StyleSheet.create({
     send_error: {
         color: colors.maroon,
         paddingHorizontal: 20,
-        paddingBottom: 100,
+        paddingVertical: 8,
     },
     upload_button: {
         flexShrink: 0,
@@ -546,8 +553,6 @@ const styles = StyleSheet.create({
     messages_functionality: {
         flexDirection: "row",
         alignItems: "center",
-        position: "absolute",
-        bottom: 0,
         alignContent: "flex-end",
         backgroundColor: colors.blush,
         width: "100%",
