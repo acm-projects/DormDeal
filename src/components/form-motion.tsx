@@ -290,8 +290,7 @@ export function FormMotion({
             const forward = variant === "notebookForward";
             motion = {
                 opacity: progress,
-                // Both directions turn from the notebook's spine; back uses
-                // the mirrored rotation rather than a different right-edge hinge.
+                // The notebook uses one left-side spine in both directions.
                 transformOrigin: "left center",
                 transform: [
                     { perspective: 900 },
@@ -304,7 +303,7 @@ export function FormMotion({
                     {
                         rotateY: progress.interpolate({
                             inputRange: [0, 1],
-                            outputRange: [forward ? "-68deg" : "68deg", "0deg"],
+                            outputRange: ["-68deg", "0deg"],
                         }),
                     },
                 ],

@@ -14,6 +14,12 @@ import Base from "./base";
 import { colors } from "../../app/root_styles";
 import { FormMotion, FormMotionProvider } from "./form-motion";
 
+type NotebookTurn = {
+    children: ReactNode;
+    variant: "notebookExitLeft";
+    direction: "forward" | "back";
+};
+
 export function PaperForm({
     children,
     header,
@@ -37,8 +43,8 @@ export function PaperForm({
         children: ReactNode;
     } | null>(null);
     const clearTurnTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const [turningPage, setTurningPage] = useState<ReactNode | null>(null);
-    const [pageIsChanging, setPageIsChanging] = useState(false);
+    const [turningPage, setTurningPage] = useState<NotebookTurn | null>(null);
+    const [settledNotebookPage, setSettledNotebookPage] = useState(false);
     const notebookStage =
         stageVariant === "notebookForward" || stageVariant === "notebookBack";
 
@@ -52,16 +58,23 @@ export function PaperForm({
             if (clearTurnTimer.current !== null) {
                 clearTimeout(clearTurnTimer.current);
             }
-            setTurningPage(previous.children);
-            setPageIsChanging(true);
+            setTurningPage({
+                children: previous.children,
+                variant: "notebookExitLeft",
+                direction:
+                    stageVariant === "notebookBack" ? "back" : "forward",
+            });
+            // The back page is the exact reverse: it begins at the turned
+            // endpoint and settles flat as the current page turns away.
+            setSettledNotebookPage(stageVariant !== "notebookBack");
             clearTurnTimer.current = setTimeout(() => {
                 setTurningPage(null);
-                setPageIsChanging(false);
+                setSettledNotebookPage(true);
                 clearTurnTimer.current = null;
             }, 560);
         }
         previousStage.current = { pageKey, children };
-    }, [children, notebookStage, pageKey]);
+    }, [children, notebookStage, pageKey, stageVariant]);
 
     useEffect(
         () => () => {
@@ -75,6 +88,7 @@ export function PaperForm({
         paddingLeft: Math.max(20, insets.left),
         paddingRight: Math.max(20, insets.right),
     };
+    const backTurn = turningPage?.direction === "back";
     return (
         <FormMotionProvider>
             <Base style={styles.base}>
@@ -88,21 +102,47 @@ export function PaperForm({
                         keyboardShouldPersistTaps="handled"
                     >
                         <View style={styles.stageShell}>
-                            <FormMotion
-                                variant={stageVariant}
-                                trigger={pageIsChanging ? 0 : undefined}
-                                style={styles.stage}
-                            >
-                                {children}
-                            </FormMotion>
-                            {turningPage !== null && (
+                            {backTurn ? (
+                                <View style={styles.stage}>
+                                    {turningPage.children}
+                                </View>
+                            ) : (
                                 <FormMotion
-                                    variant="notebookExitLeft"
-                                    style={[styles.stage, styles.turningStage]}
+                                    key={pageKey}
+                                    variant={stageVariant}
+                                    trigger={
+                                        notebookStage && settledNotebookPage
+                                            ? 0
+                                            : undefined
+                                    }
+                                    style={styles.stage}
                                 >
-                                    {turningPage}
+                                    {children}
                                 </FormMotion>
                             )}
+                            {turningPage !== null &&
+                                (backTurn ? (
+                                    <FormMotion
+                                        key={pageKey}
+                                        variant="notebookBack"
+                                        style={[
+                                            styles.stage,
+                                            styles.turningStage,
+                                        ]}
+                                    >
+                                        {children}
+                                    </FormMotion>
+                                ) : (
+                                    <FormMotion
+                                        variant={turningPage.variant}
+                                        style={[
+                                            styles.stage,
+                                            styles.turningStage,
+                                        ]}
+                                    >
+                                        {turningPage.children}
+                                    </FormMotion>
+                                ))}
                         </View>
                     </ScrollView>
                     {footer && (
