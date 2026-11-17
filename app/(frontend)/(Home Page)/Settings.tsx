@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
     Animated,
     Modal,
+    PanResponder,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -192,10 +193,12 @@ const OptionSheet = ({
     onClose: () => void;
     onSelect: (index: number) => void;
 }) => {
-    const position = useRef(new Animated.Value(1)).current;
+    const [position] = useState(() => new Animated.Value(1));
+    const [dragOffset] = useState(() => new Animated.Value(0));
     useEffect(() => {
         if (!visible) {
             position.setValue(1);
+            dragOffset.setValue(0);
             return;
         }
         Animated.timing(position, {
@@ -203,15 +206,54 @@ const OptionSheet = ({
             duration: 260,
             useNativeDriver: false,
         }).start();
-    }, [position, visible]);
+    }, [dragOffset, position, visible]);
     const dismiss = () =>
-        Animated.timing(position, {
-            toValue: 1,
-            duration: 260,
+        Animated.parallel([
+            Animated.timing(position, {
+                toValue: 1,
+                duration: 260,
+                useNativeDriver: false,
+            }),
+            Animated.timing(dragOffset, {
+                toValue: 0,
+                duration: 180,
+                useNativeDriver: false,
+            }),
+        ]).start(({ finished }) => {
+            if (finished) onClose();
+        });
+    const dismissByDrag = () =>
+        Animated.timing(dragOffset, {
+            toValue: 520,
+            duration: 180,
             useNativeDriver: false,
         }).start(({ finished }) => {
             if (finished) onClose();
         });
+    const sheetPanResponder = PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponderCapture: (_, gesture) =>
+            gesture.dy > 6 && Math.abs(gesture.dy) > Math.abs(gesture.dx),
+        onPanResponderMove: (_, gesture) => {
+            dragOffset.setValue(Math.max(0, gesture.dy));
+        },
+        onPanResponderRelease: (_, gesture) => {
+            if (gesture.dy > 100 || gesture.vy > 0.7) {
+                dismissByDrag();
+                return;
+            }
+            Animated.spring(dragOffset, {
+                toValue: 0,
+                useNativeDriver: false,
+            }).start();
+        },
+        onPanResponderTerminate: () => {
+            Animated.spring(dragOffset, {
+                toValue: 0,
+                useNativeDriver: false,
+            }).start();
+        },
+    });
     const select = (index: number) => {
         onSelect(index);
         dismiss();
@@ -230,18 +272,40 @@ const OptionSheet = ({
                         {
                             transform: [
                                 {
-                                    translateY: position.interpolate({
-                                        inputRange: [0, 1],
-                                        outputRange: [0, 520],
-                                    }),
+                                    translateY: Animated.add(
+                                        position.interpolate({
+                                            inputRange: [0, 1],
+                                            outputRange: [0, 520],
+                                        }),
+                                        dragOffset,
+                                    ),
                                 },
                             ],
                         },
                     ]}
                 >
                     <Pressable onPress={(event) => event.stopPropagation()}>
-                        <View style={styles.sheetHandle} />
-                        <Text style={styles.sheetTitle}>{title}</Text>
+                        <View
+                            {...sheetPanResponder.panHandlers}
+                            style={styles.sheetHandleTouchTarget}
+                            accessibilityLabel="Drag down to close options"
+                        >
+                            <View style={styles.sheetHandle} />
+                        </View>
+                        <View style={styles.sheetTitleRow}>
+                            <Text style={styles.sheetTitle}>{title}</Text>
+                            <Pressable
+                                onPress={dismiss}
+                                hitSlop={10}
+                                accessibilityLabel="Close options"
+                            >
+                                <Ionicons
+                                    name="close"
+                                    size={24}
+                                    color={colors.ink}
+                                />
+                            </Pressable>
+                        </View>
                         {options.map((option, index) => (
                             <Pressable
                                 key={option}
@@ -417,6 +481,19 @@ const Settings = () => {
     const [saved, setSaved] = useState(false);
     const [detail, setDetail] = useState<string | null>(null);
     const [logoutVisible, setLogoutVisible] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const normalizedSearch = searchQuery.trim().toLocaleLowerCase();
+    const filteredGroups = groups
+        .map((group) => ({
+            ...group,
+            rows: group.rows.filter(([label]) =>
+                !normalizedSearch ||
+                `${group.title} ${label}`
+                    .toLocaleLowerCase()
+                    .includes(normalizedSearch),
+            ),
+        }))
+        .filter((group) => group.rows.length > 0);
     if (saved) return <SavedListings onBack={() => setSaved(false)} />;
     if (detail)
         return <DetailSettings title={detail} onBack={() => setDetail(null)} />;
@@ -447,10 +524,13 @@ const Settings = () => {
                         placeholder="Search"
                         placeholderTextColor={colors.muted}
                         style={styles.searchInput}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        returnKeyType="search"
                     />
                 </View>
                 </SettingReveal>
-                {groups.map((group, groupIndex) => (
+                {filteredGroups.map((group, groupIndex) => (
                     <SettingReveal key={group.title} delay={270 + groupIndex * 75}>
                     <View key={group.title} style={styles.group}>
                         <Text style={styles.groupTitle}>{group.title}</Text>
@@ -504,6 +584,11 @@ const Settings = () => {
                     </View>
                     </SettingReveal>
                 ))}
+                {normalizedSearch && filteredGroups.length === 0 ? (
+                    <Text style={styles.searchEmpty}>
+                        No settings match “{searchQuery.trim()}”.
+                    </Text>
+                ) : null}
                 <Pressable
                     style={styles.logoutButton}
                     onPress={() => setLogoutVisible(true)}
@@ -732,12 +817,24 @@ const styles = StyleSheet.create({
         backgroundColor: colors.mutedLight,
         marginBottom: 14,
     },
+    sheetHandleTouchTarget: {
+        height: 32,
+        marginTop: -16,
+        alignSelf: "stretch",
+        justifyContent: "flex-end",
+    },
     sheetTitle: {
+        flex: 1,
         color: colors.ink,
         fontFamily: "Outfit",
         fontWeight: "700",
         fontSize: 20,
         marginBottom: 8,
+    },
+    sheetTitleRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
     },
     sheetOption: {
         minHeight: 54,
@@ -755,6 +852,13 @@ const styles = StyleSheet.create({
         color: colors.ink,
         fontFamily: "Outfit",
         fontSize: 16,
+    },
+    searchEmpty: {
+        color: colors.muted,
+        fontFamily: "Outfit",
+        fontSize: 16,
+        paddingVertical: 24,
+        textAlign: "center",
     },
 });
 export default Settings;

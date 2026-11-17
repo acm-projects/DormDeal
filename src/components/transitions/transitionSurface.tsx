@@ -27,7 +27,14 @@ import Svg, {
     Rect,
     Stop,
 } from "react-native-svg";
-import { d, easeIO, pick, rnd, sleep } from "./pageTransitions";
+import {
+    d,
+    easeIO,
+    pick,
+    rnd,
+    sleep,
+    stickyNoteColors,
+} from "./pageTransitions";
 import type { Snapshot, TransitionScene } from "./transitionSurface.types";
 
 type NativeScene = TransitionScene & { from: string; to: string };
@@ -117,7 +124,6 @@ function useTimeline(
 const maroon = "#7a0000";
 const overshoot = Easing.bezier(0.2, 0.9, 0.3, 1.3);
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
-const noteColors = ["#fff08a", "#ffb3c7", "#a8e0ff", "#b9f2b0", "#ffd29a"];
 const noteWords = [
     "pickup 5pm",
     "textbooks $20",
@@ -162,6 +168,64 @@ function Fade({ scene }: { scene: NativeScene }) {
     );
 }
 
+function Slide({ scene }: { scene: NativeScene }) {
+    const [progress] = useState(() => new Animated.Value(0));
+    useTimeline(scene, ({ animate }) =>
+        animate(progress, 320, { easing: Easing.out(Easing.cubic) }),
+    );
+    return (
+        <>
+            <ScreenImage uri={scene.from} scene={scene} />
+            <Animated.View
+                style={[
+                    StyleSheet.absoluteFill,
+                    {
+                        transform: [
+                            {
+                                translateX: progress.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [scene.width, 0],
+                                }),
+                            },
+                        ],
+                    },
+                ]}
+            >
+                <ScreenImage uri={scene.to} scene={scene} />
+            </Animated.View>
+        </>
+    );
+}
+
+function SlideOut({ scene }: { scene: NativeScene }) {
+    const [progress] = useState(() => new Animated.Value(0));
+    useTimeline(scene, ({ animate }) =>
+        animate(progress, 400, { easing: Easing.out(Easing.cubic) }),
+    );
+    return (
+        <>
+            <ScreenImage uri={scene.to} scene={scene} />
+            <Animated.View
+                style={[
+                    StyleSheet.absoluteFill,
+                    {
+                        transform: [
+                            {
+                                translateX: progress.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [0, scene.width],
+                                }),
+                            },
+                        ],
+                    },
+                ]}
+            >
+                <ScreenImage uri={scene.from} scene={scene} />
+            </Animated.View>
+        </>
+    );
+}
+
 function Sticky({ scene }: { scene: NativeScene }) {
     const height = scene.height - scene.bottom,
         cellWidth = scene.width / 5,
@@ -170,7 +234,7 @@ function Sticky({ scene }: { scene: NativeScene }) {
     const [notes] = useState(() =>
         Array.from({ length: 45 }, () => ({
             word: Math.random() < 0.35 ? pick(noteWords) : "",
-            color: pick(noteColors),
+            color: pick(stickyNoteColors),
             rotation: rnd(-7, 7),
             slap: new Animated.Value(0),
             peel: new Animated.Value(0),
@@ -413,7 +477,12 @@ function Plane({ scene }: { scene: NativeScene }) {
     );
 }
 
-const nativeEffects = { sticky: Sticky, plane: Plane };
+const nativeEffects = {
+    sticky: Sticky,
+    plane: Plane,
+    slide: Slide,
+    "slide-out": SlideOut,
+};
 
 export function TransitionSurface({ scene }: { scene: TransitionScene }) {
     const [reduced, setReduced] = useState<boolean | null>(null);

@@ -103,6 +103,7 @@ const RecCard = (props: RecCardProps) => {
                         [item photo]
                     </Text>
                 )}
+                <View pointerEvents="none" style={home.cardPhotoShadow} />
             </View>
             <View style={home.categoryBadge}>
                 <Text selectable={false} style={home.categoryBadgeText}>
@@ -179,7 +180,13 @@ function getTapeRotation(id: string) {
     }
     return Math.abs(hash) % 2 === 0 ? "5deg" : "-7deg";
 }
-const CardStack = ({ listings }: { listings: FeedListing[] }) => {
+const CardStack = ({
+    listings,
+    setPageScrollLocked,
+}: {
+    listings: FeedListing[];
+    setPageScrollLocked: (locked: boolean) => void;
+}) => {
     const [deck, setDeck] = useState(() => getVisualDeck(listings));
     const [undoing, setUndoing] = useState(false);
     const [undoOutgoing, setUndoOutgoing] = useState<FeedListing | null>(null);
@@ -352,9 +359,13 @@ const CardStack = ({ listings }: { listings: FeedListing[] }) => {
     advanceRef.current = advance;
     const swipe = useRef(
         PanResponder.create({
-            // check before the card's Pressable does, only grab if moving sideways
+            // Only claim a gesture once it is clearly horizontal. This leaves
+            // vertical and diagonal drags to the enclosing page ScrollView.
             onMoveShouldSetPanResponderCapture: (_, g) =>
-                !transitionRunning.current && Math.abs(g.dx) > 8,
+                !transitionRunning.current &&
+                Math.abs(g.dx) > 8 &&
+                Math.abs(g.dx) > Math.abs(g.dy),
+            onPanResponderGrant: () => setPageScrollLocked(true),
             onPanResponderTerminationRequest: () => false,
             // don't let the page scroll steal it
 
@@ -373,6 +384,9 @@ const CardStack = ({ listings }: { listings: FeedListing[] }) => {
             ),
             // finger lifted
             onPanResponderRelease: (_, g) => {
+                // Restore page scrolling as soon as the user lifts their finger;
+                // the card animation can finish independently.
+                setPageScrollLocked(false);
                 if (transitionRunning.current) return;
                 if (Math.abs(g.dx) > 100) {
                     advanceRef.current();
@@ -387,6 +401,7 @@ const CardStack = ({ listings }: { listings: FeedListing[] }) => {
                     }).start();
                 }
             },
+            onPanResponderTerminate: () => setPageScrollLocked(false),
         }),
     ).current;
 
@@ -714,6 +729,7 @@ const Home = () => {
             .map((part) => part[0]?.toUpperCase())
             .join("") || "?";
     const [mode, setMode] = useState<"buy" | "sell">("buy"); // which tab is picked
+    const [pageScrollLocked, setPageScrollLocked] = useState(false);
     const pickupMotion = useRef(new Animated.Value(0)).current;
     const pickupOpacity = useRef(new Animated.Value(1)).current;
     const pickupTransitionRunning = useRef(false);
@@ -823,7 +839,11 @@ const Home = () => {
     }, []);
     return (
         <View style={home.screen}>
-            <ScrollView contentContainerStyle={home.content}>
+            <ScrollView
+                contentContainerStyle={home.content}
+                directionalLockEnabled
+                scrollEnabled={!pageScrollLocked}
+            >
                 {/* greeting on the left, avatar on the right */}
                 <View style={home.headerRow}>
                     <View style={home.greeting}>
@@ -846,9 +866,13 @@ const Home = () => {
                                 color={colors.ink}
                             />
                         </Pressable>
-                        <View style={home.avatar}>
+                        <Pressable
+                            style={home.avatar}
+                            onPress={() => router.push("/Profile/me")}
+                            accessibilityLabel="Open my profile"
+                        >
                             <Text style={home.avatarText}>{initials}</Text>
-                        </View>
+                        </Pressable>
                     </View>
                 </View>
 
@@ -886,7 +910,10 @@ const Home = () => {
                         <ActivityIndicator color={colors.maroon} />
                     </View>
                 ) : (
-                    <CardStack listings={listings} />
+                    <CardStack
+                        listings={listings}
+                        setPageScrollLocked={setPageScrollLocked}
+                    />
                 )}
                 {recError ? (
                     <Text style={home.recommendationError}>{recError}</Text>
@@ -1115,16 +1142,22 @@ const home = StyleSheet.create({
         height: 250,
         borderRadius: 4,
         backgroundColor: colors.white,
-        borderWidth: 3,
-        borderColor: colors.maroon,
         alignItems: "center",
         justifyContent: "center",
+    },
+    cardPhotoShadow: {
+        position: "absolute",
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        borderRadius: 4,
         boxShadow: [
             {
                 offsetX: 0,
                 offsetY: 0,
-                blurRadius: 5,
-                color: "rgba(31,20,20,0.16)",
+                blurRadius: 8,
+                color: "rgba(31,20,20,0.18)",
                 inset: true,
             },
         ],

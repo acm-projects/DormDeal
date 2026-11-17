@@ -1,5 +1,14 @@
-import { useRef, useState } from "react";
 import {
+    Children,
+    isValidElement,
+    useEffect,
+    useRef,
+    useState,
+    type ReactNode,
+} from "react";
+import {
+    Animated,
+    Easing,
     Image,
     PanResponder,
     Pressable,
@@ -11,7 +20,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
-import Svg, { Circle, Path, Polygon, Rect } from "react-native-svg";
+import Svg, { Circle, Path, Polygon } from "react-native-svg";
 import {
     FormAction,
     FormBack,
@@ -101,6 +110,67 @@ function Chip({
                 {label}
             </Text>
         </Pressable>
+    );
+}
+
+function StepSequence({ children }: { children: ReactNode }) {
+    return (
+        <>
+            {Children.toArray(children).map((child, index) => (
+                <FormMotion
+                    key={
+                        isValidElement(child) && child.key !== null
+                            ? child.key
+                            : index
+                    }
+                    delay={120 + index * 90}
+                >
+                    {child}
+                </FormMotion>
+            ))}
+        </>
+    );
+}
+
+function ProgressBar({ step }: { step: number }) {
+    const [progress] = useState(() => new Animated.Value(step + 1));
+
+    useEffect(() => {
+        const animation = Animated.timing(progress, {
+            toValue: step + 1,
+            duration: 360,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: false,
+        });
+        animation.start();
+        return () => animation.stop();
+    }, [progress, step]);
+
+    return (
+        <View
+            accessible
+            accessibilityLabel={`Step ${step + 1} of 5: ${steps[step]}`}
+            accessibilityRole="progressbar"
+            accessibilityValue={{ min: 0, max: 5, now: step + 1 }}
+            style={styles.progress}
+        >
+            {steps.map((label, index) => (
+                <View key={label} style={styles.dot}>
+                    <Animated.View
+                        style={[
+                            styles.dotFill,
+                            {
+                                width: progress.interpolate({
+                                    inputRange: [index, index + 1],
+                                    outputRange: ["0%", "100%"],
+                                    extrapolate: "clamp",
+                                }),
+                            },
+                        ]}
+                    />
+                </View>
+            ))}
+        </View>
     );
 }
 
@@ -221,13 +291,14 @@ function MeetupMap({
                 onPress={(event) =>
                     customMode &&
                     onCustomPin({
-                        x: event.nativeEvent.locationX - offset.x,
-                        y: event.nativeEvent.locationY - offset.y,
+                        x: event.nativeEvent.locationX - offsetRef.current.x,
+                        y: event.nativeEvent.locationY - offsetRef.current.y,
                     })
                 }
                 style={styles.mapCanvas}
             >
                 <View
+                    pointerEvents="none"
                     style={[
                         styles.mapLayer,
                         {
@@ -254,7 +325,24 @@ function MeetupMap({
                         />
                     ))}
                     <Text style={styles.mapLabel}>UT DALLAS</Text>
-                    {spots.map(({ label, x, y }) => (
+                    {customMode && customPin && (
+                        <View
+                            style={[
+                                styles.pin,
+                                { left: customPin.x, top: customPin.y },
+                            ]}
+                        >
+                            <Ionicons
+                                name="location"
+                                size={36}
+                                color={colors.maroon}
+                            />
+                        </View>
+                    )}
+                </View>
+                {!customMode && (
+                    <View pointerEvents="box-none" style={styles.mapLayer}>
+                        {spots.map(({ label, x, y }) => (
                         <Pressable
                             key={label}
                             accessibilityRole="button"
@@ -275,23 +363,9 @@ function MeetupMap({
                                 color={colors.maroon}
                             />
                         </Pressable>
-                    ))}
-                    {customMode && customPin && (
-                        <View
-                            pointerEvents="none"
-                            style={[
-                                styles.pin,
-                                { left: customPin.x, top: customPin.y },
-                            ]}
-                        >
-                            <Ionicons
-                                name="location"
-                                size={36}
-                                color={colors.maroon}
-                            />
-                        </View>
-                    )}
-                </View>
+                        ))}
+                    </View>
+                )}
             </Pressable>
             <Text style={styles.mapAttribution}>
                 © OpenStreetMap contributors ·{" "}
@@ -410,6 +484,9 @@ function Availability({
 export default function CreateListing() {
     const router = useRouter();
     const [step, setStep] = useState(0);
+    const [pageDirection, setPageDirection] = useState<"forward" | "back">(
+        "forward",
+    );
     const [kind, setKind] = useState<ListingKind | null>(null);
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
@@ -500,6 +577,7 @@ export default function CreateListing() {
         } else {
             setMessage("");
             setFieldErrors({});
+            setPageDirection("forward");
             setStep(step + 1);
         }
     }
@@ -547,6 +625,7 @@ export default function CreateListing() {
     }
 
     function reset() {
+        setPageDirection("forward");
         setStep(0);
         setKind(null);
         setTitle("");
@@ -574,6 +653,7 @@ export default function CreateListing() {
             else router.replace("/Listings");
         } else {
             setMessage("");
+            setPageDirection("back");
             setStep(step - 1);
         }
     }
@@ -589,27 +669,18 @@ export default function CreateListing() {
     return (
         <PaperForm
             pageKey={postedId ? "posted" : step}
+            stageVariant={
+                postedId
+                    ? "fade"
+                    : pageDirection === "forward"
+                      ? "notebookForward"
+                      : "notebookBack"
+            }
             header={
                 !postedId && (
                     <View style={styles.top}>
                         <FormBack onPress={goBack} disabled={busy} />
-                        <View
-                            accessible
-                            accessibilityLabel={
-                                "Step " + (step + 1) + " of 5: " + steps[step]
-                            }
-                            style={styles.progress}
-                        >
-                            {steps.map((label, index) => (
-                                <View
-                                    key={label}
-                                    style={[
-                                        styles.dot,
-                                        index <= step && styles.filledDot,
-                                    ]}
-                                />
-                            ))}
-                        </View>
+                        <ProgressBar step={step} />
                     </View>
                 )
             }
@@ -698,12 +769,24 @@ export default function CreateListing() {
                     </FormMotion>
                 </View>
             ) : (
-                <View style={styles.form}>
+                <View style={styles.notebook}>
+                    <View pointerEvents="none" style={styles.notebookMargin} />
+                    <View pointerEvents="none" style={styles.notebookRings}>
+                        {Array.from({ length: 8 }, (_, index) => (
+                            <View key={index} style={styles.notebookRing} />
+                        ))}
+                    </View>
+                    <View pointerEvents="none" style={styles.notebookRules}>
+                        {Array.from({ length: 14 }, (_, index) => (
+                            <View key={index} style={styles.notebookRule} />
+                        ))}
+                    </View>
+                    <View style={styles.form}>
                     <Text
                         accessibilityRole="header"
                         style={[paperFormStyles.heading, styles.heading]}
                     >
-                        new post
+                        {step === 0 ? "new listing notebook" : "new post"}
                     </Text>
                     {step === 0 && (
                         <>
@@ -813,9 +896,10 @@ export default function CreateListing() {
                         </>
                     )}
                     {step === 1 && (
-                        <>
-                            <Text style={styles.section}>photo</Text>
-                            <View style={styles.photoBlock}>
+                        <StepSequence>
+                            <View key="photo-group" style={styles.stepGroup}>
+                                <Text style={styles.section}>photo</Text>
+                                <View style={styles.photoBlock}>
                                 {image ? (
                                     <FormMotion
                                         key={image.uri}
@@ -862,14 +946,16 @@ export default function CreateListing() {
                                     </Pressable>
                                 )}
                                 <PhotoDecorations />
+                                </View>
+                                {!!fieldErrors.photo && (
+                                    <Text style={styles.fieldError}>
+                                        {fieldErrors.photo}
+                                    </Text>
+                                )}
                             </View>
-                            {!!fieldErrors.photo && (
-                                <Text style={styles.fieldError}>
-                                    {fieldErrors.photo}
-                                </Text>
-                            )}
-                            <Text style={styles.section}>title</Text>
-                            <TextInput
+                            <View key="title-group" style={styles.stepGroup}>
+                                <Text style={styles.section}>title</Text>
+                                <TextInput
                                 accessibilityLabel="Listing title"
                                 style={[
                                     styles.field,
@@ -891,17 +977,24 @@ export default function CreateListing() {
                                         title: "",
                                     }));
                                 }}
-                            />
-                            <Text style={styles.counter}>
-                                {title.length}/40
-                            </Text>
-                            {!!fieldErrors.title && (
-                                <Text style={styles.fieldError}>
+                                />
+                                <Text style={styles.counter}>
+                                    {title.length}/40
+                                </Text>
+                                {!!fieldErrors.title && (
+                                <Text
+                                    style={[
+                                        styles.fieldError,
+                                        styles.detailsFieldError,
+                                    ]}
+                                >
                                     {fieldErrors.title}
                                 </Text>
-                            )}
-                            <Text style={styles.section}>description</Text>
-                            <TextInput
+                                )}
+                            </View>
+                            <View key="description-group" style={styles.stepGroup}>
+                                <Text style={styles.section}>description</Text>
+                                <TextInput
                                 accessibilityLabel="Listing description"
                                 style={[
                                     styles.field,
@@ -924,23 +1017,30 @@ export default function CreateListing() {
                                         description: "",
                                     }));
                                 }}
-                            />
-                            <Text style={styles.counter}>
-                                {description.length}/200
-                            </Text>
-                            {!!fieldErrors.description && (
-                                <Text style={styles.fieldError}>
+                                />
+                                <Text style={styles.counter}>
+                                    {description.length}/200
+                                </Text>
+                                {!!fieldErrors.description && (
+                                <Text
+                                    style={[
+                                        styles.fieldError,
+                                        styles.detailsFieldError,
+                                    ]}
+                                >
                                     {fieldErrors.description}
                                 </Text>
-                            )}
-                            <Text style={styles.section}>category</Text>
-                            <Text style={styles.copy}>choose one</Text>
-                            <View
+                                )}
+                            </View>
+                            <View key="category-group" style={styles.stepGroup}>
+                                <Text style={styles.section}>category</Text>
+                                <Text style={styles.copy}>choose one</Text>
+                                <View
                                 style={[
                                     styles.chips,
                                     fieldErrors.category && styles.invalidGroup,
                                 ]}
-                            >
+                                >
                                 {choices.map(([label]) => (
                                     <Chip
                                         key={label}
@@ -955,14 +1055,21 @@ export default function CreateListing() {
                                         }}
                                     />
                                 ))}
+                                </View>
+                                {!!fieldErrors.category && (
+                                    <Text style={styles.fieldError}>
+                                        {fieldErrors.category}
+                                    </Text>
+                                )}
                             </View>
-                            {!!fieldErrors.category && (
-                                <Text style={styles.fieldError}>
-                                    {fieldErrors.category}
-                                </Text>
-                            )}
                             {!service && (
-                                <>
+                                <View
+                                    key="condition-group"
+                                    style={[
+                                        styles.stepGroup,
+                                        styles.conditionGroup,
+                                    ]}
+                                >
                                     <Text style={styles.section}>
                                         condition
                                     </Text>
@@ -978,12 +1085,12 @@ export default function CreateListing() {
                                             />
                                         ))}
                                     </View>
-                                </>
+                                </View>
                             )}
-                        </>
+                        </StepSequence>
                     )}
                     {step === 2 && (
-                        <>
+                        <StepSequence>
                             <Text style={styles.section}>
                                 {service ? "set your rate" : "set your price"}
                             </Text>
@@ -1184,10 +1291,10 @@ export default function CreateListing() {
                                     {fieldErrors.meetup}
                                 </Text>
                             )}
-                        </>
+                        </StepSequence>
                     )}
                     {step === 3 && (
-                        <>
+                        <StepSequence>
                             <Text style={styles.section}>
                                 when are you free?
                             </Text>
@@ -1230,10 +1337,10 @@ export default function CreateListing() {
                                     />
                                 ))}
                             </View>
-                        </>
+                        </StepSequence>
                     )}
                     {step === 4 && (
-                        <>
+                        <StepSequence>
                             <Text style={styles.section}>looks good?</Text>
                             <Text style={styles.copy}>
                                 Your title, description, category, price and
@@ -1301,8 +1408,9 @@ export default function CreateListing() {
                                         ))}
                                 </View>
                             </View>
-                        </>
+                        </StepSequence>
                     )}
+                    </View>
                 </View>
             )}
         </PaperForm>
@@ -1313,10 +1421,10 @@ const styles = StyleSheet.create({
     top: { flexDirection: "row", alignItems: "center", gap: 16 },
     progress: {
         flex: 1,
+        paddingRight: 48,
         flexDirection: "row",
         justifyContent: "center",
         gap: 12,
-        paddingRight: 48,
     },
     dot: {
         width: 24,
@@ -1324,8 +1432,54 @@ const styles = StyleSheet.create({
         borderRadius: 3,
         borderWidth: 2,
         borderColor: colors.maroon,
+        overflow: "hidden",
     },
-    filledDot: { backgroundColor: colors.maroon },
+    dotFill: { height: "100%", backgroundColor: colors.maroon },
+    notebook: {
+        position: "relative",
+        minHeight: "100%",
+        overflow: "hidden",
+        backgroundColor: "#FFFDF7",
+        borderWidth: 1,
+        borderColor: "#E5DDD0",
+        boxShadow: "0px 3px 8px rgba(48, 31, 20, 0.12)",
+        paddingTop: 22,
+        paddingRight: 18,
+        paddingBottom: 26,
+        paddingLeft: 42,
+    },
+    notebookMargin: {
+        position: "absolute",
+        top: 0,
+        bottom: 0,
+        left: 29,
+        width: 2,
+        backgroundColor: "#E7A7A7",
+    },
+    notebookRings: {
+        position: "absolute",
+        top: 22,
+        bottom: 18,
+        left: -8,
+        justifyContent: "space-between",
+    },
+    notebookRing: {
+        width: 24,
+        height: 12,
+        borderWidth: 3,
+        borderColor: colors.ink,
+        borderRadius: 6,
+        backgroundColor: colors.cream,
+    },
+    notebookRules: {
+        position: "absolute",
+        top: 76,
+        right: 0,
+        bottom: 14,
+        left: 32,
+        justifyContent: "space-between",
+    },
+    notebookRule: { height: 1, backgroundColor: "#DDE9F2" },
     form: { gap: 13 },
     heading: { fontSize: 46, lineHeight: 49 },
     section: {
@@ -1468,8 +1622,8 @@ const styles = StyleSheet.create({
         minHeight: 140,
         textAlignVertical: "top",
         backgroundColor: colors.white,
-        fontFamily: "Caveat",
-        fontSize: 23,
+        fontFamily: "Outfit",
+        fontSize: 19,
     },
     counter: {
         alignSelf: "flex-end",
@@ -1479,6 +1633,8 @@ const styles = StyleSheet.create({
         marginTop: -8,
     },
     chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+    stepGroup: { gap: 13 },
+    conditionGroup: { marginBottom: 18 },
     timeChips: { justifyContent: "center" },
     chip: {
         paddingHorizontal: 11,
@@ -1612,6 +1768,9 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         color: "#B33B3B",
         marginTop: -6,
+    },
+    detailsFieldError: {
+        marginTop: -16,
     },
     calendar: {
         borderWidth: 2,

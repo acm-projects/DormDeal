@@ -673,7 +673,7 @@ const page = StyleSheet.create({
     tag: {
         paddingHorizontal: 12,
         paddingVertical: 6,
-        borderRadius: 16,
+        borderRadius: 3,
         backgroundColor: colors.white,
     },
     tagMain: {
@@ -892,7 +892,7 @@ const page = StyleSheet.create({
     messageButton: {
         flex: 1,
         height: 52,
-        borderRadius: 26,
+        borderRadius: 3,
         borderWidth: 1.5,
         borderColor: colors.maroon,
         alignItems: "center",
@@ -907,7 +907,7 @@ const page = StyleSheet.create({
     buyButton: {
         flex: 1,
         height: 52,
-        borderRadius: 26,
+        borderRadius: 3,
         backgroundColor: colors.maroon,
         alignItems: "center",
         justifyContent: "center",

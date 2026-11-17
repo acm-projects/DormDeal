@@ -12,7 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Text, { Header1 } from "../../../src/components/text_styles";
-import { useRouter, useFocusEffect } from "expo-router";
+import { useRouter, useFocusEffect, usePathname } from "expo-router";
 import { colors } from "../../root_styles";
 import TabBar from "../../../src/components/tab_bar";
 import { supabase } from "../../../lib/supabase";
@@ -23,6 +23,7 @@ import {
     hideConversations,
     readHiddenConversations,
 } from "../../../src/components/inbox-removal";
+import { navigateWithTransition } from "../../../src/components/transitions/pageTransitions";
 
 type Chat = {
     id: number;
@@ -30,6 +31,7 @@ type Chat = {
     initials: string;
     item: string;
     lastMessage: string;
+    searchText: string;
     time: string;
     unread: boolean;
 };
@@ -146,6 +148,7 @@ const ChatRow = (props: {
 
 const Contacts = () => {
     const router = useRouter();
+    const pathname = usePathname();
     const insets = useSafeAreaInsets();
     const [query, setQuery] = useState(""); // what's typed in the search bar
     const [chats, setChats] = useState<Chat[]>([]);
@@ -165,6 +168,13 @@ const Contacts = () => {
         timer?: ReturnType<typeof setTimeout>;
     } | null>(null);
     const dismissConfirm = useCallback(() => setConfirm(false), []);
+    const openConversation = (id: number) => {
+        void navigateWithTransition(
+            { pathname },
+            `/Messages/${id}`,
+            "slide",
+        );
+    };
 
     const flush = useCallback(() => {
         const deletion = pending.current;
@@ -305,9 +315,19 @@ const Contacts = () => {
 
                 // newest message per conversation (messages arrive newest first)
                 const last_msg = new Map<number, any>();
+                const messagesByConversation = new Map<number, string[]>();
                 (msgs ?? []).forEach((m: any) => {
                     if (!last_msg.has(m.conversation_id))
                         last_msg.set(m.conversation_id, m);
+                    const content = m.content?.trim();
+                    if (!content) return;
+                    const conversationMessages =
+                        messagesByConversation.get(m.conversation_id) ?? [];
+                    conversationMessages.push(content);
+                    messagesByConversation.set(
+                        m.conversation_id,
+                        conversationMessages,
+                    );
                 });
 
                 setChats(
@@ -321,6 +341,11 @@ const Contacts = () => {
                             initials: get_initials(name),
                             item: r.listings?.title ?? "a listing",
                             lastMessage: last?.content ?? "No messages yet",
+                            searchText: (
+                                messagesByConversation.get(
+                                    r.conversation_id,
+                                ) ?? []
+                            ).join(" "),
                             time: stamp ? time_ago(stamp) : "",
                             unread: Boolean(last && last.sender_id !== me),
                         };
@@ -341,10 +366,14 @@ const Contacts = () => {
         }, [flush, motion]),
     );
 
-    // only chats whose name matches the search
+    // Search the participant, listing, and every loaded message in the chat.
     const inbox = chats.filter((chat) => !hidden.includes(String(chat.id)));
-    const shown = inbox.filter((c) =>
-        c.name.toLowerCase().includes(query.toLowerCase()),
+    const normalizedQuery = query.trim().toLocaleLowerCase();
+    const shown = inbox.filter((chat) =>
+        !normalizedQuery ||
+        `${chat.name} ${chat.item} ${chat.searchText}`
+            .toLocaleLowerCase()
+            .includes(normalizedQuery),
     );
 
     return (
@@ -420,7 +449,7 @@ const Contacts = () => {
                             <Pressable
                                 key={c.id}
                                 style={contacts.recentPerson}
-                                onPress={() => router.push(`/Messages/${c.id}`)}
+                                onPress={() => openConversation(c.id)}
                             >
                                 <View style={contacts.recentAvatarWrap}>
                                     <View style={contacts.recentAvatar}>
@@ -473,8 +502,7 @@ const Contacts = () => {
                                 selected={selected.includes(c.id)}
                                 onPress={() => {
                                     if (removing.length) return;
-                                    if (!editing)
-                                        router.push(`/Messages/${c.id}`);
+                                    if (!editing) openConversation(c.id);
                                     else
                                         setSelected((current) =>
                                             current.includes(c.id)

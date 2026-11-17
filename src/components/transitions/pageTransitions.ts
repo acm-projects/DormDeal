@@ -1,4 +1,6 @@
-export type TransitionId = "sticky" | "plane";
+import { colors } from "../../../app/root_styles";
+
+export type TransitionId = "sticky" | "plane" | "slide" | "slide-out";
 export type TransitionSource = { pathname: string; stageBottom?: number };
 
 type TransitionHost = (
@@ -17,6 +19,13 @@ export const d = (ms: number) => ms * K;
 export const rnd = (a: number, b: number) => a + Math.random() * (b - a);
 export const pick = <T>(items: readonly T[]) =>
     items[Math.floor(Math.random() * items.length)];
+export const stickyNoteColors = [
+    colors.rose,
+    colors.roseSelected,
+    "#EFC7C5",
+    "#E5AAA5",
+    "#D9948D",
+] as const;
 export const easeIO = (t: number) =>
     t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 export const easeO = (t: number) => 1 - Math.pow(1 - t, 3);

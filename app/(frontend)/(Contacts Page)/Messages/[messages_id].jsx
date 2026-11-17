@@ -1,4 +1,7 @@
 import {
+    Animated,
+    Easing,
+    LayoutAnimation,
     StyleSheet,
     ScrollView,
     View,
@@ -6,7 +9,7 @@ import {
     TextInput,
 } from "react-native";
 import { useEffect, useRef, useState } from "react";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, usePathname } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Path } from "react-native-svg";
 import Other_Message_Box from "../../../../src/components/message_box_pink";
@@ -17,6 +20,7 @@ import Base from "../../../../src/components/base";
 import Text from "../../../../src/components/text_styles";
 import { colors } from "../../../root_styles";
 import { supabase } from "../../../../lib/supabase";
+import { navigateWithTransition } from "../../../../src/components/transitions/pageTransitions";
 
 const PaperclipIcon = ({ color = "#8F969E", size = 28 }) => (
     <Svg width={size} height={size * 1.4} viewBox="0 0 24 34">
@@ -47,20 +51,69 @@ const time_ago = (iso) => {
     return `${d} day${d === 1 ? "" : "s"} ago`;
 };
 
+const MessagePop = ({ children, delay = 0 }) => {
+    const [progress] = useState(() => new Animated.Value(0));
+
+    useEffect(() => {
+        progress.setValue(0);
+        const animation = Animated.timing(progress, {
+            toValue: 1,
+            duration: 600,
+            delay,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+        });
+        animation.start();
+        return () => animation.stop();
+    }, [delay, progress]);
+
+    return (
+        <Animated.View
+            style={{
+                opacity: progress,
+            }}
+        >
+            {children}
+        </Animated.View>
+    );
+};
+
 const Messages = () => {
     const { messages_id } = useLocalSearchParams();
     const conversation_id = Number(messages_id);
+    const pathname = usePathname();
+    const [isClosing, setIsClosing] = useState(false);
 
     const [user_id, set_user_id] = useState(null);
     const [messages, set_messages] = useState([]);
+    const [historyAnimationDelays, setHistoryAnimationDelays] = useState(
+        () => new Map(),
+    );
     const [text, set_text] = useState("");
     const [chat_title, set_chat_title] = useState("Chat");
     const [listing_title, set_listing_title] = useState("Starbucks Cup");
     const [send_error, set_send_error] = useState("");
 
     const scroll_view_ref = useRef(null);
-    const scroll_to_end_func = () => {
-        scroll_view_ref.current?.scrollToEnd({ animated: false });
+    const shouldAnimateScroll = useRef(false);
+    const needsInitialScroll = useRef(true);
+    const handleContentSizeChange = () => {
+        if (shouldAnimateScroll.current) {
+            scroll_view_ref.current?.scrollToEnd({
+                animated: true,
+            });
+            shouldAnimateScroll.current = false;
+        }
+    };
+    const closeConversation = () => {
+        if (isClosing) return;
+
+        setIsClosing(true);
+        void navigateWithTransition(
+            { pathname },
+            "/Contacts",
+            "slide-out",
+        );
     };
 
     // who am I?
@@ -104,7 +157,21 @@ const Messages = () => {
                 .eq("conversation_id", conversation_id)
                 .order("sent_at", { ascending: true });
             if (error) console.error(error);
-            set_messages(data ?? []);
+            const history = data ?? [];
+            // The tip can finish its initial layout before history arrives.
+            // Re-arm the initial scroll so the fetched thread opens at newest.
+            needsInitialScroll.current = true;
+            set_messages(history);
+            // Mount the whole history at once to avoid a layout/scroll jump
+            // for each bubble, then reveal it newest-to-oldest.
+            setHistoryAnimationDelays(
+                new Map(
+                    history.map((message, index) => [
+                        message.message_id,
+                        (history.length - index - 1) * 60,
+                    ]),
+                ),
+            );
         };
         load();
 
@@ -134,6 +201,26 @@ const Messages = () => {
         };
     }, [user_id, conversation_id]);
 
+    // Run after the fetched history has committed, rather than from an early
+    // child-layout callback. A second frame covers web's deferred text layout.
+    useEffect(() => {
+        if (!needsInitialScroll.current || messages.length === 0) return;
+
+        needsInitialScroll.current = false;
+        let secondFrame = null;
+        const firstFrame = requestAnimationFrame(() => {
+            scroll_view_ref.current?.scrollToEnd({ animated: false });
+            secondFrame = requestAnimationFrame(() => {
+                scroll_view_ref.current?.scrollToEnd({ animated: false });
+            });
+        });
+
+        return () => {
+            cancelAnimationFrame(firstFrame);
+            if (secondFrame !== null) cancelAnimationFrame(secondFrame);
+        };
+    }, [messages]);
+
     const send_message = async () => {
         if (!text.trim() || !user_id) return;
         const content = text;
@@ -150,6 +237,12 @@ const Messages = () => {
             return;
         }
         set_send_error("");
+        shouldAnimateScroll.current = true;
+        LayoutAnimation.configureNext({
+            duration: 240,
+            create: { type: LayoutAnimation.Types.easeInEaseOut },
+            update: { type: LayoutAnimation.Types.easeInEaseOut },
+        });
         set_messages((prev) =>
             prev.some((m) => m.message_id === data.message_id)
                 ? prev
@@ -160,7 +253,11 @@ const Messages = () => {
     return (
         <Base style={{ paddingLeft: 0, paddingRight: 0, paddingBottom: 0 }}>
             <View style={styles.header_container}>
-                <Back_Button href="/Contacts" style={styles.back_button} />
+                <Back_Button
+                    disabled={isClosing}
+                    onPress={closeConversation}
+                    style={styles.back_button}
+                />
                 <View style={styles.header_quick_info}>
                     <View style={styles.profile_avatar}>
                         <Ionicons
@@ -212,34 +309,44 @@ const Messages = () => {
 
             <ScrollView
                 ref={scroll_view_ref}
-                onContentSizeChange={scroll_to_end_func}
+                onContentSizeChange={handleContentSizeChange}
                 style={styles.messages_scroll_view}
                 contentContainerStyle={styles.messages_container}
                 showsVerticalScrollIndicator={false}
             >
-                <View style={styles.tip_note}>
-                    <View style={styles.tip_top} />
-                    <Text style={styles.tip_text}>
-                        Tip: meet in a busy campus spot, like the Library lobby.
-                    </Text>
+                <View>
+                    <View style={styles.tip_note}>
+                        <View style={styles.tip_top} />
+                        <Text style={styles.tip_text}>
+                            Tip: meet in a busy campus spot, like the Library lobby.
+                        </Text>
+                    </View>
+                    {messages.map((m) =>
+                        m.sender_id === user_id ? (
+                            <MessagePop
+                                key={m.message_id}
+                                delay={
+                                    historyAnimationDelays.get(m.message_id) ?? 0
+                                }
+                            >
+                                <You_Message_Box status={time_ago(m.sent_at)}>
+                                    {m.content}
+                                </You_Message_Box>
+                            </MessagePop>
+                        ) : (
+                            <MessagePop
+                                key={m.message_id}
+                                delay={
+                                    historyAnimationDelays.get(m.message_id) ?? 0
+                                }
+                            >
+                                <Other_Message_Box status={time_ago(m.sent_at)}>
+                                    {m.content}
+                                </Other_Message_Box>
+                            </MessagePop>
+                        ),
+                    )}
                 </View>
-                {messages.map((m) =>
-                    m.sender_id === user_id ? (
-                        <You_Message_Box
-                            key={m.message_id}
-                            status={time_ago(m.sent_at)}
-                        >
-                            {m.content}
-                        </You_Message_Box>
-                    ) : (
-                        <Other_Message_Box
-                            key={m.message_id}
-                            status={time_ago(m.sent_at)}
-                        >
-                            {m.content}
-                        </Other_Message_Box>
-                    ),
-                )}
             </ScrollView>
 
             {send_error ? (
@@ -300,7 +407,7 @@ const styles = StyleSheet.create({
         paddingLeft: 20,
         paddingRight: 20,
         paddingHorizontal: 20,
-        paddingBottom: 106,
+        paddingBottom: 20,
     },
     messages_scroll_view: {
         flex: 1,
@@ -432,7 +539,7 @@ const styles = StyleSheet.create({
     send_error: {
         color: colors.maroon,
         paddingHorizontal: 20,
-        paddingBottom: 100,
+        paddingVertical: 8,
     },
     upload_button: {
         flexShrink: 0,
@@ -446,8 +553,6 @@ const styles = StyleSheet.create({
     messages_functionality: {
         flexDirection: "row",
         alignItems: "center",
-        position: "absolute",
-        bottom: 0,
         alignContent: "flex-end",
         backgroundColor: colors.blush,
         width: "100%",
