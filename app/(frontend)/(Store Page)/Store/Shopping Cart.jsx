@@ -86,6 +86,7 @@ function CartRow({ index, children }) {
 
 function RedesignedCart() {
     const router = useRouter();
+    const pageEntrance = useRef(new Animated.Value(0)).current;
     const [items, setItems] = useState(
         cartItems.map((item) => ({ ...item, quantity: 1 })),
     );
@@ -111,8 +112,32 @@ function RedesignedCart() {
         );
     };
 
+    useEffect(() => {
+        Animated.timing(pageEntrance, {
+            toValue: 1,
+            duration: 260,
+            useNativeDriver: true,
+        }).start();
+    }, [pageEntrance]);
+
     return (
         <Base>
+            <Animated.View
+                style={[
+                    modern.page,
+                    {
+                        opacity: pageEntrance,
+                        transform: [
+                            {
+                                translateY: pageEntrance.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [18, 0],
+                                }),
+                            },
+                        ],
+                    },
+                ]}
+            >
             <View style={modern.top}>
                 <Pressable
                     accessibilityLabel="Back to catalog"
@@ -230,11 +255,13 @@ function RedesignedCart() {
                     Checkout
                 </Text>
             </Pressable>
+            </Animated.View>
         </Base>
     );
 }
 
 const modern = StyleSheet.create({
+    page: { flex: 1 },
     top: { gap: 4 },
     back: {
         width: 56,

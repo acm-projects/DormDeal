@@ -59,7 +59,10 @@ type Motion =
     | "door"
     | "glow"
     | "pulse"
-    | "slide";
+    | "slide"
+    | "notebookForward"
+    | "notebookBack"
+    | "notebookExitLeft";
 
 const durations: Record<Motion, number> = {
     fade: 500,
@@ -73,6 +76,9 @@ const durations: Record<Motion, number> = {
     glow: 2400,
     pulse: 2200,
     slide: 420,
+    notebookForward: 560,
+    notebookBack: 560,
+    notebookExitLeft: 560,
 };
 
 function useProgress(
@@ -274,6 +280,55 @@ export function FormMotion({
                         translateX: progress.interpolate({
                             inputRange: [0, 1],
                             outputRange: [40, 0],
+                        }),
+                    },
+                ],
+            };
+            break;
+        case "notebookForward":
+        case "notebookBack": {
+            const forward = variant === "notebookForward";
+            motion = {
+                opacity: progress,
+                // The notebook uses one left-side spine in both directions.
+                transformOrigin: "left center",
+                transform: [
+                    { perspective: 900 },
+                    {
+                        translateX: progress.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [forward ? 30 : -30, 0],
+                        }),
+                    },
+                    {
+                        rotateY: progress.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: ["-68deg", "0deg"],
+                        }),
+                    },
+                ],
+            };
+            break;
+        }
+        case "notebookExitLeft":
+            motion = {
+                opacity: progress.interpolate({
+                    inputRange: [0, 0.85, 1],
+                    outputRange: [1, 1, 0],
+                }),
+                transformOrigin: "left center",
+                transform: [
+                    { perspective: 900 },
+                    {
+                        translateX: progress.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0, -30],
+                        }),
+                    },
+                    {
+                        rotateY: progress.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: ["0deg", "-68deg"],
                         }),
                     },
                 ],
