@@ -31,6 +31,7 @@ import {
     getFavoriteListingIds,
     setListingFavorite,
 } from "../../../lib/api/favorites";
+import { services, serviceRateNumber } from "../../../data/services";
 
 const FavoriteHeart = ({ active }) => {
     const scale = useRef(new Animated.Value(1)).current;
@@ -176,6 +177,63 @@ const Listing_Card = (props) => {
     );
 };
 
+<<<<<<< HEAD
+// one service, pinned like the listing cards. services are demo data for now (data/services.ts)
+const Service_Card = ({ service }) => {
+    const router = useRouter();
+    const rotation = `${(((Number(service.id) * 37) % 401) - 200) / 100}deg`;
+
+    return (
+        <View
+            style={[styles.card_wrapper, { transform: [{ rotate: rotation }] }]}
+        >
+            <View style={styles.card_pin} />
+            <Pressable
+                style={styles.card}
+                onPress={() =>
+                    router.push(`/Store/Listing/Service/${service.id}`)
+                }
+                accessibilityLabel={`Open ${service.title}`}
+            >
+                <View style={[styles.cardPhoto, styles.servicePhoto]}>
+                    <View style={styles.serviceIcon}>
+                        <Ionicons
+                            name={service.icon}
+                            size={34}
+                            color={colors.maroon}
+                        />
+                    </View>
+                </View>
+                <View style={styles.cardInfo}>
+                    <NativeText style={styles.cardTitle} numberOfLines={2}>
+                        {service.title}
+                    </NativeText>
+                    <View style={styles.sellerRow}>
+                        <View style={styles.sellerDot}>
+                            <Text style={styles.sellerInitials}>
+                                {service.initials}
+                            </Text>
+                        </View>
+                        <NativeText style={styles.sellerName} numberOfLines={1}>
+                            {service.provider}
+                        </NativeText>
+                    </View>
+                    <View style={styles.priceRow}>
+                        <Text style={styles.priceLabel}>Rate</Text>
+                        <Text style={styles.price}>
+                            {service.rate}
+                            {service.rateUnit ? (
+                                <Text style={styles.rateUnit}>
+                                    {service.rateUnit}
+                                </Text>
+                            ) : null}
+                        </Text>
+                    </View>
+                </View>
+                <Text style={styles.cardCategory}>{service.category}</Text>
+            </Pressable>
+        </View>
+=======
 const SearchSuggestions = ({ listings, visible, onSelect }) => {
     const entrance = useRef(new Animated.Value(0)).current;
     const [shouldRender, setShouldRender] = useState(visible);
@@ -265,6 +323,7 @@ const SearchSuggestions = ({ listings, visible, onSelect }) => {
                 </Pressable>
             ))}
         </Animated.View>
+>>>>>>> 4e02d237c7cb8a76d991ae0fd9b403d5d8ee84da
     );
 };
 
@@ -387,8 +446,33 @@ const Store = () => {
             })
             .map(({ listing }) => listing);
     }, [filteredListings, normalizedQuery, scoreListing, sortConfig]);
+    const showingServices = current_tab === "services";
+    const visibleServices = useMemo(() => {
+        const matching = services.filter((service) => {
+            if (enabledFilters["Under $25"] && serviceRateNumber(service) > 25)
+                return false;
+            if (!normalizedQuery) return true;
+            return `${service.title} ${service.category} ${service.provider} ${service.description}`
+                .toLocaleLowerCase()
+                .includes(normalizedQuery);
+        });
+        if (sortConfig.direction === "Unsorted") return matching;
+        const direction = sortConfig.direction === "Ascending" ? 1 : -1;
+        return [...matching].sort((a, b) => {
+            let comparison = 0;
+            if (sortConfig.field === "Name")
+                comparison = a.title.localeCompare(b.title);
+            if (sortConfig.field === "Seller")
+                comparison = a.provider.localeCompare(b.provider);
+            if (sortConfig.field === "Price")
+                comparison = serviceRateNumber(a) - serviceRateNumber(b);
+            return comparison * direction;
+        });
+    }, [enabledFilters, normalizedQuery, sortConfig]);
     const searchSuggestions =
-        searchFocused && normalizedQuery ? visibleListings.slice(0, 5) : [];
+        !showingServices && searchFocused && normalizedQuery
+            ? visibleListings.slice(0, 5)
+            : [];
 
     useFocusEffect(
         useCallback(() => {
@@ -544,7 +628,11 @@ const Store = () => {
                         onBlur={() => setSearchFocused(false)}
                         onSubmitEditing={() => setSearchFocused(false)}
                         returnKeyType="search"
-                        accessibilityLabel="Search marketplace listings"
+                        accessibilityLabel={
+                            showingServices
+                                ? "Search services"
+                                : "Search marketplace listings"
+                        }
                     />
                     <Button
                         style={[
@@ -592,14 +680,24 @@ const Store = () => {
                     style={styles.listing_flat_list}
                     contentContainerStyle={styles.marketplace_listing_container}
                     columnWrapperStyle={styles.marketplace_listing_row}
-                    data={visibleListings}
+                    data={showingServices ? visibleServices : visibleListings}
                     numColumns={2}
-                    keyExtractor={(listing) => String(listing.listing_id)}
+                    keyExtractor={(entry) =>
+                        showingServices
+                            ? `service-${entry.id}`
+                            : String(entry.listing_id)
+                    }
                     showsVerticalScrollIndicator={false}
                     removeClippedSubviews={false}
                     ListHeaderComponent={null}
                     ListEmptyComponent={
-                        loadingListings ? (
+                        showingServices ? (
+                            <Text style={styles.listingMessage}>
+                                {normalizedQuery
+                                    ? `No services match “${searchQuery.trim()}”.`
+                                    : "No services match these filters."}
+                            </Text>
+                        ) : loadingListings ? (
                             <View style={styles.loadingListings}>
                                 <ActivityIndicator color={colors.maroon} />
                             </View>
@@ -618,6 +716,8 @@ const Store = () => {
                         )
                     }
                     renderItem={({ item: listing }) => {
+                        if (showingServices)
+                            return <Service_Card service={listing} />;
                         const sellerName = formatSellerName(
                             listing.seller_name,
                         );
@@ -1072,6 +1172,24 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         color: colors.maroon,
         fontFamily: "Outfit",
+    },
+    servicePhoto: {
+        backgroundColor: colors.goldLight,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    serviceIcon: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: colors.white,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    rateUnit: {
+        fontSize: 14,
+        fontWeight: "500",
+        color: colors.muted,
     },
     cardCategory: {
         minHeight: 18,
