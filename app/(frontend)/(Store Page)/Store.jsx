@@ -177,7 +177,6 @@ const Listing_Card = (props) => {
     );
 };
 
-<<<<<<< HEAD
 // one service, pinned like the listing cards. services are demo data for now (data/services.ts)
 const Service_Card = ({ service }) => {
     const router = useRouter();
@@ -233,7 +232,9 @@ const Service_Card = ({ service }) => {
                 <Text style={styles.cardCategory}>{service.category}</Text>
             </Pressable>
         </View>
-=======
+    );
+};
+
 const SearchSuggestions = ({ listings, visible, onSelect }) => {
     const entrance = useRef(new Animated.Value(0)).current;
     const [shouldRender, setShouldRender] = useState(visible);
@@ -323,7 +324,6 @@ const SearchSuggestions = ({ listings, visible, onSelect }) => {
                 </Pressable>
             ))}
         </Animated.View>
->>>>>>> 4e02d237c7cb8a76d991ae0fd9b403d5d8ee84da
     );
 };
 
