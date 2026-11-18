@@ -676,28 +676,47 @@ const Store = () => {
                         )
                     }
                 />
-                <FlatList
-                    style={styles.listing_flat_list}
-                    contentContainerStyle={styles.marketplace_listing_container}
-                    columnWrapperStyle={styles.marketplace_listing_row}
-                    data={showingServices ? visibleServices : visibleListings}
-                    numColumns={2}
-                    keyExtractor={(entry) =>
-                        showingServices
-                            ? `service-${entry.id}`
-                            : String(entry.listing_id)
-                    }
-                    showsVerticalScrollIndicator={false}
-                    removeClippedSubviews={false}
-                    ListHeaderComponent={null}
-                    ListEmptyComponent={
-                        showingServices ? (
+                {showingServices ? (
+                    <FlatList
+                        key="services-list"
+                        style={styles.listing_flat_list}
+                        contentContainerStyle={
+                            styles.marketplace_listing_container
+                        }
+                        columnWrapperStyle={styles.marketplace_listing_row}
+                        data={visibleServices}
+                        numColumns={2}
+                        keyExtractor={(service) => `service-${service.id}`}
+                        showsVerticalScrollIndicator={false}
+                        removeClippedSubviews={false}
+                        ListHeaderComponent={null}
+                        ListEmptyComponent={
                             <Text style={styles.listingMessage}>
                                 {normalizedQuery
                                     ? `No services match “${searchQuery.trim()}”.`
                                     : "No services match these filters."}
                             </Text>
-                        ) : loadingListings ? (
+                        }
+                        renderItem={({ item: service }) => (
+                            <Service_Card service={service} />
+                        )}
+                    />
+                ) : (
+                    <FlatList
+                        key="marketplace-list"
+                        style={styles.listing_flat_list}
+                        contentContainerStyle={
+                            styles.marketplace_listing_container
+                        }
+                        columnWrapperStyle={styles.marketplace_listing_row}
+                        data={visibleListings}
+                        numColumns={2}
+                        keyExtractor={(listing) => String(listing.listing_id)}
+                        showsVerticalScrollIndicator={false}
+                        removeClippedSubviews={false}
+                        ListHeaderComponent={null}
+                        ListEmptyComponent={
+                            loadingListings ? (
                             <View style={styles.loadingListings}>
                                 <ActivityIndicator color={colors.maroon} />
                             </View>
@@ -714,42 +733,41 @@ const Store = () => {
                                       : "No active listings match these filters."}
                             </Text>
                         )
-                    }
-                    renderItem={({ item: listing }) => {
-                        if (showingServices)
-                            return <Service_Card service={listing} />;
-                        const sellerName = formatSellerName(
-                            listing.seller_name,
-                        );
-                        const sellerWords = sellerName.split(/\s+/);
-                        const sellerInitials =
-                            sellerWords
-                                .slice(0, 2)
-                                .map((word) => word[0]?.toUpperCase())
-                                .join("") || "?";
+                        }
+                        renderItem={({ item: listing }) => {
+                            const sellerName = formatSellerName(
+                                listing.seller_name,
+                            );
+                            const sellerWords = sellerName.split(/\s+/);
+                            const sellerInitials =
+                                sellerWords
+                                    .slice(0, 2)
+                                    .map((word) => word[0]?.toUpperCase())
+                                    .join("") || "?";
 
-                        return (
-                            <Listing_Card
-                                id={listing.listing_id}
-                                title={listing.title}
-                                seller={sellerName}
-                                initials={sellerInitials}
-                                price={formatListingPrice(listing.price)}
-                                category={formatCategory(listing.category)}
-                                imageUrl={listing.image_url}
-                                isFavorite={favoriteListingIds.has(
-                                    listing.listing_id,
-                                )}
-                                favoriteBusy={favoriteBusyIds.has(
-                                    listing.listing_id,
-                                )}
-                                onToggleFavorite={() =>
-                                    toggleFavorite(listing.listing_id)
-                                }
-                            />
-                        );
-                    }}
-                />
+                            return (
+                                <Listing_Card
+                                    id={listing.listing_id}
+                                    title={listing.title}
+                                    seller={sellerName}
+                                    initials={sellerInitials}
+                                    price={formatListingPrice(listing.price)}
+                                    category={formatCategory(listing.category)}
+                                    imageUrl={listing.image_url}
+                                    isFavorite={favoriteListingIds.has(
+                                        listing.listing_id,
+                                    )}
+                                    favoriteBusy={favoriteBusyIds.has(
+                                        listing.listing_id,
+                                    )}
+                                    onToggleFavorite={() =>
+                                        toggleFavorite(listing.listing_id)
+                                    }
+                                />
+                            );
+                        }}
+                    />
+                )}
             </View>
             {activePanel && (
                 <CatalogOptions

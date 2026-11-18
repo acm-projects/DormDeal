@@ -121,6 +121,7 @@ export default function Joined() {
         <PaperForm
             pageKey={step}
             stageVariant={step === 1 ? "slide" : "fade"}
+            headerOverlay={step === 0}
             header={
                 <View style={styles.top}>
                     <FormBack

@@ -26,11 +26,14 @@ export function PaperForm({
     footer,
     pageKey,
     stageVariant = "fade",
+    headerOverlay = false,
 }: {
     children: ReactNode;
     header?: ReactNode;
     footer?: ReactNode;
     pageKey?: string | number;
+    /** Lets an edge-to-edge intro continue beneath a floating header. */
+    headerOverlay?: boolean;
     stageVariant?:
         | "fade"
         | "slide"
@@ -91,14 +94,29 @@ export function PaperForm({
     const backTurn = turningPage?.direction === "back";
     return (
         <FormMotionProvider>
-            <Base style={styles.base}>
+            <Base
+                style={[styles.base, headerOverlay && styles.overlayBase]}
+            >
                 <KeyboardAvoidingView
                     style={styles.page}
                     behavior={Platform.OS === "ios" ? "padding" : undefined}
                 >
-                    {header && <View style={gutters}>{header}</View>}
+                    {header && (
+                        <View
+                            style={[
+                                gutters,
+                                headerOverlay && styles.headerOverlay,
+                            ]}
+                        >
+                            {header}
+                        </View>
+                    )}
                     <ScrollView
-                        contentContainerStyle={[styles.content, gutters]}
+                        contentContainerStyle={[
+                            styles.content,
+                            headerOverlay && styles.overlayContent,
+                            gutters,
+                        ]}
                         keyboardShouldPersistTaps="handled"
                     >
                         <View style={styles.stageShell}>
@@ -287,8 +305,17 @@ export const paperFormStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
     base: { paddingLeft: 0, paddingRight: 0 },
+    overlayBase: { paddingTop: 0 },
     page: { flex: 1, width: "100%" },
+    headerOverlay: {
+        position: "absolute",
+        top: 0,
+        right: 0,
+        left: 0,
+        zIndex: 2,
+    },
     stageShell: { flexGrow: 1, position: "relative" },
+    overlayContent: { paddingTop: 0 },
     stage: { flexGrow: 1 },
     turningStage: {
         position: "absolute",
