@@ -1,5 +1,6 @@
 import {
     Animated,
+    Easing,
     Pressable,
     StyleSheet,
     Text,
@@ -43,12 +44,14 @@ export default function Landing() {
             Animated.sequence([
                 Animated.timing(swing, {
                     toValue: 1,
-                    duration: 3600,
+                    duration: 2800,
+                    easing: Easing.inOut(Easing.sin),
                     useNativeDriver: false,
                 }),
                 Animated.timing(swing, {
                     toValue: 0,
-                    duration: 3600,
+                    duration: 2800,
+                    easing: Easing.inOut(Easing.sin),
                     useNativeDriver: false,
                 }),
             ]),
@@ -58,26 +61,24 @@ export default function Landing() {
     }, [swing]);
     const tagRotation = swing.interpolate({
         inputRange: [0, 1],
-        outputRange: ["-5deg", "5deg"],
+        outputRange: ["-2.2deg", "2.2deg"],
     });
     return (
         <Base style={landingStyles.base}>
             <View style={landingStyles.screen}>
                 <View style={landingStyles.brand}>
-                    <View style={landingStyles.hanger} />
                     <Animated.View
                         style={[
-                            landingStyles.tagWrap,
+                            landingStyles.tagAssembly,
                             {
-                                transform: [
-                                    {
-                                        rotate: tagRotation,
-                                    },
-                                ],
+                                transform: [{ rotate: tagRotation }],
                             },
                         ]}
                     >
-                        <DealTag />
+                        <View style={landingStyles.hanger} />
+                        <View style={landingStyles.tagWrap}>
+                            <DealTag />
+                        </View>
                     </Animated.View>
                     <Text style={landingStyles.word}>Dorm</Text>
                     <Squiggle />
@@ -270,22 +271,31 @@ const landingStyles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "flex-end",
     },
+    tagAssembly: {
+        position: "absolute",
+        top: -32,
+        left: "58%",
+        width: 150,
+        height: 190,
+        zIndex: 10,
+        elevation: 10,
+        transformOrigin: "0px 0px",
+    },
     hanger: {
         position: "absolute",
-        height: 135,
-        top: -20,
-        left: "58%",
+        height: 154,
+        top: 0,
+        left: 0,
         borderLeftWidth: 2,
         borderColor: colors.ink,
     },
     tagWrap: {
         position: "absolute",
-        top: 82,
-        left: "58%",
-        marginLeft: -25,
-        zIndex: 10,
-        elevation: 10,
-        transformOrigin: "25px 0px",
+        // The tag's hole is at (25, 40), exactly at the string endpoint.
+        top: 114,
+        left: -25,
+        zIndex: 1,
+        elevation: 1,
     },
     word: {
         color: colors.ink,

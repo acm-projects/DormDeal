@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
+import { Animated, Easing, StyleSheet, Text, View } from "react-native";
 import Svg, { Circle, Path, Text as SvgText } from "react-native-svg";
 import { colors } from "../../app/root_styles";
 
@@ -11,12 +11,14 @@ export function JoinedDormDealLogo() {
             Animated.sequence([
                 Animated.timing(swing, {
                     toValue: 1,
-                    duration: 3600,
+                    duration: 2800,
+                    easing: Easing.inOut(Easing.sin),
                     useNativeDriver: false,
                 }),
                 Animated.timing(swing, {
                     toValue: 0,
-                    duration: 3600,
+                    duration: 2800,
+                    easing: Easing.inOut(Easing.sin),
                     useNativeDriver: false,
                 }),
             ]),
@@ -27,7 +29,7 @@ export function JoinedDormDealLogo() {
 
     const tagRotation = swing.interpolate({
         inputRange: [0, 1],
-        outputRange: ["-5deg", "5deg"],
+        outputRange: ["-2.2deg", "2.2deg"],
     });
 
     return (
@@ -36,32 +38,21 @@ export function JoinedDormDealLogo() {
             accessibilityLabel="DormDeal logo with a swinging Deal tag attached to the letter m"
             style={styles.logo}
         >
-            <Text style={styles.word}>Dorm</Text>
-            <Svg
-                width={58}
-                height={126}
-                viewBox="0 0 58 126"
-                style={styles.string}
-            >
-                <Path
-                    d="M33 0 C16 9 16 30 33 38 C48 46 48 60 33 68 V126"
-                    fill="none"
-                    stroke={colors.ink}
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                />
-            </Svg>
             <Animated.View
                 style={[
-                    styles.tagWrap,
+                    styles.tagAssembly,
                     { transform: [{ rotate: tagRotation }] },
                 ]}
             >
-                <DealTag />
+                <View style={styles.string} />
+                <View style={styles.tagWrap}>
+                    <DealTag />
+                </View>
             </Animated.View>
-            <Svg width={190} height={12} style={styles.squiggle}>
+            <Text style={styles.word}>Dorm</Text>
+            <Svg width={160} height={12}>
                 <Path
-                    d="M2 7 Q20 1 38 7 T74 7 T110 7 T146 7 T188 6"
+                    d="M2 7 Q16 1 30 7 T58 7 T86 7 T114 7 T142 6 T158 6"
                     stroke={colors.maroon}
                     strokeWidth={3}
                     fill="none"
@@ -107,35 +98,43 @@ function DealTag() {
 const styles = StyleSheet.create({
     logo: {
         width: 360,
-        height: 330,
+        height: 210,
         position: "relative",
         alignItems: "center",
         justifyContent: "flex-end",
     },
     word: {
-        top: 45,
-        alignSelf: "center",
-        position: "absolute",
-        zIndex: 1,
         color: colors.ink,
         fontFamily: "Outfit",
         fontWeight: "800",
-        fontSize: 102,
-        letterSpacing: -5,
+        fontSize: 68,
+        letterSpacing: -3,
+    },
+    tagAssembly: {
+        position: "absolute",
+        // The Joined screen centers its welcome block lower than Landing.
+        // Lengthen upward while keeping the tag at the same attachment point.
+        top: -473,
+        left: "58%",
+        width: 150,
+        height: 631,
+        zIndex: 10,
+        elevation: 10,
+        transformOrigin: "0px 0px",
     },
     string: {
         position: "absolute",
-        top: 122,
-        left: 32,
-        zIndex: 2,
+        height: 595,
+        top: 0,
+        left: 0,
+        borderLeftWidth: 2,
+        borderColor: colors.ink,
     },
     tagWrap: {
         position: "absolute",
-        top: 208,
-        left: 40,
-        zIndex: 3,
-        elevation: 3,
-        transformOrigin: "25px 40px",
+        top: 555,
+        left: -25,
+        zIndex: 1,
+        elevation: 1,
     },
-    squiggle: { position: "absolute", top: 168 },
 });
